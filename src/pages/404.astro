@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { t } from '../i18n/index.ts';
+import { url } from '../lib/site.ts';
+---
+
+<BaseLayout title={t('notFound.title')} noindex>
+  <div class="prose">
+    <h1>{t('notFound.title')}</h1>
+    <p>{t('notFound.text')}</p>
+    <p><a class="button" href={url('ru/')}>{t('notFound.home')}</a></p>
+  </div>
+</BaseLayout>

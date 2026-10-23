@@ -1,0 +1,111 @@
+name: Проверки
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BASE_PATH: /${{ github.event.repository.name }}/
+  ASTRO_TELEMETRY_DISABLED: 1
+
+jobs:
+  checks:
+    name: Сборка и автопроверки
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Лицензии пакетов
+        run: npm run check:licenses
+      - name: Типы
+        run: npm run check:types
+      - name: Модульные тесты
+        run: npm test
+      - name: Сборка
+        run: npm run build
+      - name: Ссылки, якоря и CSP
+        run: npm run check:site
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          include-hidden-files: true
+          retention-days: 3
+
+  e2e:
+    name: Сквозные тесты (${{ matrix.browser }})
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            projects: --project=chromium --project=mobile-chromium
+          - browser: webkit
+            projects: --project=webkit --project=mobile-webkit
+          - browser: firefox
+            projects: --project=firefox
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+      - name: Браузер
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Тесты
+        run: npx playwright test ${{ matrix.projects }}
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-${{ matrix.browser }}
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+  lighthouse:
+    name: Скорость и доступность (Lighthouse, телефон)
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+      - run: npm run lighthouse
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lighthouse
+          path: .lighthouseci
+          include-hidden-files: true
+          retention-days: 7

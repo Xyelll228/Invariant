@@ -1,0 +1,22 @@
+---
+import { url } from '../lib/site.ts';
+
+// Корень сайта ведёт на русскую версию: адреса всех языков — с префиксом.
+const target = url('ru/');
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Инвариант</title>
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={new URL(target, Astro.site).href} />
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+  </head>
+  <body>
+    <p><a href={target}>Перейти на русскую версию «Инварианта»</a></p>
+  </body>
+</html>

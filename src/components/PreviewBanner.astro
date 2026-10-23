@@ -1,0 +1,23 @@
+---
+import { t } from '../i18n/index.ts';
+
+interface Props {
+  pr: number;
+}
+
+const { pr } = Astro.props;
+---
+
+<div class="preview-banner">
+  <div class="container">{t('preview.banner', { pr })}</div>
+</div>
+
+<style>
+  .preview-banner {
+    background: var(--color-inverse-bg);
+    color: var(--color-inverse-text);
+    font-size: var(--text-small);
+    font-weight: 600;
+    padding: var(--space-2) 0;
+  }
+</style>

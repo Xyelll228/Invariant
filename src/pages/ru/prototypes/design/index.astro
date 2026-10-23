@@ -1,0 +1,323 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import tokensCss from '../../../../styles/tokens.css?raw';
+import { contrastRatio, formatRatio } from '../../../../lib/contrast.ts';
+import { darkTheme, parseTokens } from '../../../../lib/tokens.ts';
+import { url } from '../../../../lib/site.ts';
+
+const tokens = parseTokens(tokensCss);
+const light = tokens.light;
+const dark = darkTheme(tokens);
+
+function value(theme: Record<string, string>, name: string): string {
+  const result = theme[name];
+  if (!result) throw new Error(`Нет токена ${name}`);
+  return result;
+}
+
+const interfaceRows = [
+  { name: '--color-bg', label: 'Фон', against: null },
+  { name: '--color-surface', label: 'Поверхность', against: null },
+  { name: '--color-surface-strong', label: 'Поверхность, сильнее', against: null },
+  { name: '--color-text', label: 'Текст', against: '--color-bg' },
+  { name: '--color-text-muted', label: 'Текст приглушённый', against: '--color-bg' },
+  { name: '--color-text-subtle', label: 'Текст второстепенный', against: '--color-bg' },
+  { name: '--color-border', label: 'Рамка декоративная', against: null },
+  { name: '--color-border-strong', label: 'Рамка полей и кнопок', against: '--color-bg' },
+].map((row) => ({
+  ...row,
+  light: value(light, row.name),
+  dark: value(dark, row.name),
+  lightRatio: row.against ? formatRatio(contrastRatio(value(light, row.name), value(light, row.against))) : '—',
+  darkRatio: row.against ? formatRatio(contrastRatio(value(dark, row.name), value(dark, row.against))) : '—',
+}));
+
+const vizRows = [
+  { name: '--viz-neutral', label: 'Обычный элемент', mark: 'без отметки' },
+  { name: '--viz-compare', label: 'Сравнение', mark: 'пунктирная рамка' },
+  { name: '--viz-swap', label: 'Обмен или запись', mark: 'стрелки ⇄' },
+  { name: '--viz-key', label: 'Текущий ключ', mark: 'треугольник ▲' },
+  { name: '--viz-done', label: 'Уже на месте', mark: 'галочка ✓' },
+  { name: '--viz-pointer', label: 'Указатель', mark: 'стрелка ↓' },
+].map((row) => ({ ...row, light: value(light, row.name), dark: value(dark, row.name) }));
+
+const bars = [
+  { height: 40, state: 'done', label: '2' },
+  { height: 70, state: 'done', label: '5' },
+  { height: 55, state: 'compare', label: '4' },
+  { height: 30, state: 'key', label: '1' },
+  { height: 85, state: 'neutral', label: '7' },
+  { height: 62, state: 'neutral', label: '6' },
+] as const;
+---
+
+<BaseLayout title="Основа дизайна" description="Шрифты, цвета, элементы интерфейса и палитра визуализаций «Инварианта».">
+  <div class="prose">
+    <p><a href={url('ru/prototypes/')}>← Все прототипы</a></p>
+    <h1>Основа дизайна</h1>
+    <p class="lead">
+      Строгий монохром, крупный текст и одно главное действие на экране. Цвет есть только в визуализациях, и он всегда
+      дублируется формой или подписью.
+    </p>
+    <p>Переключите тему кнопкой в шапке и проверьте страницу в светлой и тёмной теме.</p>
+
+    <h2>Шрифты</h2>
+    <p>
+      Текст набран шрифтом Inter, код — Source Code Pro. Оба под свободной лицензией OFL и содержат полную кириллицу, включая
+      казахские буквы: <span lang="kk">Ә ә, Ғ ғ, Қ қ, Ң ң, Ө ө, Ұ ұ, Ү ү, Һ һ, І і</span>.
+    </p>
+    <h3>Заголовок третьего уровня</h3>
+    <p>
+      Обычный абзац: короткие предложения, строка 60–75 знаков, базовый размер текста не меньше 16 пикселей. Ссылка выглядит
+      <a href="#links-sample" id="links-sample">так</a>, важное выделяется <strong>жирностью</strong>, а код в строке —
+      <code>insertionSort(a)</code>. Клавиши: <kbd>←</kbd> и <kbd>→</kbd>.
+    </p>
+    <p class="muted">Приглушённый текст — для пояснений и подписей.</p>
+
+    <h2>Код</h2>
+    <pre><code>{`function swap(a, i, j) {
+  const t = a[i];
+  a[i] = a[j];
+  a[j] = t;
+}`}</code></pre>
+
+    <h2>Кнопки и поля</h2>
+    <div class="button-row">
+      <button type="button" class="button button--primary">Проверить</button>
+      <button type="button" class="button">Подсказка</button>
+      <button type="button" class="button" disabled>Недоступно</button>
+    </div>
+    <p>
+      <label for="sample-input">Ваш ответ</label>
+      <input id="sample-input" type="text" inputmode="text" autocomplete="off" placeholder="например, n log n" />
+    </p>
+    <fieldset>
+      <legend>Насколько вы уверены?</legend>
+      <label class="choice"><input type="radio" name="confidence" value="know" /> знаю</label>
+      <label class="choice"><input type="radio" name="confidence" value="unsure" /> сомневаюсь</label>
+      <label class="choice"><input type="radio" name="confidence" value="guess" /> наугад</label>
+    </fieldset>
+
+    <h2>Сообщения</h2>
+    <div class="note">
+      <span class="note__title">Верно.</span>
+      <p>Тон нейтральный: без похвалы и восклицательных знаков.</p>
+    </div>
+    <div class="note">
+      <span class="note__title">Неверно. Вот почему…</span>
+      <p>Разбор называет заблуждение, которое стоит за выбранным ответом, и ведёт к нужному блоку справочника.</p>
+    </div>
+
+    <h2>Таблица</h2>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Клавиши управления визуализацией">
+      <table>
+        <caption class="visually-hidden">Клавиши управления визуализацией</caption>
+        <thead>
+          <tr><th scope="col">Клавиша</th><th scope="col">Действие</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><kbd>→</kbd></td><td>Шаг вперёд</td></tr>
+          <tr><td><kbd>←</kbd></td><td>Шаг назад</td></tr>
+          <tr><td><kbd>Home</kbd></td><td>В начало</td></tr>
+          <tr><td><kbd>Пробел</kbd></td><td>Автопроигрывание: пуск и пауза</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h2>Цвета интерфейса</h2>
+  <p class="prose">
+    Контраст текста — не меньше 4,5:1, рамок полей и кнопок — не меньше 3:1 (WCAG 2.2 AA). Значения ниже посчитаны при
+    сборке из файла токенов, тот же расчёт проверяет автотест.
+  </p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Цвета интерфейса и их контраст">
+    <table class="tokens">
+      <thead>
+        <tr>
+          <th scope="col">Назначение</th>
+          <th scope="col">Светлая тема</th>
+          <th scope="col">Контраст</th>
+          <th scope="col">Тёмная тема</th>
+          <th scope="col">Контраст</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          interfaceRows.map((row) => (
+            <tr>
+              <th scope="row">
+                {row.label}
+                <br />
+                <code>{row.name}</code>
+              </th>
+              <td>
+                <svg class="swatch" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="0.5" y="0.5" width="23" height="23" rx="4" fill={row.light} stroke="#767676" />
+                </svg>{' '}
+                <code>{row.light}</code>
+              </td>
+              <td>{row.lightRatio}</td>
+              <td>
+                <svg class="swatch" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="0.5" y="0.5" width="23" height="23" rx="4" fill={row.dark} stroke="#767676" />
+                </svg>{' '}
+                <code>{row.dark}</code>
+              </td>
+              <td>{row.darkRatio}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Палитра визуализаций</h2>
+  <p class="prose">
+    Палитра Окабе — Ито различима при нарушениях цветового зрения. Каждое состояние дополнительно отмечено формой и
+    подписью, поэтому смысл не теряется и без цвета.
+  </p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Палитра визуализаций">
+    <table class="tokens">
+      <thead>
+        <tr>
+          <th scope="col">Состояние</th>
+          <th scope="col">Отметка без цвета</th>
+          <th scope="col">Светлая тема</th>
+          <th scope="col">Тёмная тема</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          vizRows.map((row) => (
+            <tr>
+              <th scope="row">
+                {row.label}
+                <br />
+                <code>{row.name}</code>
+              </th>
+              <td>{row.mark}</td>
+              <td>
+                <svg class="swatch" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="0.5" y="0.5" width="23" height="23" rx="4" fill={row.light} stroke="#111111" />
+                </svg>{' '}
+                <code>{row.light}</code>
+              </td>
+              <td>
+                <svg class="swatch" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="0.5" y="0.5" width="23" height="23" rx="4" fill={row.dark} stroke="#f0f0f0" />
+                </svg>{' '}
+                <code>{row.dark}</code>
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Пример в текущей теме</h3>
+  <figure class="viz-sample">
+    <svg viewBox="0 0 330 150" role="img" aria-labelledby="viz-sample-title">
+      <title id="viz-sample-title">
+        Массив 2, 5, 4, 1, 7, 6. Элементы 2 и 5 уже на месте, элемент 4 сравнивается с ключом 1.
+      </title>
+      {
+        bars.map((bar, index) => {
+          const x = 15 + index * 52;
+          const y = 120 - bar.height;
+          return (
+            <g class={`bar bar--${bar.state}`}>
+              <rect x={x} y={y} width="40" height={bar.height} rx="3" />
+              <text class="bar__value" x={x + 20} y={y - 6} text-anchor="middle">
+                {bar.label}
+              </text>
+              {bar.state === 'done' && (
+                <text class="bar__mark" x={x + 20} y={142} text-anchor="middle">
+                  ✓
+                </text>
+              )}
+              {bar.state === 'key' && (
+                <text class="bar__mark" x={x + 20} y={142} text-anchor="middle">
+                  ▲
+                </text>
+              )}
+            </g>
+          );
+        })
+      }
+    </svg>
+    <figcaption>
+      <ul class="viz-legend">
+        <li><span aria-hidden="true">✓</span> уже на месте</li>
+        <li><span aria-hidden="true">┅</span> пунктирная рамка — сравнение</li>
+        <li><span aria-hidden="true">▲</span> текущий ключ</li>
+      </ul>
+    </figcaption>
+  </figure>
+</BaseLayout>
+
+<style>
+  .swatch {
+    width: 1.5rem;
+    height: 1.5rem;
+    vertical-align: middle;
+  }
+
+  .tokens td,
+  .tokens th {
+    white-space: nowrap;
+  }
+
+  .viz-sample {
+    max-width: 30rem;
+    margin: 0 0 var(--space-6);
+  }
+
+  .viz-sample svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .bar rect {
+    stroke: var(--viz-outline);
+    stroke-width: 1.5;
+    fill: var(--viz-neutral);
+  }
+
+  .bar--done rect {
+    fill: var(--viz-done);
+  }
+
+  .bar--compare rect {
+    fill: var(--viz-compare);
+    stroke-dasharray: 5 3;
+    stroke-width: 2.5;
+  }
+
+  .bar--key rect {
+    fill: var(--viz-key);
+  }
+
+  .bar__value,
+  .bar__mark {
+    fill: var(--color-text);
+    font-size: 14px;
+    font-weight: 650;
+  }
+
+  .viz-legend {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-3) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-5);
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+  }
+
+  .viz-legend li + li {
+    margin-top: 0;
+  }
+</style>
