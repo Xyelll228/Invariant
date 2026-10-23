@@ -35,6 +35,12 @@ jobs:
         run: npm run check:types
       - name: Модульные тесты
         run: npm test
+      - name: 'Контент: схема, связи, шаблон, источники, текст'
+        run: npm run check:content
+      - name: Орфография
+        run: npm run check:spelling
+      - name: 'Код тем: C++, Python, свойства, мутанты, удвоение, генераторы'
+        run: npm run check:code
       - name: Сборка
         run: npm run build
       - name: Ссылки, якоря и CSP

@@ -1,0 +1,39 @@
+topic: algo.sorting.insertion
+
+skills:
+  - id: algo.sorting.insertion.s.after-k-steps
+    title: Состояние массива после k шагов сортировки вставками
+    level: fundament
+
+misconceptions:
+  - id: algo.sorting.insertion.m.one-step-short
+    text: Делает на один шаг меньше, чем спрошено.
+    explanation: >-
+      Первым шагом вставляется элемент с индексом 1: элемент с индексом 0 стоит
+      в левой части с самого начала. Поэтому после k шагов упорядочены первые
+      k + 1 элементов, а не k.
+    block: algo.sorting.insertion.b.misconceptions
+  - id: algo.sorting.insertion.m.one-step-extra
+    text: Делает на один шаг больше, чем спрошено.
+    explanation: >-
+      После k шагов вставлены элементы с индексами от 1 до k. Элемент с индексом
+      k + 1 и всё, что правее, ещё не тронуто.
+    block: algo.sorting.insertion.b.misconceptions
+  - id: algo.sorting.insertion.m.selection
+    text: Путает сортировку вставками с сортировкой выбором.
+    explanation: >-
+      Сортировка выбором на каждом шаге ищет минимум в правой части и меняет его
+      местами с первым элементом этой части. Сортировка вставками минимум не ищет:
+      она берёт первый элемент правой части и вставляет его в левую, а остальная
+      правая часть не меняется.
+    block: algo.sorting.insertion.b.idea
+
+questions:
+  - id: algo.sorting.insertion.q.after-k-steps
+    version: 1
+    level: fundament
+    role: practice
+    type: generated
+    questionType: trace
+    generator: afterKSteps
+    skill: algo.sorting.insertion.s.after-k-steps

@@ -1,0 +1,28 @@
+# Тема-образец этапа 0: на ней проверяются шаблон, схема и автопроверки.
+# Статус draft — черновик: на сайте как тема не публикуется. Перед выходом
+# в волне 1 тема пройдёт весь конвейер качества (ТЗ, раздел «Качество»).
+id: algo.sorting.insertion
+version: 1
+title: Сортировка вставками
+module: algo.sorting
+kind: algorithm
+levels: [fundament, base, depth]
+summary: >-
+  Сортировка вставками берёт элементы массива по одному и вставляет каждый
+  на своё место в уже упорядоченную левую часть.
+prerequisites:
+  - { topic: algo.linear.array, level: base }
+  - { topic: algo.analysis.asymptotics, level: base }
+confusableWith: [algo.sorting.selection]
+terms: [term.stable-sort, term.in-place-sort, term.inversion]
+complexity:
+  time: { best: 'n', average: 'n^2', worst: 'n^2' }
+  memory: '1'
+properties: { stable: true, inPlace: true }
+code:
+  harness: sort-numbers
+  js: insertionSort
+  cpp: insertion_sort
+  py: insertion_sort
+  cases: { best: sorted, average: random, worst: reversed }
+review: { status: draft, date: '2026-10-24' }

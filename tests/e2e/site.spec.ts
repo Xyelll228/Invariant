@@ -6,6 +6,7 @@ const pages = [
   { path: 'ru/', heading: 'Инвариант' },
   { path: 'ru/prototypes/', heading: 'Прототипы' },
   { path: 'ru/prototypes/design/', heading: 'Основа дизайна' },
+  { path: 'ru/prototypes/topic/', heading: 'Сортировка вставками' },
   { path: 'ru/about/', heading: 'О проекте' },
 ];
 

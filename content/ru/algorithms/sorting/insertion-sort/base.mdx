@@ -1,0 +1,22 @@
+---
+level: base
+version: 1
+---
+
+<Block id="algo.sorting.insertion.b.definition" kind="explanation" version={1} title="Определение">
+
+Сортировка вставками упорядочивает массив a длины n по возрастанию. Для каждого i от 1 до n − 1 элемент a[i] вставляется в упорядоченную часть a[0..i − 1]: пока он меньше соседа слева, их меняют местами.
+
+</Block>
+
+<Block id="algo.sorting.insertion.b.proof-idea" kind="proof" version={1} title="Почему это работает">
+
+Перед вставкой элемента с индексом i левая часть a[0..i − 1] упорядочена. Вставка сохраняет это свойство для части a[0..i]. После последнего шага упорядочен весь массив.
+
+</Block>
+
+<Block id="algo.sorting.insertion.b.base-misconceptions" kind="misconceptions" version={1} title="Частые ошибки">
+
+- Сравнение a[j − 1] > a[j] нельзя заменять на a[j − 1] >= a[j]: тогда равные элементы меняются местами и сортировка перестаёт быть устойчивой.
+
+</Block>

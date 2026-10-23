@@ -1,0 +1,22 @@
+topic: algo.sorting.insertion
+basedOn: 'Основано на: «Сортировка вставками», Википедия (CC BY-SA 4.0), с изменениями.'
+sources:
+  - id: wikipedia-ru-insertion-sort
+    title: Сортировка вставками
+    authors: [Авторы Википедии]
+    url: https://ru.wikipedia.org/wiki/Сортировка_вставками
+    license: CC-BY-SA-4.0
+    use: adapted
+  - id: wikipedia-en-insertion-sort
+    title: Insertion sort
+    authors: [Wikipedia contributors]
+    url: https://en.wikipedia.org/wiki/Insertion_sort
+    license: CC-BY-SA-4.0
+    use: reference
+  - id: clrs
+    title: Introduction to Algorithms, 4th edition
+    authors: [Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein]
+    url: https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/
+    license: proprietary
+    use: read-more
+    chapters: гл. 2.1

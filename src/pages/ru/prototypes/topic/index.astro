@@ -1,0 +1,249 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Block from '../../../../components/content/Block.astro';
+import catalogMarkdown from '../../../../../docs/catalog.md?raw';
+import modulesYaml from '../../../../../content/modules.yaml?raw';
+import { modulesById, parseCatalog } from '../../../../content/catalog.ts';
+import { LEVEL_TITLES, LEVELS } from '../../../../content/schema.ts';
+import { formatComplexity, formatDate } from '../../../../lib/format.ts';
+import { repositoryUrl, url } from '../../../../lib/site.ts';
+
+/**
+ * Прототип страницы темы на черновике «Сортировка вставками». Показывает
+ * шаблон: уровни из блоков, свойства, код на трёх языках, термины и источники.
+ */
+const TOPIC_ID = 'algo.sorting.insertion';
+
+const topicEntry = await getEntry('topics', TOPIC_ID);
+if (!topicEntry) throw new Error(`Нет темы ${TOPIC_ID}`);
+const topic = topicEntry.data;
+const folder = (topicEntry.filePath ?? '').replace(/^content\/ru\//, '').replace(/\/topic\.yaml$/, '');
+
+const module = modulesById(parseCatalog(catalogMarkdown, modulesYaml)).get(topic.module);
+const allTopics = await getCollection('topics');
+const titleOf = (id: string): string | undefined => allTopics.find((entry) => entry.id === id)?.data.title;
+
+const levels = await Promise.all(
+  LEVELS.filter((level) => topic.levels.includes(level)).map(async (level) => {
+    const entry = await getEntry('levels', `${folder}/${level}`);
+    if (!entry) throw new Error(`Нет файла уровня ${folder}/${level}.mdx`);
+    return { level, title: LEVEL_TITLES[level], Content: (await render(entry)).Content };
+  }),
+);
+
+const terms = (await Promise.all(topic.terms.map((id) => getEntry('glossary', id)))).filter((entry) => entry !== undefined);
+const sources = (await getEntry('sources', TOPIC_ID))?.data;
+
+const references = import.meta.glob<{ code: readonly string[] }>('/content/ru/**/reference.ts', { eager: true });
+const cppFiles = import.meta.glob<string>('/content/ru/**/impl.cpp', { query: '?raw', import: 'default', eager: true });
+const pyFiles = import.meta.glob<string>('/content/ru/**/impl.py', { query: '?raw', import: 'default', eager: true });
+const jsCode = references[`/content/ru/${folder}/reference.ts`]?.code.join('\n') ?? '';
+const cppCode = cppFiles[`/content/ru/${folder}/impl.cpp`] ?? '';
+const pyCode = pyFiles[`/content/ru/${folder}/impl.py`] ?? '';
+
+const statusTitle = { draft: 'черновик', auto: 'проверено автоматически', expert: 'проверено экспертом' }[topic.review.status];
+const yesNo = (value: boolean | undefined): string => (value === undefined ? '—' : value ? 'да' : 'нет');
+const useTitle = { adapted: 'основа текста', reference: 'сверка фактов', 'read-more': 'читать дальше' };
+---
+
+<BaseLayout title="Шаблон темы" description="Прототип страницы темы на черновике «Сортировка вставками».">
+  <div class="prose">
+    <p><a href={url('ru/prototypes/')}>← Все прототипы</a></p>
+    <div class="note">
+      <span class="note__title">Черновик для проверки шаблона.</span>
+      <p>
+        Текст ещё не прошёл конвейер качества и как тема не опубликован. Здесь видно, как устроена страница темы. Формат
+        описан в <a href={`${repositoryUrl}/blob/main/docs/content-guide.md`}>руководстве по темам</a>.
+      </p>
+    </div>
+
+    <p class="muted topic-path">
+      {module?.section.title} · {module?.title}
+    </p>
+    <h1>{topic.title}</h1>
+    <p class="lead">{topic.summary}</p>
+
+    <dl class="topic-meta">
+      <div>
+        <dt>Предпосылки</dt>
+        <dd>
+          <ul class="plain-list">
+            {
+              topic.prerequisites.map((item) => {
+                const title = titleOf(item.topic);
+                return (
+                  <li>
+                    {title ?? <code>{item.topic}</code>}, {LEVEL_TITLES[item.level]}
+                    {!title && <span class="muted"> — тема ещё не написана</span>}
+                  </li>
+                );
+              })
+            }
+          </ul>
+        </dd>
+      </div>
+      <div>
+        <dt>Статус</dt>
+        <dd>{statusTitle}, {formatDate(topic.review.date)}</dd>
+      </div>
+    </dl>
+
+    {
+      topic.complexity && (
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Свойства алгоритма">
+          <table>
+            <caption class="visually-hidden">Свойства алгоритма</caption>
+            <thead>
+              <tr>
+                <th scope="col">Лучший случай</th>
+                <th scope="col">Средний</th>
+                <th scope="col">Худший</th>
+                <th scope="col">Память</th>
+                <th scope="col">Устойчивая</th>
+                <th scope="col">На месте</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{formatComplexity(topic.complexity.time.best)}</td>
+                <td>{formatComplexity(topic.complexity.time.average)}</td>
+                <td>{formatComplexity(topic.complexity.time.worst)}</td>
+                <td>{formatComplexity(topic.complexity.memory)}</td>
+                <td>{yesNo(topic.properties?.stable)}</td>
+                <td>{yesNo(topic.properties?.inPlace)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+
+    <nav class="level-nav" aria-label="Уровни темы">
+      <ul>
+        {
+          levels.map(({ level, title }) => (
+            <li>
+              <a href={`#level-${level}`}>{title}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    {
+      levels.map(({ level, title, Content }) => (
+        <section class="level" id={`level-${level}`} aria-labelledby={`level-${level}-title`}>
+          <h2 id={`level-${level}-title`}>{title}</h2>
+          <Content components={{ Block }} />
+        </section>
+      ))
+    }
+
+    <h2>Код</h2>
+    <p class="muted">Версии на C++ и Python проверяются при сборке на тех же данных, что и эталон на JavaScript.</p>
+    <h3>JavaScript</h3>
+    <pre tabindex="0"><code>{jsCode}</code></pre>
+    <h3>C++</h3>
+    <pre tabindex="0"><code>{cppCode.trim()}</code></pre>
+    <h3>Python</h3>
+    <pre tabindex="0"><code>{pyCode.trim()}</code></pre>
+
+    <h2>Термины</h2>
+    <dl class="terms">
+      {
+        terms.map((term) => (
+          <div id={term.data.id}>
+            <dt>
+              {term.data.term} <span class="muted">({term.data.en})</span>
+            </dt>
+            <dd>{term.data.definition}</dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    {
+      sources && (
+        <>
+          <h2>Источники</h2>
+          <p>{sources.basedOn}</p>
+          <ul>
+            {sources.sources.map((source) => (
+              <li>
+                <a href={source.url}>{source.title}</a>
+                {source.chapters ? `, ${source.chapters}` : ''} — {source.authors.join(', ')}.{' '}
+                <span class="muted">
+                  {useTitle[source.use]}, {source.license === 'proprietary' ? 'закрытая лицензия' : source.license}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .topic-path {
+    margin-bottom: 0;
+  }
+
+  .topic-path + h1 {
+    margin-top: var(--space-2);
+  }
+
+  .topic-meta,
+  .terms {
+    margin: 0 0 var(--space-5);
+  }
+
+  .topic-meta > div,
+  .terms > div {
+    margin-bottom: var(--space-3);
+  }
+
+  dt {
+    font-weight: 650;
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  .plain-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .level-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: var(--space-5) 0;
+  }
+
+  .level-nav li + li {
+    margin-top: 0;
+  }
+
+  .level-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--color-border-strong);
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .level {
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-6);
+  }
+</style>

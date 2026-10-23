@@ -1,0 +1,74 @@
+# Постоянные идентификаторы разделов и модулей каталога (docs/catalog.md).
+# Идентификатор не меняется при переименовании и никогда не используется повторно:
+# на нём держится история повторений. Новый модуль каталога получает новую строку.
+#
+# folder — имя папки раздела в content/<язык>/; папка модуля — часть id после точки.
+
+sections:
+  - { number: 0, id: js, folder: javascript }
+  - { number: 1, id: algo, folder: algorithms }
+  - { number: 2, id: db, folder: databases }
+  - { number: 3, id: cpp, folder: c-cpp }
+  - { number: 4, id: py, folder: python }
+  - { number: 5, id: math, folder: math }
+  - { number: 6, id: interview, folder: interview }
+
+modules:
+  '0.1': js.basics
+  '0.2': js.control
+  '0.3': js.functions
+  '0.4': js.data
+  '0.5': js.errors
+  '1.1': algo.analysis
+  '1.2': algo.linear
+  '1.3': algo.recursion
+  '1.4': algo.search
+  '1.5': algo.sorting
+  '1.6': algo.hashing
+  '1.7': algo.trees
+  '1.8': algo.graphs
+  '1.9': algo.greedy
+  '1.10': algo.dp
+  '1.11': algo.strings
+  '1.12': algo.numeric
+  '1.13': algo.geometry
+  '1.14': algo.randomized
+  '1.15': algo.complexity
+  '2.1': db.basics
+  '2.2': db.algebra
+  '2.3': db.design
+  '2.4': db.ddl
+  '2.5': db.dml
+  '2.6': db.queries
+  '2.7': db.indexes
+  '2.8': db.execution
+  '2.9': db.transactions
+  '2.10': db.storage
+  '2.11': db.programming
+  '2.12': db.scaling
+  '2.13': db.practice
+  '3.1': cpp.toolchain
+  '3.2': cpp.c
+  '3.3': cpp.memory
+  '3.4': cpp.basics
+  '3.5': cpp.oop
+  '3.6': cpp.stl
+  '3.7': cpp.threads
+  '3.8': cpp.algorithms
+  '4.1': py.basics
+  '4.2': py.advanced
+  '4.3': py.algorithms
+  '4.4': py.internals
+  '5.1': math.logic
+  '5.2': math.sets
+  '5.3': math.combinatorics
+  '5.4': math.sums
+  '5.5': math.numbers
+  '5.6': math.probability
+  '5.7': math.graphs
+  '5.8': math.representation
+  '5.9': math.linear
+  '6.1': interview.process
+  '6.2': interview.patterns
+  '6.3': interview.practice
+  '6.4': interview.system-design
