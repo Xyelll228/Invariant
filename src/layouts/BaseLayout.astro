@@ -1,6 +1,8 @@
 ---
 import '@fontsource-variable/inter/wght.css';
 import '@fontsource-variable/source-code-pro/wght.css';
+import interCyrillic from '@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2?url';
+import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import '../styles/tokens.css';
 import '../styles/base.css';
 import PreviewBanner from '../components/PreviewBanner.astro';
@@ -43,6 +45,8 @@ Astro.csp?.insertScriptHash(scriptHash(themeInitCode));
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
     <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <link rel="preload" href={interCyrillic} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
     <script is:inline set:html={themeInitCode} />
   </head>
   <body>

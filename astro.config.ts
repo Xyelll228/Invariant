@@ -12,6 +12,24 @@ import mdx from '@astrojs/mdx';
 const site = process.env.SITE_URL ?? 'https://xyelll228.github.io';
 const base = normalizeBase(process.env.BASE_PATH ?? '/Invariant/');
 
+/**
+ * Шрифты Fontsource с font-display: optional вместо swap. Если шрифт не
+ * успел загрузиться к первой отрисовке, страница остаётся на системном
+ * шрифте и текст не перестраивается (CLS ≤ 0,1 из ТЗ). Основные файлы
+ * шрифта предзагружаются (BaseLayout), а при повторных визитах берутся из кеша.
+ */
+function fontDisplayOptional() {
+  return {
+    name: 'invariant:font-display-optional',
+    enforce: 'pre' as const,
+    transform(code: string, id: string) {
+      const path = id.split('?')[0] ?? '';
+      if (!/@fontsource(?:-variable)?\/[^/]+\/[^/]+\.css$/.test(path)) return null;
+      return { code: code.replaceAll('font-display: swap;', 'font-display: optional;'), map: null };
+    },
+  };
+}
+
 function normalizeBase(path: string): string {
   let result = path.trim();
   if (!result.startsWith('/')) result = `/${result}`;
@@ -67,6 +85,7 @@ export default defineConfig({
   prefetch: false,
   devToolbar: { enabled: false },
   vite: {
+    plugins: [fontDisplayOptional()],
     build: {
       // Никаких data:-адресов для шрифтов и картинок: CSP их не пропустит.
       assetsInlineLimit: 0,
