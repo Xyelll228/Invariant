@@ -26,7 +26,9 @@ export function insertionSortBy<T>(input: readonly T[], key: (item: T) => number
   for (;;) {
     trace({ t: 'line', line: 2 });
     if (!(i < a.length)) break;
-    trace({ t: 'note', text: `Вставляем элемент с индексом ${i}` });
+    trace({ t: 'region', name: 'sorted', from: 0, to: i });
+    trace({ t: 'pointer', name: 'key', i });
+    trace({ t: 'note', text: `Вставляем ${key(a[i] as T)} — элемент с индексом ${i} — в упорядоченную часть слева.` });
     trace({ t: 'line', line: 3 });
     let j = i;
     for (;;) {
@@ -42,7 +44,10 @@ export function insertionSortBy<T>(input: readonly T[], key: (item: T) => number
     }
     i++;
   }
+  trace({ t: 'region', name: 'sorted', from: 0, to: a.length });
+  trace({ t: 'pointer', name: 'key', i: null });
   trace({ t: 'line', line: 9 });
+  trace({ t: 'note', text: 'Готово: массив упорядочен.' });
   return a;
 }
 

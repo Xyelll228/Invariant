@@ -1,0 +1,48 @@
+---
+/**
+ * Разобранный пример: этапы алгоритма на заданных данных. Всё вычисляет
+ * эталон темы при сборке — руками состояния массива не пишем.
+ */
+import { recordTrace } from '../../lib/trace.ts';
+import { arrayAlgorithms, type ArrayAlgorithmId } from '../../lib/viz/algorithms.ts';
+import { buildFrames, formatArray, stagesOf } from '../../lib/viz/array-frames.ts';
+
+interface Props {
+  algorithm: ArrayAlgorithmId;
+  input: number[];
+}
+
+const { algorithm, input } = Astro.props;
+const spec = arrayAlgorithms[algorithm];
+const stages = stagesOf(buildFrames(input, recordTrace((sink) => spec.run(input, sink)).events));
+---
+
+<p>Исходный массив: <code>{formatArray(input)}</code>.</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label={`Разбор по шагам: ${spec.title}`}>
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Шаг</th>
+        <th scope="col">Что делаем</th>
+        <th scope="col">Сравнений</th>
+        <th scope="col">Обменов</th>
+        <th scope="col">Массив после шага</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        stages.map((stage, index) => (
+          <tr>
+            <td>{index + 1}</td>
+            <td>{stage.text}</td>
+            <td>{stage.compares}</td>
+            <td>{stage.swaps}</td>
+            <td>
+              <code>{formatArray(stage.after)}</code>
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

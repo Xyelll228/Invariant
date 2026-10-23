@@ -1,7 +1,7 @@
 ---
 import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
-import Block from '../../../../components/content/Block.astro';
+import { mdxComponents } from '../../../../content/mdx-components.ts';
 import catalogMarkdown from '../../../../../docs/catalog.md?raw';
 import modulesYaml from '../../../../../content/modules.yaml?raw';
 import { modulesById, parseCatalog } from '../../../../content/catalog.ts';
@@ -135,7 +135,7 @@ const useTitle = { adapted: 'основа текста', reference: 'сверк�
       levels.map(({ level, title, Content }) => (
         <section class="level" id={`level-${level}`} aria-labelledby={`level-${level}-title`}>
           <h2 id={`level-${level}-title`}>{title}</h2>
-          <Content components={{ Block }} />
+          <Content components={mdxComponents} />
         </section>
       ))
     }

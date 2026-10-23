@@ -9,7 +9,13 @@ export type TraceEvent =
   | { t: 'set'; i: number; value: number }
   | { t: 'visit'; node: string }
   | { t: 'line'; line: number } // текущая строка кода
-  | { t: 'note'; text: string }; // пояснение шага для человека
+  | { t: 'note'; text: string } // пояснение шага для человека
+  // Разметка для визуализации: какие элементы образуют часть массива
+  // (например, упорядоченную) и куда указывает именованный указатель.
+  // Привязывается к самим элементам, а не к ячейкам: при обменах
+  // отметки едут вместе с элементами.
+  | { t: 'region'; name: string; from: number; to: number }
+  | { t: 'pointer'; name: string; i: number | null };
 
 export type TraceSink = (event: TraceEvent) => void;
 

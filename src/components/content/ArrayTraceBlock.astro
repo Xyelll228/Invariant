@@ -1,0 +1,14 @@
+---
+/** Визуализация в тексте темы: <ArrayTrace algorithm="…" input={[…]} />. Разметка собирается заранее, оживает в браузере. */
+import ArrayTrace from '../viz/ArrayTrace.tsx';
+import type { ArrayAlgorithmId } from '../../lib/viz/algorithms.ts';
+
+interface Props {
+  algorithm: ArrayAlgorithmId;
+  input: number[];
+}
+
+const { algorithm, input } = Astro.props;
+---
+
+<ArrayTrace client:visible algorithm={algorithm} input={input} />

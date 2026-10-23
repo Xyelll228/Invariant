@@ -7,6 +7,7 @@ const pages = [
   { path: 'ru/prototypes/', heading: 'Прототипы' },
   { path: 'ru/prototypes/design/', heading: 'Основа дизайна' },
   { path: 'ru/prototypes/topic/', heading: 'Сортировка вставками' },
+  { path: 'ru/prototypes/trace/', heading: 'След алгоритма' },
   { path: 'ru/about/', heading: 'О проекте' },
 ];
 
