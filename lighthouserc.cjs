@@ -16,7 +16,13 @@ module.exports = {
       startServerCommand: `npx astro preview --port ${port} --ignore-lock`,
       startServerReadyPattern: 'localhost',
       startServerReadyTimeout: 60000,
-      url: [`${origin}ru/`, `${origin}ru/prototypes/design/`, `${origin}ru/prototypes/topic/`, `${origin}ru/prototypes/trace/`],
+      url: [
+        `${origin}ru/`,
+        `${origin}ru/prototypes/design/`,
+        `${origin}ru/prototypes/topic/`,
+        `${origin}ru/prototypes/trace/`,
+        `${origin}ru/prototypes/sandbox/`,
+      ],
       numberOfRuns: 3,
       settings: {
         chromeFlags: '--no-sandbox --headless=new',

@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import CodeLab from '../../../../components/code/CodeLab.tsx';
+import { insertionSortExercise, isolationExamples } from '../../../../lib/sandbox/exercises.ts';
+import { url } from '../../../../lib/site.ts';
+
+const exercise = insertionSortExercise();
+const runnerUrl = url('sandbox/runner.html');
+const firstExample = isolationExamples[0];
+if (!firstExample) throw new Error('Нет примеров проверки изоляции');
+---
+
+<BaseLayout title="Песочница кода" description="Прототип: свой код на JavaScript запускается изолированно — без доступа к данным приложения, без сети, с лимитом времени.">
+  <div class="prose">
+    <p><a href={url('ru/prototypes/')}>← Все прототипы</a></p>
+    <h1>Песочница кода</h1>
+    <p class="lead">
+      Свой код на JavaScript запускается прямо в браузере, но изолированно: он не видит прогресс и ключи приложения, не
+      может обратиться к сети и не повесит страницу бесконечным циклом.
+    </p>
+
+    <h2>Задание: сортировка вставками</h2>
+    <p>
+      Напишите функцию <code>insertionSort(a)</code>, которая упорядочивает массив чисел по возрастанию и возвращает его.
+      Код проверяют {exercise.visibleTests.length} видимых и {exercise.hiddenTests.length} скрытых тестов; на каждый тест —
+      не больше 2 секунд.
+    </p>
+  </div>
+
+  <CodeLab
+    client:visible
+    label="Задание: сортировка вставками"
+    functionName={exercise.functionName}
+    starterCode={exercise.starterCode}
+    visibleTests={exercise.visibleTests}
+    hiddenTests={exercise.hiddenTests}
+    runnerUrl={runnerUrl}
+  />
+
+  <div class="prose">
+    <h2>Проверка изоляции</h2>
+    <p>
+      Вставьте пример и запустите: код попробует прочитать хранилище приложения, отправить запрос в сеть или уйти в
+      бесконечный цикл. Во время бесконечного цикла страница продолжает работать — например, переключается тема.
+    </p>
+  </div>
+
+  <CodeLab
+    client:visible
+    label="Проверка изоляции"
+    functionName="probe"
+    starterCode={firstExample.code}
+    visibleTests={[{ args: [], call: 'probe()' }]}
+    hiddenTests={[]}
+    runnerUrl={runnerUrl}
+    examples={isolationExamples}
+  />
+
+  <div class="prose">
+    <h2>Как это устроено</h2>
+    <ul>
+      <li>
+        Код выполняется во вложенном окне с атрибутом <code>sandbox</code> без <code>allow-same-origin</code>. У такого окна
+        непрозрачный источник: хранилище приложения ему недоступно.
+      </li>
+      <li>Внутри окна — фоновый поток. По истечении лимита времени поток уничтожается, а страница остаётся рабочей.</li>
+      <li>Политика безопасности контента (CSP) окна запрещает сетевые запросы, картинки, стили и вложенные окна.</li>
+    </ul>
+  </div>
+</BaseLayout>

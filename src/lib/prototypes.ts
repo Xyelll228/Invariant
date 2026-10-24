@@ -33,7 +33,7 @@ export const prototypes: readonly Prototype[] = [
     slug: 'sandbox',
     title: 'Песочница кода',
     description: 'Свой код на JavaScript запускается изолированно: без доступа к данным приложения, без сети, с лимитом времени.',
-    status: 'next',
+    status: 'ready',
   },
   {
     slug: 'review',
