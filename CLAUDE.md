@@ -29,7 +29,7 @@ Astro (статическая сборка, MDX, коллекции контен
 Node.js 24 (файл `.nvmrc`).
 
 - `npm run dev` — сайт для разработки. CSP в этом режиме Astro не включает.
-- `npm run build` — сборка в `dist/`. Путь сайта задаёт `BASE_PATH`, по умолчанию `/Invariant/`.
+- `npm run build` — сборка в `dist/` и Service Worker для работы без сети (`scripts/build-sw.mjs`, Workbox). Путь сайта задаёт `BASE_PATH`, по умолчанию `/Invariant/`.
 - `npm run preview` — собранный сайт локально.
 - `npm run check:types` — проверка типов.
 - `npm test` — модульные тесты (Vitest).

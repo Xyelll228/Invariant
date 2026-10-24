@@ -24,6 +24,7 @@ module.exports = {
         `${origin}ru/prototypes/sandbox/`,
         `${origin}ru/prototypes/review/`,
         `${origin}ru/prototypes/search/`,
+        `${origin}ru/prototypes/offline/`,
       ],
       numberOfRuns: 3,
       settings: {
