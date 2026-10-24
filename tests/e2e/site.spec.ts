@@ -10,6 +10,7 @@ const pages = [
   { path: 'ru/prototypes/trace/', heading: 'След алгоритма' },
   { path: 'ru/prototypes/sandbox/', heading: 'Песочница кода' },
   { path: 'ru/prototypes/review/', heading: 'Хранилище, повторение и экспорт' },
+  { path: 'ru/prototypes/search/', heading: 'Поиск по-русски' },
   { path: 'ru/about/', heading: 'О проекте' },
 ];
 

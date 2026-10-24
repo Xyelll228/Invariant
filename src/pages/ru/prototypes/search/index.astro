@@ -1,0 +1,79 @@
+---
+import { readFileSync } from 'node:fs';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import SearchBox from '../../../../components/search/SearchBox.tsx';
+import { CONTROL_QUERIES } from '../../../../lib/search/control-queries.ts';
+import { buildCorpus } from '../../../../lib/search/corpus.ts';
+import { buildIndex, displayOrder, searchDocs } from '../../../../lib/search/engine.ts';
+import { evaluate, TOP } from '../../../../lib/search/evaluate.ts';
+import { compileSynonyms, PROTOTYPE_SYNONYMS, synonymGroupsFromGlossary } from '../../../../lib/search/synonyms.ts';
+import { repositoryUrl, url } from '../../../../lib/site.ts';
+
+// Контрольные запросы прогоняются при каждой сборке: таблица ниже всегда свежая.
+const root = `${process.cwd()}/`;
+const { docs, glossary } = buildCorpus(root);
+const synonyms = compileSynonyms([...synonymGroupsFromGlossary(glossary), ...PROTOTYPE_SYNONYMS]);
+const index = buildIndex(docs);
+const result = evaluate(CONTROL_QUERIES, (query) => displayOrder(searchDocs(index, query, synonyms)));
+
+// Итог сравнения с Pagefind — из отчёта npm run search:compare.
+const report = readFileSync(`${root}docs/search-prototype.md`, 'utf8');
+const pagefind = /\| Попаданий в первые \d+ \| [^|]+ \| ([^|]+) \|/.exec(report)?.[1]?.trim() ?? 'нет данных';
+const reportUrl = `${repositoryUrl}/blob/main/docs/search-prototype.md`;
+---
+
+<BaseLayout title="Поиск по-русски" description="Прототип: поиск по справочнику с формами слов, синонимами и опечатками; выбор библиотеки по 50 контрольным запросам.">
+  <div class="prose">
+    <p><a href={url('ru/prototypes/')}>← Все прототипы</a></p>
+    <h1>Поиск по-русски</h1>
+    <p class="lead">
+      Поиск понимает формы слов, синонимы и английские названия, прощает опечатки и показывает результаты при вводе. Индекс
+      собирается при сборке сайта и работает без сети.
+    </p>
+    <p>
+      Тем пока почти нет, поэтому в индексе {docs.length} записей: все темы каталога по названиям, модулям и разделам,
+      термины глоссария и блоки темы-образца. Попробуйте «сортировкой вставками», «хэш», «дийкстра» или «heap».
+    </p>
+  </div>
+
+  <SearchBox client:load indexUrl={url('search/index.json')} base={url()} />
+
+  <div class="prose">
+    <h2>Как выбирали библиотеку</h2>
+    <p>
+      По ТЗ библиотеку выбирают на 50 контрольных запросах: нужная тема должна быть в первых трёх результатах не меньше
+      чем в 90% случаев. MiniSearch со своим стеммером и словарём синонимов — <strong>{result.hits} из {result.total}</strong>,
+      Pagefind — {pagefind}: он не прощает опечатки и не умеет синонимы в запросе. Подробности — в
+      <a href={reportUrl}>отчёте о сравнении</a>.
+    </p>
+    <p>
+      Оговорка: настройки MiniSearch подбирались на тех же запросах. В волне 1 набор пополнится запросами по написанным
+      темам, и автотест будет проверять уже его.
+    </p>
+  </div>
+
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Контрольные запросы">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Запрос</th>
+          <th scope="col">Вид</th>
+          <th scope="col">Место ответа</th>
+          <th scope="col">Первые {TOP} результата</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          result.outcomes.map((item) => (
+            <tr>
+              <td>{item.query}</td>
+              <td>{item.kind}</td>
+              <td>{item.rank ?? '—'}</td>
+              <td>{item.top.join(' · ')}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</BaseLayout>

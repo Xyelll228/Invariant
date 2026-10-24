@@ -19,7 +19,8 @@
     "check:site": "node scripts/check-site.mjs",
     "check:content": "node scripts/check-content.ts",
     "check:code": "vitest run --config vitest.content.config.ts",
-    "check:spelling": "cspell --no-progress --unique"
+    "check:spelling": "cspell --no-progress --unique",
+    "search:compare": "node scripts/search-compare.ts"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.1.1",
@@ -35,6 +36,7 @@
     "@lezer/highlight": "^1.2.5",
     "astro": "^7.4.2",
     "dexie": "^4.4.6",
+    "minisearch": "^7.2.0",
     "preact": "^11.0.2",
     "ts-fsrs": "^5.4.2"
   },
@@ -49,7 +51,9 @@
     "fake-indexeddb": "^6.2.6",
     "fast-check": "^4.10.2",
     "node-html-parser": "^9.0.5",
+    "pagefind": "^1.5.2",
     "satteri": "^0.10.5",
+    "snowball-stemmers": "^0.6.0",
     "typescript": "~6.0.3",
     "vitest": "^5.0.5",
     "yaml": "^2.9.1"
