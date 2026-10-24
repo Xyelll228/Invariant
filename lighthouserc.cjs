@@ -22,6 +22,7 @@ module.exports = {
         `${origin}ru/prototypes/topic/`,
         `${origin}ru/prototypes/trace/`,
         `${origin}ru/prototypes/sandbox/`,
+        `${origin}ru/prototypes/review/`,
       ],
       numberOfRuns: 3,
       settings: {
