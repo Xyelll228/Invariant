@@ -20,7 +20,7 @@
 
 ## Стек
 
-Astro (статическая сборка, MDX, коллекции контента со схемами Zod) · острова на Preact · TypeScript в строгом режиме · Dexie поверх IndexedDB · ts-fsrs (FSRS-6) · CodeMirror 6 · sql.js (SQLite не ниже 3.39), PGlite — с волны 3 · Pyodide — с волны 4 · KaTeX · Pagefind или MiniSearch (выбор на прототипе) · Workbox · Vitest, fast-check, Playwright, axe-core, Lighthouse CI.
+Astro (статическая сборка, MDX, коллекции контента со схемами Zod) · острова на Preact · TypeScript в строгом режиме · Dexie поверх IndexedDB · ts-fsrs (FSRS-6) · CodeMirror 6 · sql.js (SQLite не ниже 3.39), PGlite — с волны 3 · Pyodide — с волны 4 · KaTeX · MiniSearch (выбран на прототипе, [docs/search-prototype.md](docs/search-prototype.md)) · Workbox · Vitest, fast-check, Playwright, axe-core, Lighthouse CI.
 
 Все зависимости — под свободными лицензиями, версии закреплены в lock-файле.
 
@@ -40,6 +40,7 @@ Node.js 24 (файл `.nvmrc`).
 - `npm run check:spelling` — орфография в текстах тем, глоссарии и строках интерфейса; слова проекта — в `cspell-words.txt`.
 - `npm run test:e2e` — сквозные тесты (Playwright). Свой Chromium локально: `PLAYWRIGHT_CHROMIUM_PATH=…`.
 - `npm run lighthouse` — Lighthouse CI на профиле телефона.
+- `npm run search:compare` — сравнение MiniSearch и Pagefind на 50 контрольных запросах; пишет отчёт `docs/search-prototype.md`. Не входит в CI.
 
 Перед pull request прогоняем всё, что выше, кроме `dev`; сквозные тесты — хотя бы в Chromium. В CI они идут во всех трёх браузерах.
 

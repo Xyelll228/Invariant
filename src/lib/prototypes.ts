@@ -45,7 +45,7 @@ export const prototypes: readonly Prototype[] = [
     slug: 'search',
     title: 'Поиск по-русски',
     description: 'Формы слов, синонимы и опечатки; выбор библиотеки по 50 контрольным запросам.',
-    status: 'next',
+    status: 'ready',
   },
   {
     slug: 'offline',
