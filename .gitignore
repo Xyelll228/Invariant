@@ -12,6 +12,8 @@ blob-report/
 reports/tmp/
 
 # Служебное
+__pycache__/
+*.pyc
 .cache/
 *.log
 .DS_Store

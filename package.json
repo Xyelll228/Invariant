@@ -16,7 +16,10 @@
     "test:e2e": "playwright test",
     "check:licenses": "node scripts/check-licenses.mjs",
     "lighthouse": "lhci autorun",
-    "check:site": "node scripts/check-site.mjs"
+    "check:site": "node scripts/check-site.mjs",
+    "check:content": "node scripts/check-content.ts",
+    "check:code": "vitest run --config vitest.content.config.ts",
+    "check:spelling": "cspell --no-progress --unique"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.1.1",
@@ -29,11 +32,16 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
     "@axe-core/playwright": "^4.14.0",
+    "@cspell/dict-ru_ru": "^2.3.4",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.64.1",
     "@types/node": "^24.19.2",
+    "cspell": "^10.4.0",
+    "fast-check": "^4.10.2",
     "node-html-parser": "^9.0.5",
+    "satteri": "^0.10.5",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "yaml": "^2.9.1"
   }
 }

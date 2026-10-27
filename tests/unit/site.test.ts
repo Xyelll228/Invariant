@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { databaseNameFor, joinBase, parsePreviewPr } from '../../src/lib/site.ts';
 import { t } from '../../src/i18n/index.ts';
 import { nextTheme } from '../../src/scripts/theme.ts';
+import { formatComplexity, formatDate } from '../../src/lib/format.ts';
 
 describe('адреса и base', () => {
   it('склеивает base и путь без двойных косых черт', () => {
@@ -40,5 +41,16 @@ describe('переключатель темы', () => {
     expect(nextTheme('system')).toBe('light');
     expect(nextTheme('light')).toBe('dark');
     expect(nextTheme('dark')).toBe('system');
+  });
+});
+
+describe('форматирование', () => {
+  it('сложность записывается как O-оценка со степенью', () => {
+    expect(formatComplexity('n^2')).toBe('O(n²)');
+    expect(formatComplexity('n log n')).toBe('O(n log n)');
+    expect(formatComplexity('1')).toBe('O(1)');
+  });
+  it('дата — по-русски, без сдвига часового пояса', () => {
+    expect(formatDate('2026-10-24')).toBe('24 октября 2026 г.');
   });
 });

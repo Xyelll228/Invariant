@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "ru,en",
+  "import": [
+    "@cspell/dict-ru_ru/cspell-ext.json"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "invariant-words",
+      "path": "./cspell-words.txt",
+      "addWords": true
+    }
+  ],
+  "dictionaries": [
+    "invariant-words"
+  ],
+  "files": [
+    "content/**/*.mdx",
+    "content/**/*.yaml",
+    "src/i18n/*.ts"
+  ],
+  "ignorePaths": [
+    "content/modules.yaml",
+    "node_modules/**"
+  ],
+  "ignoreRegExpList": [
+    "/\\bid: [\\w.-]+/g",
+    "/\\b[a-z][\\w-]*(\\.[\\w-]+)+\\b/g",
+    "/https?:\\/\\/\\S+/g",
+    "/`[^`]*`/g"
+  ],
+  "minWordLength": 3,
+  "allowCompoundWords": false
+}

@@ -1,0 +1,40 @@
+---
+/**
+ * Блок темы. У каждого блока постоянный id: на него ведут ссылки из разборов
+ * ошибок, глоссария и сообщений «нашёл ошибку». Версия растёт, когда меняется
+ * смысл блока.
+ */
+import type { BlockKind } from '../../content/schema.ts';
+
+interface Props {
+  id: string;
+  kind: BlockKind;
+  version: number;
+  title: string;
+}
+
+const { id, kind, version, title } = Astro.props;
+---
+
+<section class="block" id={id} data-kind={kind} data-version={version}>
+  <h3 class="block__title"><a class="block__anchor" href={`#${id}`}>{title}</a></h3>
+  <slot />
+</section>
+
+<style>
+  .block {
+    margin: 0 0 var(--space-6);
+  }
+
+  .block__title {
+    margin-top: var(--space-6);
+  }
+
+  .block__anchor {
+    text-decoration: none;
+  }
+
+  .block__anchor:hover {
+    text-decoration: underline;
+  }
+</style>

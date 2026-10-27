@@ -32,10 +32,28 @@ const ALLOWED = new Set([
   'Zlib',
 ]);
 
-/** Пакеты без стандартного поля license. Ключ — имя@версия. */
+/**
+ * Только для пакетов разработки (в сайт не попадают): копилефт-лицензии
+ * словарей и инструментов допустимы, потому что мы их не распространяем.
+ */
+const ALLOWED_DEV_ONLY = new Set([
+  'CC-BY-SA-4.0',
+  'GPL-2.0-or-later',
+  'GPL-3.0-only',
+  'GPL-3.0-or-later',
+  'LGPL-2.1-or-later',
+  'WTFPL',
+]);
+
+/**
+ * Пакеты, у которых лицензия записана не по SPDX или не в стандартном поле.
+ * Ключ — имя@версия: после обновления пакет придётся проверить заново.
+ */
 const EXCEPTIONS = {
   // Поле устаревшего формата licenses: [{ type: "BSD" }], файл LICENSE — BSD-3-Clause.
   'parse-cache-control@1.0.1': 'BSD-3-Clause',
+  // В package.json записано «CC BY-SA 4.0» с пробелами.
+  '@cspell/dict-en-common-misspellings@2.2.5': 'CC-BY-SA-4.0',
 };
 
 const FORBIDDEN_PATTERN = /-(NC|ND)(-|$)/;
@@ -45,7 +63,7 @@ function tokenize(expression) {
 }
 
 /** Разбор выражения SPDX: AND — нужны все, OR — достаточно одной, WITH — исключение к лицензии. */
-function evaluate(expression) {
+function evaluate(expression, devOnly = false) {
   const tokens = tokenize(expression);
   let index = 0;
 
@@ -64,7 +82,9 @@ function evaluate(expression) {
     if (FORBIDDEN_PATTERN.test(id)) return { ok: false, reason: `${id} — ограничение NC или ND запрещено` };
     // Устаревшие формы: GPL-2.0+ → GPL-2.0-or-later и т. п. не разрешаем молча.
     id = id.trim();
-    return ALLOWED.has(id) ? { ok: true } : { ok: false, reason: `${id} нет в списке разрешённых` };
+    if (ALLOWED.has(id) || (devOnly && ALLOWED_DEV_ONLY.has(id))) return { ok: true };
+    const hint = ALLOWED_DEV_ONLY.has(id) ? ' (допустимо только для пакетов разработки)' : '';
+    return { ok: false, reason: `${id} нет в списке разрешённых${hint}` };
   }
 
   function andExpression() {
@@ -100,14 +120,13 @@ for (const [path, meta] of Object.entries(lock.packages ?? {})) {
   if (path === '') continue;
   const name = path.slice(path.lastIndexOf('node_modules/') + 'node_modules/'.length);
   const id = `${name}@${meta.version}`;
-  let license = typeof meta.license === 'string' ? meta.license : meta.license?.type;
-  if (!license && EXCEPTIONS[id]) license = EXCEPTIONS[id];
+  const license = EXCEPTIONS[id] ?? (typeof meta.license === 'string' ? meta.license : meta.license?.type);
   if (!license) {
     problems.push(`${id}: лицензия не указана`);
     continue;
   }
   try {
-    const result = evaluate(license);
+    const result = evaluate(license, meta.dev === true);
     if (!result.ok) problems.push(`${id}: ${license} — ${result.reason}`);
     else counts.set(license, (counts.get(license) ?? 0) + 1);
   } catch (error) {
