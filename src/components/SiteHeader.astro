@@ -1,0 +1,119 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import { t } from '../i18n/index.ts';
+import { url } from '../lib/site.ts';
+
+const links = [
+  { href: url('ru/prototypes/'), label: t('nav.prototypes') },
+  { href: url('ru/about/'), label: t('nav.about') },
+];
+
+const current = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a class="site-header__brand" href={url('ru/')}>{t('site.name')}</a>
+    <nav class="site-header__nav" aria-label={t('nav.main')}>
+      <ul>
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href} aria-current={current.startsWith(link.href) ? 'page' : undefined}>
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <ThemeToggle />
+  </div>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .site-header__inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'brand toggle'
+      'nav nav';
+    align-items: center;
+    column-gap: var(--space-3);
+    padding-block: var(--space-2);
+  }
+
+  @media (min-width: 36rem) {
+    .site-header__inner {
+      grid-template-columns: 1fr auto auto;
+      grid-template-areas: 'brand nav toggle';
+      min-height: 3.75rem;
+      padding-block: 0;
+    }
+  }
+
+  .site-header__brand {
+    grid-area: brand;
+    justify-self: start;
+    font-weight: 750;
+    font-size: 1.125rem;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+
+  .site-header__nav {
+    grid-area: nav;
+  }
+
+  .site-header__inner > :global(.theme-toggle) {
+    grid-area: toggle;
+  }
+
+  .site-header__nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-1);
+    list-style: none;
+    margin: 0 0 0 calc(-1 * var(--space-2));
+    padding: 0;
+  }
+
+  @media (min-width: 36rem) {
+    .site-header__nav ul {
+      margin: 0;
+    }
+  }
+
+  .site-header__nav li + li {
+    margin-top: 0;
+  }
+
+  .site-header__nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    padding: 0 var(--space-2);
+    white-space: nowrap;
+    text-decoration: none;
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+
+  .site-header__nav a:hover {
+    color: var(--color-text);
+  }
+
+  .site-header__nav a[aria-current='page'] {
+    color: var(--color-text);
+    font-weight: 650;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+</style>

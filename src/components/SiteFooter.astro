@@ -1,0 +1,26 @@
+---
+import { t } from '../i18n/index.ts';
+import { repositoryUrl } from '../lib/site.ts';
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      {t('footer.license')}
+      <a href={repositoryUrl}>{t('footer.source')}</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--color-border);
+    padding: var(--space-5) 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-small);
+  }
+
+  .site-footer p {
+    margin: 0;
+  }
+</style>

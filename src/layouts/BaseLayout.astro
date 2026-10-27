@@ -1,0 +1,73 @@
+---
+import '@fontsource-variable/inter/wght.css';
+import '@fontsource-variable/source-code-pro/wght.css';
+import interCyrillic from '@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2?url';
+import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import PreviewBanner from '../components/PreviewBanner.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { t } from '../i18n/index.ts';
+import { previewPr, url } from '../lib/site.ts';
+import { scriptHash } from '../lib/csp.ts';
+import themeInit from '../scripts/theme-init.js?raw';
+
+interface Props {
+  /** Заголовок страницы без названия сайта. */
+  title?: string;
+  description?: string;
+  /** Страница не для поисковиков: 404, служебные страницы. */
+  noindex?: boolean;
+}
+
+const { title, description = t('site.description'), noindex = false } = Astro.props;
+const hideFromSearch = noindex || previewPr !== null;
+const fullTitle = title ? `${title} — ${t('site.name')}` : t('site.name');
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+
+// Тема выставляется до отрисовки страницы маленьким встроенным скриптом.
+// Его хеш добавляется в CSP, иначе браузер его не выполнит. В режиме
+// разработки CSP нет (Astro.csp не задан); наличие хеша в сборке
+// проверяет npm run check:site.
+const themeInitCode = themeInit.trim();
+Astro.csp?.insertScriptHash(scriptHash(themeInitCode));
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {hideFromSearch ? <meta name="robots" content="noindex, nofollow" /> : canonical && <link rel="canonical" href={canonical} />}
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <link rel="preload" href={interCyrillic} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
+    <script is:inline set:html={themeInitCode} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t('nav.skip')}</a>
+    {previewPr !== null && <PreviewBanner pr={previewPr} />}
+    <SiteHeader />
+    <main id="main" tabindex="-1">
+      <div class="container">
+        <slot />
+      </div>
+    </main>
+    <SiteFooter />
+  </body>
+</html>
+
+<style>
+  main:focus {
+    outline: none;
+  }
+
+  main {
+    padding-bottom: var(--space-8);
+  }
+</style>

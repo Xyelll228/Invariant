@@ -26,7 +26,19 @@ Astro (статическая сборка, MDX, коллекции контен
 
 ## Команды
 
-Появятся на этапе 0 — сборка, тесты, автопроверки. Записать их сюда сразу после настройки.
+Node.js 24 (файл `.nvmrc`).
+
+- `npm run dev` — сайт для разработки. CSP в этом режиме Astro не включает.
+- `npm run build` — сборка в `dist/`. Путь сайта задаёт `BASE_PATH`, по умолчанию `/Invariant/`.
+- `npm run preview` — собранный сайт локально.
+- `npm run check:types` — проверка типов.
+- `npm test` — модульные тесты (Vitest).
+- `npm run check:site` — ссылки, якоря и CSP в собранном сайте.
+- `npm run check:licenses` — лицензии всех пакетов.
+- `npm run test:e2e` — сквозные тесты (Playwright). Свой Chromium локально: `PLAYWRIGHT_CHROMIUM_PATH=…`.
+- `npm run lighthouse` — Lighthouse CI на профиле телефона.
+
+Перед pull request прогоняем всё, что выше, кроме `dev`; сквозные тесты — хотя бы в Chromium. В CI они идут во всех трёх браузерах.
 
 ## GitHub Pages
 
@@ -35,7 +47,9 @@ Astro (статическая сборка, MDX, коллекции контен
 - Превью каждой правки — `rossjrw/pr-preview-action@v1` в папку `/Invariant/pr-preview/pr-N/`; превью собирается со своим base и удаляется после закрытия PR. Для PR из форков превью не строятся. Нужны права Actions на запись (Settings → Actions → General → Workflow permissions).
 - Основной деплой не стирает превью: у `JamesIves/github-pages-deploy-action` — `clean-exclude: pr-preview/` и `force: false`.
 - Ограничения: сайт до 1 ГБ, мягкий лимит трафика 100 ГБ в месяц, публикация дольше 10 минут прерывается.
-- Своих HTTP-заголовков нет: CSP задаётся тегом meta в каждой странице. В meta не работают frame-ancestors, report-uri и sandbox.
+- Своих HTTP-заголовков нет: CSP задаётся тегом meta в каждой странице (`security.csp` в `astro.config.ts`). В meta не работают frame-ancestors, report-uri и sandbox.
+- Встроенный скрипт — только с хешем через `Astro.csp?.insertScriptHash()` (пример — выбор темы в `BaseLayout.astro`). Атрибуты `style="…"` и `on…="…"` запрещены. Всё это проверяет `npm run check:site`.
+- В `public/` лежит `.nojekyll`, а папка сборки называется `assets/` без подчёркивания: иначе Jekyll на GitHub Pages спрячет файлы.
 - Все сайты Pages одного аккаунта — один источник `xyelll228.github.io` и видят хранилище друг друга. Поэтому: других сайтов на Pages на аккаунте владельца нет; база IndexedDB называется `invariant`, у превью — своя база с номером PR; Service Worker основного сайта не обслуживает `/Invariant/pr-preview/`; ключ API по умолчанию живёт только в памяти вкладки.
 
 ## Безопасность и приватность — не нарушать

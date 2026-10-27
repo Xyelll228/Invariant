@@ -1,0 +1,28 @@
+name: Внешние ссылки
+
+# Внешние ссылки проверяются раз в неделю, а не на каждой правке:
+# чужие сайты бывают временно недоступны, и это не должно блокировать работу.
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    name: Проверка внешних ссылок
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --max-retries 3
+            --accept 200..=299,429
+            --exclude-path node_modules
+            'docs/**/*.md' README.md CLAUDE.md
+          fail: true

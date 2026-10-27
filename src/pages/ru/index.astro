@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { t } from '../../i18n/index.ts';
+import { repositoryUrl, url } from '../../lib/site.ts';
+
+const tzUrl = `${repositoryUrl}/blob/main/docs/tz.md`;
+const catalogUrl = `${repositoryUrl}/blob/main/docs/catalog.md`;
+---
+
+<BaseLayout>
+  <div class="prose">
+    <h1>{t('site.name')}</h1>
+    <p class="lead">
+      Открытое приложение для глубокого изучения алгоритмов и структур данных, баз данных и SQL, C и C++, Python и
+      математики для информатики — с треком подготовки к собеседованиям.
+    </p>
+    <p>
+      Цель — чтобы вы умели объяснить, доказать, написать код сам, измерить его и помнили это через месяцы, а не узнавали
+      правильный ответ среди вариантов.
+    </p>
+
+    <h2>Что сейчас</h2>
+    <p>
+      Идёт этап 0 «Подготовка»: на прототипах проверяем самые рискованные части приложения. Затем выйдет первая волна —
+      59 тем, от основ JavaScript до сортировок.
+    </p>
+    <div class="button-row">
+      <a class="button button--primary" href={url('ru/prototypes/')}>{t('nav.prototypes')}</a>
+      <a class="button" href={url('ru/about/')}>{t('nav.about')}</a>
+    </div>
+    <p class="muted">
+      Техническое задание и каталог тем открыты на GitHub: <a href={tzUrl}>ТЗ</a> и <a href={catalogUrl}>каталог из 427 тем</a>.
+    </p>
+  </div>
+</BaseLayout>

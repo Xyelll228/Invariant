@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { t } from '../../../i18n/index.ts';
+import { prototypes } from '../../../lib/prototypes.ts';
+import { url } from '../../../lib/site.ts';
+---
+
+<BaseLayout title={t('nav.prototypes')}>
+  <div class="prose">
+    <h1>{t('nav.prototypes')}</h1>
+    <p class="lead">
+      Этап 0 «Подготовка»: каждая рискованная часть приложения сначала собирается как прототип и проверяется на телефоне и
+      компьютере.
+    </p>
+    <ul class="card-list">
+      {
+        prototypes.map((item) => (
+          <li class="card">
+            <p class="card__title">
+              {item.status === 'ready' ? <a href={url(`ru/prototypes/${item.slug}/`)}>{item.title}</a> : item.title}
+            </p>
+            <p>{item.description}</p>
+            <span class:list={['badge', { 'badge--solid': item.status === 'ready' }]}>
+              {item.status === 'ready' ? t('status.ready') : t('status.next')}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="muted">
+      Переход к первой волне — когда все прототипы работают на телефоне и компьютере, а библиотека поиска выбрана.
+    </p>
+  </div>
+</BaseLayout>

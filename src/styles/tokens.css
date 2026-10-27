@@ -1,0 +1,105 @@
+/*
+ * Токены дизайна. Интерфейс — строгий монохром: чёрный, белый и серые.
+ * Цвет есть только в визуализациях (--viz-*), и он всегда дублируется
+ * формой или подписью. Контраст проверяется тестом tests/unit/contrast.test.ts.
+ *
+ * Тёмная тема записана дважды: для системной настройки и для явного выбора.
+ * Значения в двух тёмных блоках должны совпадать — это тоже проверяет тест.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Светлая тема */
+  --color-bg: #ffffff;
+  --color-surface: #f5f5f5;
+  --color-surface-strong: #e8e8e8;
+  --color-text: #111111;
+  --color-text-muted: #484848;
+  --color-text-subtle: #636363;
+  --color-border: #d6d6d6;
+  --color-border-strong: #767676;
+  --color-inverse-bg: #111111;
+  --color-inverse-text: #ffffff;
+
+  --viz-neutral: #c4c4c4;
+  --viz-outline: #111111;
+  --viz-compare: #0072b2;
+  --viz-swap: #d55e00;
+  --viz-key: #e69f00;
+  --viz-done: #009e73;
+  --viz-pointer: #cc79a7;
+
+  /* Типографика */
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Source Code Pro Variable', ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --text-scale: 1;
+  --text-base: calc(1.0625rem * var(--text-scale));
+  --text-small: calc(0.9375rem * var(--text-scale));
+  --leading: 1.6;
+  --measure: 68ch;
+
+  /* Отступы */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  --radius-small: 6px;
+  --radius: 10px;
+  --tap: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-bg: #121212;
+    --color-surface: #1c1c1c;
+    --color-surface-strong: #2a2a2a;
+    --color-text: #f0f0f0;
+    --color-text-muted: #c4c4c4;
+    --color-text-subtle: #a6a6a6;
+    --color-border: #343434;
+    --color-border-strong: #8c8c8c;
+    --color-inverse-bg: #f0f0f0;
+    --color-inverse-text: #121212;
+
+    --viz-neutral: #4f4f4f;
+    --viz-outline: #f0f0f0;
+    --viz-compare: #56b4e9;
+    --viz-swap: #ff8c42;
+    --viz-key: #f0c040;
+    --viz-done: #3cc8a0;
+    --viz-pointer: #e49bc8;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-bg: #121212;
+  --color-surface: #1c1c1c;
+  --color-surface-strong: #2a2a2a;
+  --color-text: #f0f0f0;
+  --color-text-muted: #c4c4c4;
+  --color-text-subtle: #a6a6a6;
+  --color-border: #343434;
+  --color-border-strong: #8c8c8c;
+  --color-inverse-bg: #f0f0f0;
+  --color-inverse-text: #121212;
+
+  --viz-neutral: #4f4f4f;
+  --viz-outline: #f0f0f0;
+  --viz-compare: #56b4e9;
+  --viz-swap: #ff8c42;
+  --viz-key: #f0c040;
+  --viz-done: #3cc8a0;
+  --viz-pointer: #e49bc8;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}

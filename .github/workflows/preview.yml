@@ -1,0 +1,46 @@
+name: Превью правки
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency: preview-${{ github.ref }}
+
+jobs:
+  preview:
+    name: Сборка и публикация превью
+    # Превью строятся только для правок из этого же репозитория, не из форков.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BASE_PATH: /${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/
+      PUBLIC_PREVIEW_PR: ${{ github.event.number }}
+      PUBLIC_REPOSITORY: ${{ github.repository }}
+      ASTRO_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        if: github.event.action != 'closed'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+        if: github.event.action != 'closed'
+      - name: Адрес сайта
+        if: github.event.action != 'closed'
+        run: echo "SITE_URL=https://${GITHUB_REPOSITORY_OWNER,,}.github.io" >> "$GITHUB_ENV"
+      - run: npm run build
+        if: github.event.action != 'closed'
+      - name: Ссылки, якоря и CSP
+        if: github.event.action != 'closed'
+        run: npm run check:site
+      - uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: dist
+          deploy-commit-message: Превью правки № ${{ github.event.number }}
+          remove-commit-message: Удаление превью правки № ${{ github.event.number }}
