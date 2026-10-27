@@ -34,18 +34,20 @@ describe('проверка контента', () => {
     mkdirSync(join(fixture, 'content'), { recursive: true });
     copyFileSync(join(repo, 'docs', 'catalog.md'), join(fixture, 'docs', 'catalog.md'));
     copyFileSync(join(repo, 'content', 'modules.yaml'), join(fixture, 'content', 'modules.yaml'));
+    copyFileSync(join(repo, 'content', 'topics.yaml'), join(fixture, 'content', 'topics.yaml'));
     write('content/ru/glossary/x.yaml', 'id: term.x\nversion: 1\nterm: икс\nen: x\ndefinition: Очевидно, это икс.\nforbidden: [стабильная сортировка]\n');
     write(
       'content/ru/algorithms/sorting/a/topic.yaml',
       [
-        'id: algo.sorting.a',
+        'id: algo.sorting.bubble',
         'version: 1',
         'title: Тема А',
         'module: algo.sorting',
         'kind: concept',
         'levels: [fundament]',
         'summary: Кратко.',
-        'prerequisites: [{ topic: algo.sorting.b, level: base }]',
+        'prerequisites: [{ topic: algo.sorting.selection, level: base }, { topic: algo.search.binary, level: base }]',
+        'related: [algo.sorting.zzz]',
         'terms: [term.x, term.nope]',
         "review: { status: auto, date: '2026-10-24' }",
       ].join('\n'),
@@ -53,14 +55,14 @@ describe('проверка контента', () => {
     write(
       'content/ru/algorithms/sorting/b/topic.yaml',
       [
-        'id: algo.sorting.b',
+        'id: algo.sorting.selection',
         'version: 1',
         'title: Тема Б',
         'module: algo.sorting',
         'kind: concept',
         'levels: [base]',
         'summary: Кратко.',
-        'prerequisites: [{ topic: algo.sorting.a, level: fundament }]',
+        'prerequisites: [{ topic: algo.sorting.bubble, level: fundament }]',
         'terms: [term.x]',
         "review: { status: draft, date: '2026-10-24' }",
       ].join('\n'),
@@ -73,13 +75,13 @@ describe('проверка контента', () => {
         'version: 1',
         '---',
         '',
-        '<Block id="algo.sorting.a.b.one" kind="explanation" version={1} title="Раз">',
+        '<Block id="algo.sorting.bubble.b.one" kind="explanation" version={1} title="Раз">',
         '',
-        'Здесь нет стабильной сортировки.',
+        'Здесь нет стабильной сортировки, а есть <Term id="term.nope">что-то</Term>.',
         '',
         '</Block>',
         '',
-        '<Block id="algo.sorting.a.b.one" kind="weird" title="Два">',
+        '<Block id="algo.sorting.bubble.b.one" kind="weird" title="Два">',
         '',
         'Текст.',
         '',
@@ -87,9 +89,22 @@ describe('проверка контента', () => {
       ].join('\n'),
     );
     write(
+      'content/ru/algorithms/sorting/c/topic.yaml',
+      [
+        'id: algo.sorting.unknown',
+        'version: 1',
+        'title: Тема В',
+        'module: algo.sorting',
+        'kind: concept',
+        'levels: [fundament, base, depth]',
+        'summary: Кратко.',
+        "review: { status: draft, date: '2026-10-24' }",
+      ].join('\n'),
+    );
+    write(
       'content/ru/algorithms/sorting/a/sources.yaml',
       [
-        'topic: algo.sorting.a',
+        'topic: algo.sorting.bubble',
         "basedOn: 'Основано на: книга.'",
         'sources:',
         "  - { id: book, title: Книга, authors: [Автор], url: 'https://example.org/', license: CC-BY-NC-SA-4.0, use: adapted }",
@@ -99,9 +114,14 @@ describe('проверка контента', () => {
     const { code, output } = run(fixture);
     expect(code).toBe(1);
     for (const expected of [
-      'цикл в предпосылках: algo.sorting.a → algo.sorting.b → algo.sorting.a',
+      'цикл в предпосылках: algo.sorting.bubble → algo.sorting.selection → algo.sorting.bubble',
       'термина term.nope нет в глоссарии',
-      'id algo.sorting.a.b.one уже занят',
+      '<Term id="term.nope">: такого термина нет в глоссарии',
+      'темы algo.sorting.unknown нет в content/topics.yaml',
+      'related: темы algo.sorting.zzz нет в каталоге',
+      'levels: [fundament], а нужно [fundament, base, depth]',
+      'algo.search.binary выходит в волне 2, а эта тема — в волне 1',
+      'id algo.sorting.bubble.b.one уже занят',
       'неизвестный вид блока «weird»',
       'нет версии version={1}',
       'нет обязательного блока «Частые ошибки и заблуждения»',
@@ -113,6 +133,6 @@ describe('проверка контента', () => {
       expect(output).toContain(expected);
     }
     // Неполнота черновика — предупреждение, а не ошибка.
-    expect(output).toMatch(/b\/topic\.yaml\n\s+предупреждение: нет файла уровня base\.mdx/);
+    expect(output).toMatch(/b\/topic\.yaml\n(?:\s+.*\n)*?\s+предупреждение: нет файла уровня base\.mdx/);
   });
 });

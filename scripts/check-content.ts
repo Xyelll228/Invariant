@@ -20,7 +20,7 @@ import { join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import type { z } from 'astro/zod';
-import { catalogTotals, modulesById, parseCatalog } from '../src/content/catalog.ts';
+import { catalogTotals, modulesById, parseCatalog, topicsById } from '../src/content/catalog.ts';
 import { MDX_COMPONENTS } from '../src/content/components.ts';
 import {
   READY_MIN_MUTANTS,
@@ -50,6 +50,7 @@ import {
   topicSchema,
 } from '../src/content/schema.ts';
 import { checkProse, parseMdx, type ProseFragment } from '../src/content/text.ts';
+import { arrayAlgorithms } from '../src/lib/viz/algorithms.ts';
 
 type Severity = 'error' | 'warning';
 interface Problem {
@@ -98,15 +99,23 @@ function proseOf(...texts: (string | undefined)[]): ProseFragment[] {
 
 // ---------- каталог ----------
 
-const catalog = parseCatalog(
-  readFileSync(join(ROOT, 'docs', 'catalog.md'), 'utf8'),
-  readFileSync(join(ROOT, 'content', 'modules.yaml'), 'utf8'),
-);
+let catalog;
+try {
+  catalog = parseCatalog(
+    readFileSync(join(ROOT, 'docs', 'catalog.md'), 'utf8'),
+    readFileSync(join(ROOT, 'content', 'modules.yaml'), 'utf8'),
+    readFileSync(join(ROOT, 'content', 'topics.yaml'), 'utf8'),
+  );
+} catch (error) {
+  console.log(`\ndocs/catalog.md, content/modules.yaml, content/topics.yaml\n  ошибка: ${(error as Error).message}`);
+  process.exit(1);
+}
 const totals = catalogTotals(catalog);
 if (totals.modules !== 58 || totals.topics !== 427) {
   report('error', join(ROOT, 'docs', 'catalog.md'), `в каталоге ${totals.modules} модулей и ${totals.topics} тем, по ТЗ — 58 и 427; каталог можно дополнять, но тогда обновите это число`);
 }
 const modules = modulesById(catalog);
+const registry = topicsById(catalog);
 
 // ---------- глоссарий ----------
 
@@ -198,6 +207,22 @@ for (const loaded of topics.values()) {
   }
   if (!topic.id.startsWith(`${topic.module}.`)) report('error', file, `id темы начинается с id модуля: ${topic.module}.…`);
 
+  // Тема каталога: id из content/topics.yaml и уровни по пометкам каталога
+  const listed = registry.get(topic.id);
+  if (!listed) {
+    report('error', file, `темы ${topic.id} нет в content/topics.yaml: id темы берётся оттуда`);
+  } else {
+    const expected: Level[] = listed.depthOnly
+      ? ['depth']
+      : listed.module.section.id === 'js'
+        ? ['fundament', 'base']
+        : ['fundament', 'base', 'depth'];
+    if (topic.levels.join(',') !== expected.join(',')) {
+      const why = listed.depthOnly ? 'тема с пометкой (Г) — только Глубина' : listed.module.section.id === 'js' ? 'в разделе 0 — Фундамент и База' : 'у темы три уровня';
+      report('error', file, `levels: [${topic.levels.join(', ')}], а нужно [${expected.join(', ')}] — ${why}`);
+    }
+  }
+
   // Уровни
   const order = topic.levels.map((level) => LEVELS.indexOf(level));
   if (new Set(topic.levels).size !== topic.levels.length || order.some((value, index) => index > 0 && value <= (order[index - 1] ?? -1))) {
@@ -229,6 +254,34 @@ for (const loaded of topics.values()) {
     for (const component of new Set(parsed.components)) {
       if (!(MDX_COMPONENTS as readonly string[]).includes(component)) {
         report('error', levelFile, `компонента <${component}> нет в списке src/content/components.ts`);
+      }
+    }
+    for (const usage of parsed.usages) {
+      const at = usage.line;
+      if (usage.name === 'Term') {
+        const id = usage.attributes.id;
+        if (!id) report('error', levelFile, '<Term> без атрибута id="term.…"', at);
+        else if (!terms.has(id)) report('error', levelFile, `<Term id="${id}">: такого термина нет в глоссарии`, at);
+        else if (!topic.terms.includes(id)) report('error', levelFile, `<Term id="${id}">: добавьте термин в terms темы`, at);
+        if (!usage.text) report('error', levelFile, '<Term> без текста внутри', at);
+      } else if (usage.name === 'TopicCode') {
+        if (topic.kind !== 'algorithm' || !topic.code) report('error', levelFile, '<TopicCode /> — только у алгоритма с полем code в topic.yaml', at);
+      } else if (['TraceSteps', 'ArrayTrace', 'ArraySimulation'].includes(usage.name)) {
+        const algorithm = usage.attributes.algorithm;
+        if (!algorithm || !(algorithm in arrayAlgorithms)) {
+          report('error', levelFile, `<${usage.name} algorithm="${algorithm ?? ''}">: такого эталона нет в src/lib/viz/algorithms.ts`, at);
+        }
+        let input: unknown;
+        try {
+          input = JSON.parse(usage.attributes.input ?? '');
+        } catch {
+          input = undefined;
+        }
+        if (!Array.isArray(input) || !input.every((value) => Number.isInteger(value))) {
+          report('error', levelFile, `<${usage.name}>: input={[…]} — массив целых чисел`, at);
+        } else if (usage.name === 'ArraySimulation' && (input.length < 5 || input.length > 8)) {
+          report('error', levelFile, `<ArraySimulation>: для ручной работы 5–8 элементов, сейчас ${input.length}`, at);
+        }
       }
     }
 
@@ -282,17 +335,25 @@ for (const loaded of topics.values()) {
 
 const prerequisiteEdges = new Map<string, string[]>();
 for (const { topic, file } of topics.values()) {
-  const incomplete: Severity = topic.review.status === 'draft' ? 'warning' : 'error';
   prerequisiteEdges.set(topic.id, topic.prerequisites.map((item) => item.topic));
   const references: [string, string[]][] = [
     ['prerequisites', topic.prerequisites.map((item) => item.topic)],
     ['related', topic.related],
     ['confusableWith', topic.confusableWith],
   ];
+  const wave = registry.get(topic.id)?.wave;
   for (const [field, ids] of references) {
     for (const id of ids) {
       if (id === topic.id) report('error', file, `${field}: тема ссылается сама на себя`);
-      else if (!topics.has(id)) report(incomplete, file, `${field}: темы ${id} пока нет`);
+      else if (!registry.has(id)) report('error', file, `${field}: темы ${id} нет в каталоге (content/topics.yaml)`);
+      else if (!topics.has(id)) report('warning', file, `${field}: тема ${id} ещё не написана (волна ${registry.get(id)?.wave})`);
+    }
+  }
+  for (const prerequisite of topic.prerequisites) {
+    const target = registry.get(prerequisite.topic);
+    // Тема-предпосылка выходит вместе с первой темой, которой она нужна (ТЗ, «Каталог тем»).
+    if (target && wave !== undefined && target.wave > wave) {
+      report('error', file, `prerequisites: ${prerequisite.topic} выходит в волне ${target.wave}, а эта тема — в волне ${wave}; предпосылка должна выйти не позже — перенос темы между волнами решает владелец`);
     }
   }
   for (const prerequisite of topic.prerequisites) {
@@ -307,7 +368,8 @@ if (cycle) report('error', join(CONTENT), `цикл в предпосылках:
 
 for (const term of terms.values()) {
   const file = join(GLOSSARY, `${term.id.slice('term.'.length)}.yaml`);
-  if (term.topic && !topics.has(term.topic)) report('warning', file, `topic: темы ${term.topic} пока нет`);
+  if (term.topic && !registry.has(term.topic)) report('error', file, `topic: темы ${term.topic} нет в каталоге (content/topics.yaml)`);
+  else if (term.topic && !topics.has(term.topic)) report('warning', file, `topic: тема ${term.topic} ещё не написана`);
   for (const other of term.confusedWith) {
     if (!terms.has(other)) report('error', file, `confusedWith: термина ${other} нет в глоссарии`);
   }

@@ -1,0 +1,48 @@
+---
+/**
+ * Источники темы: строка «Основано на», источники текста и сверки фактов,
+ * отдельно — «читать дальше» (закрытые книги — только здесь, ТЗ, «Источники»).
+ */
+import type { SourcesFile } from '../../content/schema.ts';
+
+interface Props {
+  sources: SourcesFile;
+}
+
+const { sources } = Astro.props;
+const used = sources.sources.filter((source) => source.use !== 'read-more');
+const further = sources.sources.filter((source) => source.use === 'read-more');
+const useTitle = { adapted: 'основа текста', reference: 'сверка фактов', 'read-more': 'читать дальше' } as const;
+const license = (value: string) => (value === 'proprietary' ? 'закрытая лицензия' : value.replace(/-/g, ' '));
+---
+
+<section class="topic-sources" aria-labelledby="topic-sources-title">
+  <h2 id="topic-sources-title">Источники</h2>
+  <p>{sources.basedOn}</p>
+  <ul>
+    {
+      used.map((source) => (
+        <li>
+          <a href={source.url}>{source.title}</a>{source.chapters ? `, ${source.chapters}` : ''} — {source.authors.join(', ')}.{' '}
+          <span class="muted">
+            {useTitle[source.use]}, {license(source.license)}
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+  {
+    further.length > 0 && (
+      <>
+        <h3>Читать дальше</h3>
+        <ul>
+          {further.map((source) => (
+            <li>
+              <a href={source.url}>{source.title}</a>{source.chapters ? `, ${source.chapters}` : ''} — {source.authors.join(', ')}.
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+</section>

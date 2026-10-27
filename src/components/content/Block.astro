@@ -3,8 +3,11 @@
  * Блок темы. У каждого блока постоянный id: на него ведут ссылки из разборов
  * ошибок, глоссария и сообщений «нашёл ошибку». Версия растёт, когда меняется
  * смысл блока.
+ *
+ * Доказательства на уровнях Фундамент и База свёрнуты (ТЗ, «Справочник»).
  */
 import type { BlockKind } from '../../content/schema.ts';
+import ReportButton from '../report/ReportButton.astro';
 
 interface Props {
   id: string;
@@ -14,11 +17,42 @@ interface Props {
 }
 
 const { id, kind, version, title } = Astro.props;
+const topic = Astro.locals.topic;
+const collapsed = kind === 'proof' && topic !== undefined && topic.level !== 'depth';
 ---
 
 <section class="block" id={id} data-kind={kind} data-version={version}>
-  <h3 class="block__title"><a class="block__anchor" href={`#${id}`}>{title}</a></h3>
-  <slot />
+  {
+    collapsed ? (
+      <details class="block__details">
+        <summary class="block__summary">
+          <h3 class="block__title">{title}</h3>
+          <span class="block__toggle muted">показать доказательство</span>
+        </summary>
+        <div class="block__body">
+          <slot />
+        </div>
+      </details>
+    ) : (
+      <>
+        <h3 class="block__title">
+          <a class="block__anchor" href={`#${id}`}>
+            {title}
+          </a>
+        </h3>
+        <div class="block__body">
+          <slot />
+        </div>
+      </>
+    )
+  }
+  {
+    topic && (
+      <div class="block__footer">
+        <ReportButton topicId={topic.id} topicTitle={topic.title} targetId={id} targetTitle={title} version={version} />
+      </div>
+    )
+  }
 </section>
 
 <style>
@@ -36,5 +70,44 @@ const { id, kind, version, title } = Astro.props;
 
   .block__anchor:hover {
     text-decoration: underline;
+  }
+
+  .block__details {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0 var(--space-4);
+    margin-top: var(--space-6);
+  }
+
+  .block__summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+    min-height: var(--tap);
+    padding: var(--space-3) 0;
+    cursor: pointer;
+    list-style-position: inside;
+  }
+
+  .block__summary .block__title {
+    display: inline;
+    margin: 0;
+  }
+
+  .block__details[open] .block__toggle {
+    display: none;
+  }
+
+  .block__details[open] {
+    padding-bottom: var(--space-2);
+  }
+
+  .block__body > :last-child {
+    margin-bottom: 0;
+  }
+
+  .block__footer {
+    margin-top: var(--space-2);
   }
 </style>

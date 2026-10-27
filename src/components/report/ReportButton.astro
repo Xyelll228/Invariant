@@ -1,0 +1,53 @@
+---
+/**
+ * Кнопка «Нашёл ошибку» у блока или вопроса. Открывает общее окно
+ * ReportDialog с заполненными полями: тема, блок, версия, выделенный текст.
+ */
+interface Props {
+  topicId: string;
+  topicTitle: string;
+  targetId: string;
+  targetTitle: string;
+  version: number | string;
+}
+
+const { topicId, topicTitle, targetId, targetTitle, version } = Astro.props;
+---
+
+<button
+  type="button"
+  class="report-button"
+  data-report
+  data-report-topic={topicId}
+  data-report-topic-title={topicTitle}
+  data-report-target={targetId}
+  data-report-target-title={targetTitle}
+  data-report-version={String(version)}
+  aria-haspopup="dialog"
+>
+  Нашёл ошибку<span class="visually-hidden">: {targetTitle}</span>
+</button>
+
+<style>
+  .report-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    padding: 0 var(--space-2);
+    margin-left: calc(-1 * var(--space-2));
+    border: 0;
+    background: none;
+    color: var(--color-text-muted);
+    font: inherit;
+    font-size: var(--text-small);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    cursor: pointer;
+  }
+
+  .report-button:hover {
+    color: var(--color-text);
+    text-decoration-thickness: 2px;
+  }
+</style>

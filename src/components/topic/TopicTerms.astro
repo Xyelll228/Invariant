@@ -1,0 +1,44 @@
+---
+/** Термины темы со ссылками в глоссарий. */
+import type { Term } from '../../content/schema.ts';
+import { termPath } from '../../content/paths.ts';
+import { url } from '../../lib/site.ts';
+
+interface Props {
+  terms: Term[];
+}
+
+const { terms } = Astro.props;
+---
+
+{
+  terms.length > 0 && (
+    <section class="topic-terms" aria-labelledby="topic-terms-title">
+      <h2 id="topic-terms-title">Термины</h2>
+      <dl>
+        {terms.map((term) => (
+          <div>
+            <dt>
+              <a href={url(termPath(term.id))}>{term.term}</a> <span class="muted">({term.en})</span>
+            </dt>
+            <dd>{term.definition}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
+
+<style>
+  .topic-terms dl > div {
+    margin-bottom: var(--space-3);
+  }
+
+  .topic-terms dt {
+    font-weight: 650;
+  }
+
+  .topic-terms dd {
+    margin: 0;
+  }
+</style>

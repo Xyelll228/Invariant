@@ -1,0 +1,20 @@
+---
+/**
+ * Поиск (ТЗ, «Справочник»): по темам, глоссарию и заголовкам блоков; формы
+ * слов, синонимы, опечатки. Работает без сети: индекс строится при сборке.
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SearchBox from '../../../components/search/SearchBox.tsx';
+import { url } from '../../../lib/site.ts';
+---
+
+<BaseLayout title="Поиск" description="Поиск по темам, глоссарию и блокам тем: формы слов, синонимы и опечатки.">
+  <div class="prose">
+    <h1>Поиск</h1>
+    <p class="lead">
+      Ищет по всем темам каталога, глоссарию и блокам вышедших тем. Понимает формы слов, синонимы и английские названия,
+      прощает опечатки.
+    </p>
+    <SearchBox client:load indexUrl={url('search/index.json')} base={url()} />
+  </div>
+</BaseLayout>

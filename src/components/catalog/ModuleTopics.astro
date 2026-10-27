@@ -1,0 +1,76 @@
+---
+/**
+ * Темы модуля в каталоге: вышедшие — ссылками на страницы, остальные —
+ * текстом. Волна выхода указана у модуля, а у темы — только если модуль
+ * выходит в нескольких волнах. У каждой темы якорь с её постоянным id: на
+ * него ведут ссылки на темы, которые ещё не вышли.
+ */
+import type { ModuleWithSection } from '../../content/catalog.ts';
+import type { TopicPage } from '../../content/site-data.ts';
+import { capitalize } from '../../lib/format.ts';
+import { url } from '../../lib/site.ts';
+
+interface Props {
+  module: ModuleWithSection;
+  pages: ReadonlyMap<string, TopicPage>;
+  /** Показывать краткое определение вышедших тем. */
+  summaries?: boolean;
+}
+
+const { module, pages, summaries = false } = Astro.props;
+---
+
+<ol class="module-topics">
+  {
+    module.topics.map((topic) => {
+      const page = pages.get(topic.id);
+      return (
+        <li id={topic.id} class="module-topics__item" data-topic-id={topic.id}>
+          <span class="module-topics__head">
+            {page ? <a href={url(page.path)}>{page.topic.title}</a> : <span>{capitalize(topic.title)}</span>}
+            {topic.depthOnly && <span class="badge">только Глубина</span>}
+            {page?.draft && <span class="badge">черновик</span>}
+            {!page && module.waves.length > 1 && <span class="muted module-topics__wave">волна {topic.wave}</span>}
+          </span>
+          {page && summaries && <span class="module-topics__summary muted">{page.topic.summary}</span>}
+        </li>
+      );
+    })
+  }
+</ol>
+
+<style>
+  .module-topics {
+    padding-left: 1.75rem;
+  }
+
+  .module-topics__item {
+    scroll-margin-top: var(--space-5);
+  }
+
+  .module-topics__item + .module-topics__item {
+    margin-top: var(--space-2);
+  }
+
+  .module-topics__head {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-2);
+  }
+
+  .module-topics__wave {
+    font-size: var(--text-small);
+  }
+
+  .module-topics__summary {
+    display: block;
+    font-size: var(--text-small);
+  }
+
+  .module-topics__item:target {
+    outline: 2px solid var(--color-text);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+</style>

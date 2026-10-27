@@ -10,6 +10,9 @@ export const ru = {
   'nav.skip': 'Перейти к содержанию',
   'nav.main': 'Основная навигация',
   'nav.home': 'Главная',
+  'nav.catalog': 'Каталог',
+  'nav.search': 'Поиск',
+  'nav.glossary': 'Глоссарий',
   'nav.prototypes': 'Прототипы',
   'nav.about': 'О проекте',
 

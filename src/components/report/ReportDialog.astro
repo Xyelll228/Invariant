@@ -1,0 +1,154 @@
+---
+/**
+ * Окно «Нашёл ошибку» — одно на страницу. Его открывают кнопки ReportButton:
+ * поля тема, блок, версия и выделенный текст заполняются сами, человек
+ * пишет, что не так, и открывает форму на GitHub или копирует отчёт.
+ */
+import { repositoryUrl, url } from '../../lib/site.ts';
+---
+
+<dialog class="report-dialog" data-report-dialog data-repository={repositoryUrl} aria-labelledby="report-dialog-title">
+  <form method="dialog" class="report-dialog__form">
+    <h2 id="report-dialog-title" class="report-dialog__title">Нашёл ошибку</h2>
+    <dl class="report-dialog__facts">
+      <dt>Где</dt>
+      <dd data-report-where></dd>
+      <dt>Версия</dt>
+      <dd data-report-version-text></dd>
+      <dt data-report-quote-row hidden>Выделенный текст</dt>
+      <dd data-report-quote-row hidden><q data-report-quote></q></dd>
+    </dl>
+    <label for="report-description">Что не так</label>
+    <textarea id="report-description" rows="4" data-report-description></textarea>
+    <p class="muted report-dialog__hint">
+      Для формы на GitHub нужен аккаунт GitHub. Без аккаунта скопируйте отчёт и отправьте его, как написано в разделе
+      <a href={url('ru/about/#report')}>«О проекте»</a>.
+    </p>
+    <div class="button-row">
+      <a class="button button--primary" data-report-link href={`${repositoryUrl}/issues/new`} target="_blank" rel="noopener">
+        Открыть форму на GitHub
+      </a>
+      <button type="button" class="button" data-report-copy>Скопировать отчёт</button>
+      <button type="submit" class="button">Закрыть</button>
+    </div>
+    <p class="muted" role="status" data-report-status></p>
+  </form>
+</dialog>
+
+<script>
+  import { issueUrl, reportText, type ReportContext } from '../../lib/report.ts';
+
+  const dialog = document.querySelector<HTMLDialogElement>('[data-report-dialog]');
+  if (dialog) {
+    const repository = dialog.dataset.repository ?? '';
+    const where = dialog.querySelector<HTMLElement>('[data-report-where]');
+    const versionText = dialog.querySelector<HTMLElement>('[data-report-version-text]');
+    const quoteRows = dialog.querySelectorAll<HTMLElement>('[data-report-quote-row]');
+    const quote = dialog.querySelector<HTMLElement>('[data-report-quote]');
+    const description = dialog.querySelector<HTMLTextAreaElement>('[data-report-description]');
+    const link = dialog.querySelector<HTMLAnchorElement>('[data-report-link]');
+    const copy = dialog.querySelector<HTMLButtonElement>('[data-report-copy]');
+    const status = dialog.querySelector<HTMLElement>('[data-report-status]');
+    let context: ReportContext = {};
+    let selected = '';
+
+    // Выделение запоминается до нажатия: на телефоне касание кнопки может его снять.
+    document.addEventListener('pointerdown', (event) => {
+      if ((event.target as Element | null)?.closest('[data-report]')) selected = window.getSelection()?.toString() ?? '';
+    });
+
+    const refresh = () => {
+      if (link) link.href = issueUrl(repository, context, description?.value ?? '');
+    };
+
+    document.addEventListener('click', (event) => {
+      const button = (event.target as Element | null)?.closest<HTMLElement>('[data-report]');
+      if (!button) return;
+      const data = button.dataset;
+      const text = (selected || window.getSelection()?.toString() || '').trim();
+      selected = '';
+      const page = new URL(window.location.href);
+      page.hash = data.reportTarget ?? '';
+      context = {
+        topicId: data.reportTopic,
+        topicTitle: data.reportTopicTitle,
+        targetId: data.reportTarget,
+        targetTitle: data.reportTargetTitle,
+        version: data.reportVersion,
+        ...(data.reportSeed ? { seed: Number(data.reportSeed) } : {}),
+        ...(text ? { quote: text } : {}),
+        page: page.href,
+      };
+      if (where) where.textContent = `${context.topicTitle ?? ''} — ${context.targetTitle ?? ''}`;
+      if (versionText) versionText.textContent = String(context.version ?? '—');
+      quoteRows.forEach((row) => (row.hidden = !text));
+      if (quote) quote.textContent = text;
+      if (description) description.value = '';
+      if (status) status.textContent = '';
+      refresh();
+      dialog.showModal();
+      description?.focus();
+    });
+
+    description?.addEventListener('input', refresh);
+
+    copy?.addEventListener('click', async () => {
+      const text = reportText(context, description?.value ?? '');
+      try {
+        await navigator.clipboard.writeText(text);
+        if (status) status.textContent = 'Отчёт скопирован.';
+      } catch {
+        // Без доступа к буферу обмена: показываем текст, чтобы скопировать вручную.
+        if (description) {
+          description.value = text;
+          description.select();
+        }
+        if (status) status.textContent = 'Не получилось скопировать само: текст отчёта выделен в поле выше — скопируйте его.';
+      }
+    });
+  }
+</script>
+
+<style>
+  .report-dialog {
+    width: min(36rem, calc(100vw - 2 * var(--space-4)));
+    max-height: calc(100vh - 2 * var(--space-4));
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius);
+    background: var(--color-bg);
+    color: var(--color-text);
+    padding: var(--space-5);
+  }
+
+  .report-dialog::backdrop {
+    background: rgb(0 0 0 / 55%);
+  }
+
+  .report-dialog__title {
+    margin-top: 0;
+  }
+
+  .report-dialog__facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .report-dialog__facts dt {
+    font-weight: 650;
+  }
+
+  .report-dialog__facts dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .report-dialog__facts [hidden] {
+    display: none;
+  }
+
+  .report-dialog__hint {
+    font-size: var(--text-small);
+    margin-top: var(--space-3);
+  }
+</style>

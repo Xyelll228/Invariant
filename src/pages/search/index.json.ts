@@ -6,11 +6,12 @@ import type { APIRoute } from 'astro';
 import { buildCorpus } from '../../lib/search/corpus.ts';
 import { buildIndex, SEARCH_INDEX_VERSION } from '../../lib/search/engine.ts';
 import { compileSynonyms, PROTOTYPE_SYNONYMS, synonymGroupsFromGlossary } from '../../lib/search/synonyms.ts';
+import { showDrafts } from '../../lib/site.ts';
 
 export const prerender = true;
 
 export const GET: APIRoute = () => {
-  const { docs, glossary } = buildCorpus(`${process.cwd()}/`);
+  const { docs, glossary } = buildCorpus(`${process.cwd()}/`, { showDrafts });
   const body = {
     version: SEARCH_INDEX_VERSION,
     synonyms: compileSynonyms([...synonymGroupsFromGlossary(glossary), ...PROTOTYPE_SYNONYMS]),

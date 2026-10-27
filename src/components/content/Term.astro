@@ -1,0 +1,28 @@
+---
+/**
+ * Термин в тексте темы со ссылкой в глоссарий (ТЗ, «Правила написания»:
+ * каждый термин при первом появлении ссылается на глоссарий).
+ *
+ *   <Term id="term.stable-sort">устойчивой</Term>
+ */
+import { getEntry } from 'astro:content';
+import { termPath } from '../../content/paths.ts';
+import { url } from '../../lib/site.ts';
+
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+const entry = await getEntry('glossary', id);
+if (!entry) throw new Error(`Термина ${id} нет в глоссарии content/ru/glossary/`);
+---
+
+<a class="term" href={url(termPath(id))} data-term={id}><slot /></a>
+
+<style>
+  .term {
+    text-decoration-style: dotted;
+    text-decoration-thickness: 2px;
+  }
+</style>

@@ -1,0 +1,132 @@
+---
+/**
+ * Глоссарий (ТЗ, «Справочник»): единственный источник терминов. У термина —
+ * русское и английское название, определение, пример, тема и «часто путают с».
+ * Тренажёр терминов появится вместе с прохождением тем.
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ReportButton from '../../../components/report/ReportButton.astro';
+import ReportDialog from '../../../components/report/ReportDialog.astro';
+import { catalogTopics } from '../../../content/catalog-data.ts';
+import { catalogTopicPath } from '../../../content/paths.ts';
+import { loadSite } from '../../../content/site-data.ts';
+import { capitalize } from '../../../lib/format.ts';
+import { url } from '../../../lib/site.ts';
+
+const site = await loadSite();
+const collator = new Intl.Collator('ru-RU', { sensitivity: 'base' });
+const terms = [...site.glossary.values()].sort((a, b) => collator.compare(a.term, b.term));
+const letters = [...new Set(terms.map((term) => term.term.charAt(0).toLocaleUpperCase('ru-RU')))];
+
+function topicLink(id: string): { href: string; title: string } {
+  const page = site.pages.get(id);
+  if (page) return { href: page.path, title: page.topic.title };
+  return { href: catalogTopicPath(id), title: capitalize(catalogTopics.get(id)?.title ?? id) };
+}
+---
+
+<BaseLayout title="Глоссарий" description="Термины «Инварианта»: русское и английское название, определение, пример и с чем часто путают.">
+  <div class="prose">
+    <h1>Глоссарий</h1>
+    <p class="lead">
+      Термины, которыми пользуются темы. Здесь же закреплены спорные соглашения: например, что массивы нумеруются с нуля.
+      Терминов: {terms.length}.
+    </p>
+    <nav aria-label="Буквы">
+      <ul class="glossary__letters">
+        {
+          letters.map((letter) => (
+            <li>
+              <a href={`#letter-${letter}`}>{letter}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    {
+      letters.map((letter) => (
+        <section aria-labelledby={`letter-${letter}`}>
+          <h2 id={`letter-${letter}`}>{letter}</h2>
+          {terms
+            .filter((term) => term.term.charAt(0).toLocaleUpperCase('ru-RU') === letter)
+            .map((term) => (
+              <article class="glossary__term" id={term.id} aria-labelledby={`${term.id}-title`}>
+                <h3 id={`${term.id}-title`} class="glossary__name">
+                  {capitalize(term.term)} <span class="muted glossary__en">{term.en}</span>
+                </h3>
+                <p>{term.definition}</p>
+                {term.example && <p class="muted">Пример: {term.example}</p>}
+                {term.synonyms.length > 0 && <p class="muted">Другие варианты: {term.synonyms.join(', ')}.</p>}
+                {term.topic && (
+                  <p>
+                    Тема: <a href={url(topicLink(term.topic).href)}>{topicLink(term.topic).title}</a>
+                  </p>
+                )}
+                {term.confusedWith.length > 0 && (
+                  <p>
+                    Часто путают с:{' '}
+                    {term.confusedWith.map((other, index) => (
+                      <>
+                        {index > 0 && ', '}
+                        <a href={`#${other}`}>{site.glossary.get(other)?.term ?? other}</a>
+                      </>
+                    ))}
+                  </p>
+                )}
+                <ReportButton topicId={term.id} topicTitle="Глоссарий" targetId={term.id} targetTitle={term.term} version={term.version} />
+              </article>
+            ))}
+        </section>
+      ))
+    }
+  </div>
+  <ReportDialog />
+</BaseLayout>
+
+<style>
+  .glossary__letters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    list-style: none;
+    padding: 0;
+  }
+
+  .glossary__letters li + li {
+    margin-top: 0;
+  }
+
+  .glossary__letters a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--tap);
+    min-height: var(--tap);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small);
+    text-decoration: none;
+    font-weight: 650;
+  }
+
+  .glossary__term {
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-2);
+    margin-bottom: var(--space-5);
+    scroll-margin-top: var(--space-5);
+  }
+
+  .glossary__term:target {
+    outline: 2px solid var(--color-text);
+    outline-offset: 6px;
+    border-radius: 2px;
+  }
+
+  .glossary__name {
+    margin-top: var(--space-3);
+  }
+
+  .glossary__en {
+    font-weight: 500;
+    font-size: 1rem;
+  }
+</style>

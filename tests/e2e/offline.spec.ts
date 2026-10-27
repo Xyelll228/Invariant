@@ -28,8 +28,23 @@ test('после первого посещения сайт открываетс
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Инвариант');
-  await page.getByRole('link', { name: 'Прототипы' }).first().click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Прототипы');
+  await page.getByRole('link', { name: 'Каталог' }).first().click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Каталог');
+  await page.getByRole('link', { name: 'Глоссарий' }).first().click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Глоссарий');
+});
+
+test('открытая страница темы потом открывается без сети, а неоткрытая — объясняет, что нет сети', async ({ page, context }) => {
+  await firstVisit(page);
+  await page.goto('ru/algorithms/sorting/insertion/');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Сортировка вставками');
+  // Без перезагрузки до переходов: в Chromium под Playwright после перезагрузки
+  // эмуляция «нет сети» перестаёт действовать на запросы Service Worker.
+  await context.setOffline(true);
+  await page.goto('ru/algorithms/sorting/insertion/depth/');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Нет сети');
+  await page.goto('ru/algorithms/sorting/insertion/');
+  await expect(page.getByRole('heading', { level: 2, name: 'Фундамент' })).toBeVisible();
 });
 
 test('без сети работают поиск, повторение и песочница', async ({ page, context }) => {

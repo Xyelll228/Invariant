@@ -14,6 +14,16 @@ export function parsePreviewPr(value: string | undefined): number | null {
 /** Номер правки для превью или null для основной версии. */
 export const previewPr = parsePreviewPr(import.meta.env.PUBLIC_PREVIEW_PR);
 
+/**
+ * Показывать ли черновики тем. На основном сайте черновик не публикуется
+ * (ТЗ, «Качество»), а в превью правки, при разработке и в сборке для
+ * автопроверок (PUBLIC_SHOW_DRAFTS=1) — показывается с пометкой «черновик».
+ */
+export const showDrafts = previewPr !== null || import.meta.env.PUBLIC_SHOW_DRAFTS === '1' || import.meta.env.DEV === true;
+
+/** Дата сборки ГГГГ-ММ-ДД: отметка «проверено автоматически» у кода на C++ и Python. */
+export const buildDate = import.meta.env.PUBLIC_BUILD_DATE || new Date().toISOString().slice(0, 10);
+
 /** Репозиторий проекта на GitHub. */
 export const repository = import.meta.env.PUBLIC_REPOSITORY || 'Xyelll228/Invariant';
 export const repositoryUrl = `https://github.com/${repository}`;

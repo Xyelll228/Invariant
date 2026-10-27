@@ -18,10 +18,13 @@
   "files": [
     "content/**/*.mdx",
     "content/**/*.yaml",
-    "src/i18n/*.ts"
+    "src/i18n/*.ts",
+    "src/**/*.astro",
+    "src/**/*.tsx"
   ],
   "ignorePaths": [
     "content/modules.yaml",
+    "content/topics.yaml",
     "node_modules/**"
   ],
   "ignoreRegExpList": [

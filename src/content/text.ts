@@ -17,6 +17,15 @@ export interface ProseFragment {
   line: number;
 }
 
+export interface ComponentUsage {
+  name: string;
+  /** Атрибуты-строки: id="…" или {…} со строкой; остальные выражения — null. */
+  attributes: Record<string, string | null>;
+  /** Текст внутри компонента: для <Term>…</Term>. */
+  text: string;
+  line: number;
+}
+
 export interface ParsedMdx {
   frontmatter: string | null;
   blocks: MdxBlock[];
@@ -24,6 +33,8 @@ export interface ParsedMdx {
   prose: ProseFragment[];
   /** Имена компонентов, которые встречаются в тексте. */
   components: string[];
+  /** Где и с какими атрибутами использован каждый компонент. */
+  usages: ComponentUsage[];
 }
 
 interface Node {
@@ -59,7 +70,24 @@ function inlineText(node: Node): string {
 /** Разбирает MDX; бросает ошибку с номером строки, если MDX не собрать. */
 export function parseMdx(source: string): ParsedMdx {
   const tree = mdxToMdast(source) as Node;
-  const result: ParsedMdx = { frontmatter: null, blocks: [], prose: [], components: [] };
+  const result: ParsedMdx = { frontmatter: null, blocks: [], prose: [], components: [], usages: [] };
+
+  const record = (node: Node): void => {
+    if (!node.name) return;
+    result.components.push(node.name);
+    const attributes: Record<string, string | null> = {};
+    for (const item of node.attributes ?? []) {
+      if (item.type === 'mdxJsxAttribute' && item.name) attributes[item.name] = attribute(node, item.name);
+    }
+    result.usages.push({ name: node.name, attributes, text: inlineText(node).trim(), line: node.position?.start?.line ?? 0 });
+  };
+  // Компоненты внутри абзаца (например, <Term>) — тоже учитываются.
+  const recordInline = (node: Node): void => {
+    for (const child of node.children ?? []) {
+      if (child.type === 'mdxJsxTextElement' || child.type === 'mdxJsxFlowElement') record(child);
+      recordInline(child);
+    }
+  };
 
   const visit = (node: Node): void => {
     if (node.type === 'yaml') {
@@ -68,7 +96,7 @@ export function parseMdx(source: string): ParsedMdx {
     }
     if (SKIPPED.has(node.type)) return;
     if (node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') {
-      if (node.name) result.components.push(node.name);
+      record(node);
       if (node.name === 'Block') {
         const version = attribute(node, 'version');
         result.blocks.push({
@@ -83,6 +111,7 @@ export function parseMdx(source: string): ParsedMdx {
     if (PROSE_CONTAINERS.has(node.type)) {
       const text = inlineText(node).replace(/\s+/g, ' ').trim();
       if (text) result.prose.push({ text, line: node.position?.start?.line ?? 0 });
+      recordInline(node);
       return;
     }
     for (const child of node.children ?? []) visit(child);

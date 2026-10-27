@@ -1,0 +1,87 @@
+---
+/**
+ * Модуль: его темы и сводная таблица свойств алгоритмов для сравнения
+ * (ТЗ, «Справочник»: у модуля есть сводная таблица всех его тем).
+ */
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../../components/topic/Breadcrumbs.astro';
+import ModuleTopics from '../../../../components/catalog/ModuleTopics.astro';
+import { catalogModules, folders } from '../../../../content/catalog-data.ts';
+import type { ModuleWithSection } from '../../../../content/catalog.ts';
+import { sectionPath } from '../../../../content/paths.ts';
+import { loadSite, type TopicPage } from '../../../../content/site-data.ts';
+import type { Topic } from '../../../../content/schema.ts';
+import { formatComplexity } from '../../../../lib/format.ts';
+import { url } from '../../../../lib/site.ts';
+
+export function getStaticPaths() {
+  return [...catalogModules.values()].map((module) => ({
+    params: { section: module.section.folder, module: module.id.split('.')[1] },
+    props: { module },
+  }));
+}
+
+interface Props {
+  module: ModuleWithSection;
+}
+
+const { module } = Astro.props;
+const site = await loadSite();
+type Complexity = NonNullable<Topic['complexity']>;
+const algorithms = module.topics
+  .map((topic) => site.pages.get(topic.id))
+  .filter((page): page is TopicPage & { topic: { complexity: Complexity } } => page?.topic.complexity !== undefined);
+const yesNo = (value: boolean | undefined): string => (value === undefined ? '—' : value ? 'да' : 'нет');
+---
+
+<BaseLayout title={`${module.number} ${module.title}`} description={`Модуль «${module.title}»: темы и сводная таблица.`}>
+  <div class="prose">
+    <Breadcrumbs
+      items={[
+        { href: 'ru/catalog/', label: 'Каталог' },
+        { href: sectionPath(module.section.id, folders), label: `${module.section.number}. ${module.section.title}` },
+      ]}
+    />
+    <h1>{module.number} {module.title}</h1>
+    <p class="muted">Тем: {module.topics.length}. Волна выхода: {module.waves.join('–')}.</p>
+    <h2>Темы</h2>
+    <ModuleTopics module={module} pages={site.pages} summaries />
+  </div>
+  {
+    algorithms.length > 0 && (
+      <section aria-labelledby="module-summary">
+        <h2 id="module-summary">Сводная таблица</h2>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Сводная таблица свойств алгоритмов модуля">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Тема</th>
+                <th scope="col">Лучший случай</th>
+                <th scope="col">Средний</th>
+                <th scope="col">Худший</th>
+                <th scope="col">Дополнительная память</th>
+                <th scope="col">Устойчивая</th>
+                <th scope="col">На месте</th>
+              </tr>
+            </thead>
+            <tbody>
+              {algorithms.map((page) => (
+                <tr>
+                  <th scope="row">
+                    <a href={url(page.path)}>{page.topic.title}</a>
+                  </th>
+                  <td>{formatComplexity(page.topic.complexity.time.best)}</td>
+                  <td>{formatComplexity(page.topic.complexity.time.average)}</td>
+                  <td>{formatComplexity(page.topic.complexity.time.worst)}</td>
+                  <td>{formatComplexity(page.topic.complexity.memory)}</td>
+                  <td>{yesNo(page.topic.properties?.stable)}</td>
+                  <td>{yesNo(page.topic.properties?.inPlace)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>

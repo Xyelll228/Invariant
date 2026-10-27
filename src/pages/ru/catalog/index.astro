@@ -1,0 +1,77 @@
+---
+/**
+ * Каталог (ТЗ, «Экраны»): разделы → модули → темы. Весь объём — 427 тем в
+ * 58 модулях — виден сразу; вышедшие темы ведут на свои страницы.
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ModuleTopics from '../../../components/catalog/ModuleTopics.astro';
+import { catalog, catalogModules, folders } from '../../../content/catalog-data.ts';
+import { catalogTotals } from '../../../content/catalog.ts';
+import { modulePath, sectionPath } from '../../../content/paths.ts';
+import { loadSite } from '../../../content/site-data.ts';
+import { url } from '../../../lib/site.ts';
+
+const site = await loadSite();
+const totals = catalogTotals(catalog);
+const published = [...site.pages.values()].filter((page) => !page.draft).length;
+---
+
+<BaseLayout title="Каталог" description="Все темы «Инварианта»: разделы, модули и темы с волнами выхода.">
+  <div class="prose">
+    <h1>Каталог</h1>
+    <p class="lead">{totals.topics} тем в {totals.modules} модулях. Сейчас вышло тем: {published}.</p>
+    <p>
+      Контент выходит волнами. Вышедшие темы — ссылки; рядом с модулем — волна его выхода, а если модуль выходит в
+      нескольких волнах, волна указана у каждой темы.
+    </p>
+    <nav aria-label="Разделы каталога">
+      <ul>
+        {
+          catalog.sections.map((section) => (
+            <li>
+              <a href={`#${section.id}`}>
+                {section.number}. {section.title}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    {
+      catalog.sections.map((section) => (
+        <section aria-labelledby={`${section.id}-title`} id={section.id}>
+          <h2 id={`${section.id}-title`}>
+            <a href={url(sectionPath(section.id, folders))}>
+              {section.number}. {section.title}
+            </a>
+          </h2>
+          <p>{section.intro}</p>
+          {section.modules.map((module) => {
+            const full = catalogModules.get(module.id);
+            return (
+              full && (
+                <>
+                  <h3 id={module.id}>
+                    <a href={url(modulePath(module.id, folders))}>
+                      {module.number} {module.title}
+                    </a>{' '}
+                    <span class="muted catalog__waves">волна {module.waves.join('–')}</span>
+                  </h3>
+                  <ModuleTopics module={full} pages={site.pages} />
+                </>
+              )
+            );
+          })}
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .catalog__waves {
+    font-size: var(--text-small);
+    font-weight: 500;
+  }
+</style>
