@@ -1,0 +1,46 @@
+---
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import ReviewLab from '../../../../components/learning/ReviewLab.tsx';
+import { databaseName, url } from '../../../../lib/site.ts';
+
+const questions = await getEntry('questions', 'algo.sorting.insertion');
+if (!questions) throw new Error('Нет вопросов темы algo.sorting.insertion');
+const skill = questions.data.skills[0];
+if (!skill) throw new Error('У темы algo.sorting.insertion нет навыков');
+const question = questions.data.questions.find((item) => item.skill === skill.id);
+if (!question) throw new Error(`Нет вопроса для навыка ${skill.id}`);
+const misconceptions = Object.fromEntries(
+  questions.data.misconceptions.map((item) => [item.id, { text: item.text, explanation: item.explanation }]),
+);
+const hint = misconceptions['algo.sorting.insertion.m.one-step-short']?.explanation;
+if (!hint) throw new Error('Нет текста для подсказки');
+---
+
+<BaseLayout
+  title="Хранилище, повторение и экспорт"
+  description="Прототип: прогресс в IndexedDB, оценка ответа по правилам, расписание повторений по FSRS, копия в файл и восстановление."
+>
+  <div class="prose">
+    <p><a href={url('ru/prototypes/')}>← Все прототипы</a></p>
+    <h1>Хранилище, повторение и экспорт</h1>
+    <p class="lead">
+      Прогресс хранится только в вашем браузере. Ответ превращается в оценку по правилам, а следующее повторение
+      планирует FSRS. Копия в файл переносит прогресс на другое устройство.
+    </p>
+    <p>
+      Карточка — это навык, а не вопрос: при каждом повторении генератор даёт новый вариант. Оценку ставит приложение по
+      результату и уверенности: «наугад» даже при верном ответе — Again, «сомневаюсь» — Hard, «знаю» — Good, а после
+      подсказки — не выше Hard.
+    </p>
+  </div>
+
+  <ReviewLab
+    client:load
+    databaseName={`${databaseName}-prototype`}
+    skill={{ cardId: skill.id, topicId: questions.data.topic, title: skill.title, contentVersion: question.version }}
+    question="algo.sorting.insertion.q.after-k-steps"
+    misconceptions={misconceptions}
+    hint={hint}
+  />
+</BaseLayout>

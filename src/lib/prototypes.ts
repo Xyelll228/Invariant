@@ -39,7 +39,7 @@ export const prototypes: readonly Prototype[] = [
     slug: 'review',
     title: 'Хранилище, повторение и экспорт',
     description: 'Прогресс в IndexedDB, планирование повторений по FSRS, копия в файл и восстановление.',
-    status: 'next',
+    status: 'ready',
   },
   {
     slug: 'search',
