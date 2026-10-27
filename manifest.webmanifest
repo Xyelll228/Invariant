@@ -1,0 +1,33 @@
+{
+  "id": "/Invariant/ru/",
+  "name": "Инвариант",
+  "short_name": "Инвариант",
+  "description": "Открытое приложение для глубокого изучения алгоритмов и структур данных, баз данных и SQL, C и C++, Python и математики для информатики.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "/Invariant/ru/",
+  "scope": "/Invariant/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/Invariant/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Invariant/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Invariant/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
