@@ -11,6 +11,24 @@ version: 1
 
 </Block>
 
+<Block id="algo.sorting.insertion.b.worked-example" kind="worked-example" version={1} title="Разбор на примере">
+
+Отсортируем массив из пяти чисел. На каждом шаге видно, какой элемент вставляется, сколько было сравнений и обменов и каким стал массив.
+
+<TraceSteps algorithm="algo.sorting.insertion" input={[7, 3, 5, 1, 4]} />
+
+</Block>
+
+<Block id="algo.sorting.insertion.b.visualization" kind="visualization" version={1} title="Визуализация и ручная симуляция">
+
+Пройдите алгоритм по шагам, а затем выполните его сами.
+
+<ArrayTrace algorithm="algo.sorting.insertion" input={[7, 3, 5, 1, 4]} />
+
+<ArraySimulation algorithm="algo.sorting.insertion" input={[5, 2, 8, 1, 6]} />
+
+</Block>
+
 <Block id="algo.sorting.insertion.b.misconceptions" kind="misconceptions" version={1} title="Частые ошибки">
 
 - После k шагов упорядочены первые k + 1 элементов, а не k: элемент с индексом 0 стоит в левой части с самого начала.

@@ -1,0 +1,65 @@
+---
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import ArrayTrace from '../../../../components/viz/ArrayTrace.tsx';
+import ArraySimulation from '../../../../components/viz/ArraySimulation.tsx';
+import GeneratedQuestion from '../../../../components/questions/GeneratedQuestion.tsx';
+import TraceSteps from '../../../../components/content/TraceSteps.astro';
+import { url } from '../../../../lib/site.ts';
+
+const questions = await getEntry('questions', 'algo.sorting.insertion');
+if (!questions) throw new Error('Нет вопросов темы algo.sorting.insertion');
+const misconceptions = Object.fromEntries(
+  questions.data.misconceptions.map((item) => [item.id, { text: item.text, explanation: item.explanation }]),
+);
+---
+
+<BaseLayout
+  title="След алгоритма"
+  description="Прототип: один эталонный след сортировки вставками кормит анимацию, ручную симуляцию, разбор по шагам и задания."
+>
+  <div class="prose">
+    <p><a href={url('ru/prototypes/')}>← Все прототипы</a></p>
+    <h1>След алгоритма</h1>
+    <p class="lead">
+      Эталон сортировки вставками записывает след: сравнения, обмены и текущие строки кода. Из одного следа строятся
+      анимация, ручная симуляция, разбор по шагам, задания и счётчики операций.
+    </p>
+    <p>
+      Одна реализация вместо пяти — меньше мест, где может спрятаться ошибка, и всё согласовано между собой. Код эталона
+      проверяется автотестами: свойства на случайных данных, мутанты и эксперимент удвоения.
+    </p>
+
+    <h2>Визуализация</h2>
+    <p>
+      Шаги вперёд и назад, автопроигрывание, описание каждого шага и таблица состояний вместо анимации. В режиме
+      «Предсказывать» перед шагом приложение спрашивает, что произойдёт. Можно ввести свои данные.
+    </p>
+  </div>
+
+  <ArrayTrace client:visible algorithm="algo.sorting.insertion" input={[7, 3, 5, 1, 4]} />
+
+  <div class="prose">
+    <h2>Ручная симуляция</h2>
+    <p>
+      Выполните сортировку сами. Каждый шаг сверяется со следом эталона: при ошибке видно правильный шаг и причину, а шаг
+      можно повторить.
+    </p>
+  </div>
+
+  <ArraySimulation client:visible algorithm="algo.sorting.insertion" input={[5, 2, 8, 1, 6]} />
+
+  <div class="prose">
+    <h2>Разбор по шагам</h2>
+    <p>Таблица посчитана эталоном при сборке страницы — руками состояния массива не пишутся.</p>
+    <TraceSteps algorithm="algo.sorting.insertion" input={[7, 3, 5, 1, 4]} />
+
+    <h2>Задание генератора</h2>
+    <p>
+      Условие и варианты строит генератор: правильный ответ вычисляет эталон, неверные — «неправильные алгоритмы», каждый
+      со своим заблуждением. Номер варианта воспроизводит задание точно.
+    </p>
+  </div>
+
+  <GeneratedQuestion client:load question="algo.sorting.insertion.q.after-k-steps" misconceptions={misconceptions} seed={1} />
+</BaseLayout>

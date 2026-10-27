@@ -1,0 +1,14 @@
+---
+/** Ручная симуляция в тексте темы: <ArraySimulation algorithm="…" input={[…]} />. Разметка собирается заранее, оживает в браузере. */
+import ArraySimulation from '../viz/ArraySimulation.tsx';
+import type { ArrayAlgorithmId } from '../../lib/viz/algorithms.ts';
+
+interface Props {
+  algorithm: ArrayAlgorithmId;
+  input: number[];
+}
+
+const { algorithm, input } = Astro.props;
+---
+
+<ArraySimulation client:visible algorithm={algorithm} input={input} />
