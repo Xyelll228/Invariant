@@ -51,6 +51,6 @@ export const prototypes: readonly Prototype[] = [
     slug: 'offline',
     title: 'Работа без сети и установка на телефон',
     description: 'Приложение открывается без интернета и ставится на экран «Домой» на iPhone и Android.',
-    status: 'next',
+    status: 'ready',
   },
 ];

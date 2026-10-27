@@ -11,6 +11,7 @@ const pages = [
   { path: 'ru/prototypes/sandbox/', heading: 'Песочница кода' },
   { path: 'ru/prototypes/review/', heading: 'Хранилище, повторение и экспорт' },
   { path: 'ru/prototypes/search/', heading: 'Поиск по-русски' },
+  { path: 'ru/prototypes/offline/', heading: 'Работа без сети и установка на телефон' },
   { path: 'ru/about/', heading: 'О проекте' },
 ];
 

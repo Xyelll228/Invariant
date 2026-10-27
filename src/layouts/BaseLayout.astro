@@ -45,6 +45,8 @@ Astro.csp?.insertScriptHash(scriptHash(themeInitCode));
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
     <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <link rel="manifest" href={url('manifest.webmanifest')} />
+    <link rel="apple-touch-icon" href={url('icons/apple-touch-icon.png')} />
     <link rel="preload" href={interCyrillic} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
     <script is:inline set:html={themeInitCode} />
@@ -52,6 +54,12 @@ Astro.csp?.insertScriptHash(scriptHash(themeInitCode));
   <body>
     <a class="skip-link" href="#main">{t('nav.skip')}</a>
     {previewPr !== null && <PreviewBanner pr={previewPr} />}
+    <div class="update-banner" data-update-banner role="status" hidden>
+      <div class="container update-banner__inner">
+        <span>{t('update.ready')}</span>
+        <button type="button" class="button" data-update-apply>{t('update.apply')}</button>
+      </div>
+    </div>
     <SiteHeader />
     <main id="main" tabindex="-1">
       <div class="container">
@@ -59,6 +67,9 @@ Astro.csp?.insertScriptHash(scriptHash(themeInitCode));
       </div>
     </main>
     <SiteFooter />
+    <script>
+      import '../scripts/service-worker.ts';
+    </script>
   </body>
 </html>
 
@@ -69,5 +80,24 @@ Astro.csp?.insertScriptHash(scriptHash(themeInitCode));
 
   main {
     padding-bottom: var(--space-8);
+  }
+
+  .update-banner {
+    border-bottom: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    padding: var(--space-2) 0;
+  }
+
+  .update-banner[hidden] {
+    display: none;
+  }
+
+  .update-banner__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    font-weight: 600;
   }
 </style>

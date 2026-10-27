@@ -1,0 +1,31 @@
+/* Прототип работы без сети. */
+
+.offline__title {
+  font-size: 1.25rem;
+  margin: 0 0 var(--space-3);
+}
+
+.offline__facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 var(--space-4);
+}
+
+.offline__facts dt {
+  font-weight: 600;
+}
+
+.offline__facts dd {
+  margin: 0 0 var(--space-2);
+}
+
+@media (min-width: 40rem) {
+  .offline__facts {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+
+  .offline__facts dd {
+    margin: 0;
+  }
+}

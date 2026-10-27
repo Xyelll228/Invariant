@@ -20,6 +20,9 @@ export const ru = {
 
   'preview.banner': 'Превью правки № {pr}. Это не основная версия сайта.',
 
+  'update.ready': 'Вышла новая версия приложения. Она включится при следующем открытии.',
+  'update.apply': 'Обновить сейчас',
+
   'footer.license': 'Код — MIT, учебный контент — CC BY-SA 4.0.',
   'footer.source': 'Исходный код на GitHub',
 

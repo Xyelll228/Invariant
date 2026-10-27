@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { url } from '../lib/site.ts';
+---
+
+<BaseLayout title="Нет сети" description="Эта страница ещё не сохранена для работы без интернета." noindex>
+  <div class="prose">
+    <h1>Нет сети</h1>
+    <p class="lead">Эта страница ещё не сохранена на устройстве, поэтому без интернета она не открывается.</p>
+    <p>
+      Без сети работают страницы, которые уже были открыты, и повторение. Когда интернет вернётся, обновите страницу.
+    </p>
+    <p><a href={url('ru/')}>На главную</a></p>
+  </div>
+</BaseLayout>
