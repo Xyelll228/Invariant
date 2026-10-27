@@ -1,0 +1,15 @@
+name: 'Проба 5: стороннее действие по тегу'
+on:
+  push:
+    branches: [ci-probe]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
+      - uses: JamesIves/github-pages-deploy-action@v4
+        if: false
+        with:
+          folder: dist

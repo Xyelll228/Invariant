@@ -1,0 +1,11 @@
+name: 'Проба 1: только shell'
+on:
+  push:
+    branches: [ci-probe]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok

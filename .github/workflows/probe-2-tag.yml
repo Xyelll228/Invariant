@@ -1,0 +1,11 @@
+name: 'Проба 2: actions/checkout по тегу'
+on:
+  push:
+    branches: [ci-probe]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
