@@ -123,3 +123,15 @@ export class Sandbox {
     });
   }
 }
+
+const shared = new Map<string, Sandbox>();
+
+/** Одна песочница на страницу для каждого адреса runner.html: окна и потоки не плодятся. */
+export function sharedSandbox(url: string): Sandbox {
+  let sandbox = shared.get(url);
+  if (!sandbox) {
+    sandbox = new Sandbox(url);
+    shared.set(url, sandbox);
+  }
+  return sandbox;
+}

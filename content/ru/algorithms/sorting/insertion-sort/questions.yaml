@@ -1,9 +1,33 @@
 topic: algo.sorting.insertion
 
 skills:
+  - id: algo.sorting.insertion.s.idea
+    title: Идея сортировки вставками — что берётся на шаге и куда вставляется
+    level: fundament
   - id: algo.sorting.insertion.s.after-k-steps
     title: Состояние массива после k шагов сортировки вставками
     level: fundament
+  - id: algo.sorting.insertion.s.insert-one
+    title: Вставка одного элемента в упорядоченную левую часть
+    level: fundament
+  - id: algo.sorting.insertion.s.simulate
+    title: Выполнить сортировку вставками вручную
+    level: fundament
+  - id: algo.sorting.insertion.s.assemble
+    title: Собрать сортировку вставками из строк кода
+    level: fundament
+  - id: algo.sorting.insertion.s.write
+    title: Написать сортировку вставками самостоятельно
+    level: base
+  - id: algo.sorting.insertion.s.find-bug
+    title: Найти ошибку в коде сортировки вставками
+    level: base
+  - id: algo.sorting.insertion.s.complexity
+    title: Сложность сортировки вставками в лучшем и худшем случае
+    level: base
+  - id: algo.sorting.insertion.s.trace-code
+    title: Проследить работу кода сортировки вставками
+    level: base
 
 misconceptions:
   - id: algo.sorting.insertion.m.one-step-short
@@ -27,13 +51,332 @@ misconceptions:
       она берёт первый элемент правой части и вставляет его в левую, а остальная
       правая часть не меняется.
     block: algo.sorting.insertion.b.idea
+  - id: algo.sorting.insertion.m.sort-at-end
+    text: Откладывает упорядочивание на конец.
+    explanation: >-
+      В сортировке вставками левая часть упорядочена после каждого шага, а не
+      только в конце. Каждый новый элемент сразу встаёт на своё место.
+    block: algo.sorting.insertion.b.idea
+  - id: algo.sorting.insertion.m.to-front
+    text: Сдвигает вставляемый элемент до самого начала массива.
+    explanation: >-
+      Элемент сдвигается влево, только пока сосед слева больше него. Как только
+      слева оказывается элемент не больше него, сдвиг останавливается.
+    block: algo.sorting.insertion.b.idea
+  - id: algo.sorting.insertion.m.off-by-one-start
+    text: Считает, что внешний цикл можно начать с любого индекса.
+    explanation: >-
+      Элемент с индексом 1 тоже нужно вставить: если начать с i = 2, он может
+      остаться не на своём месте. Начало с i = 1 — не формальность.
+    block: algo.sorting.insertion.b.definition
+  - id: algo.sorting.insertion.m.loop-bound
+    text: Путает условие внутреннего цикла.
+    explanation: >-
+      Элемент может дойти до самого начала массива, до индекса 0. Поэтому сдвиг
+      продолжается, пока j > 0, а не j > 1.
+    block: algo.sorting.insertion.b.definition
+  - id: algo.sorting.insertion.m.single-swap
+    text: Делает один обмен вместо сдвига до своего места.
+    explanation: >-
+      Один обмен сдвигает элемент на одну позицию. Если и следующий сосед слева
+      больше, нужен ещё обмен — и так, пока элемент не встанет на своё место.
+    block: algo.sorting.insertion.b.idea
 
 questions:
+  # ---------- Фундамент ----------
+  - id: algo.sorting.insertion.q.pre-cards
+    version: 1
+    level: fundament
+    role: pre
+    type: choice
+    format: choice
+    prompt: Вы раскладываете карты в руке по возрастанию и берёте их по одной. Что разумно делать с очередной картой?
+    options:
+      - text: Вставить её среди уже разложенных так, чтобы порядок сохранился
+        correct: true
+      - text: Найти среди оставшихся самую младшую и положить её следующей
+        misconception: algo.sorting.insertion.m.selection
+      - text: Положить в конец, а когда все карты в руке — разложить их заново
+        misconception: algo.sorting.insertion.m.sort-at-end
+    explanation: >-
+      Так работает сортировка вставками: разложенные карты всегда упорядочены, а
+      каждая новая сразу встаёт на своё место.
+
+  - id: algo.sorting.insertion.q.pre-start
+    version: 1
+    level: fundament
+    role: pre
+    type: free
+    format: free
+    normalize: number
+    prompt: Сортировка вставками упорядочивает массив `[4, 2, 7]`. Сколько элементов в упорядоченной левой части до первого шага?
+    answers: ['1']
+    explanation: >-
+      Один — элемент с индексом 0. Один элемент сам по себе упорядочен, поэтому
+      первым шагом вставляется элемент с индексом 1.
+
+  - id: algo.sorting.insertion.q.idea-next
+    version: 1
+    level: fundament
+    role: practice
+    step: 1
+    block: algo.sorting.insertion.b.idea
+    skill: algo.sorting.insertion.s.idea
+    type: choice
+    format: choice
+    prompt: Какой элемент сортировка вставками берёт на очередном шаге?
+    options:
+      - text: Первый элемент правой части — той, до которой очередь ещё не дошла
+        correct: true
+      - text: Наименьший элемент правой части
+        misconception: algo.sorting.insertion.m.selection
+    explanation: >-
+      Правая часть не меняется, пока до её элементов не дойдёт очередь. На каждом
+      шаге берётся её первый элемент.
+
+  - id: algo.sorting.insertion.q.idea-stop
+    version: 1
+    level: fundament
+    role: practice
+    step: 1
+    block: algo.sorting.insertion.b.idea
+    skill: algo.sorting.insertion.s.idea
+    type: choice
+    format: choice
+    prompt: Элемент вставляется в упорядоченную левую часть. Когда он перестаёт сдвигаться влево?
+    options:
+      - text: Когда сосед слева не больше него или элемент дошёл до начала массива
+        correct: true
+      - text: Только когда элемент дошёл до начала массива
+        misconception: algo.sorting.insertion.m.to-front
+      - text: Сразу после одного обмена с соседом
+        misconception: algo.sorting.insertion.m.single-swap
+
   - id: algo.sorting.insertion.q.after-k-steps
     version: 1
     level: fundament
     role: practice
-    type: generated
-    questionType: trace
-    generator: afterKSteps
+    step: 2
+    block: algo.sorting.insertion.b.worked-example
     skill: algo.sorting.insertion.s.after-k-steps
+    type: trace
+    format: generated
+    generator: afterKSteps
+
+  - id: algo.sorting.insertion.q.insert-one
+    version: 1
+    level: fundament
+    role: practice
+    step: 2
+    block: algo.sorting.insertion.b.worked-example
+    skill: algo.sorting.insertion.s.insert-one
+    type: trace
+    format: generated
+    generator: insertOne
+    hints:
+      - Сравнивайте вставляемый элемент с соседом слева.
+      - Пока сосед слева больше, их меняют местами; остальные элементы остаются на месте.
+
+  - id: algo.sorting.insertion.q.simulate
+    version: 1
+    level: fundament
+    role: practice
+    step: 2
+    block: algo.sorting.insertion.b.visualization
+    skill: algo.sorting.insertion.s.simulate
+    type: simulation
+    format: simulation
+    prompt: Выполните сортировку вставками вручную — выбирайте пары элементов для обмена по порядку.
+    algorithm: algo.sorting.insertion
+    input: [6, 3, 9, 2, 5]
+
+  - id: algo.sorting.insertion.q.assemble
+    version: 1
+    level: fundament
+    role: practice
+    step: 4
+    skill: algo.sorting.insertion.s.assemble
+    type: parsons
+    format: order
+    prompt: >-
+      Соберите функцию `insertionSort(a)`: она упорядочивает массив по возрастанию
+      и возвращает его. Две строки лишние. Отступы ставьте кнопками ← и →.
+    indent: true
+    items:
+      - { text: 'function insertionSort(a) {', indent: 0 }
+      - { text: 'for (let i = 1; i < a.length; i++) {', indent: 1 }
+      - { text: 'let j = i;', indent: 2 }
+      - { text: 'while (j > 0 && a[j - 1] > a[j]) {', indent: 2 }
+      - { text: '[a[j - 1], a[j]] = [a[j], a[j - 1]];', indent: 3 }
+      - { text: 'j--;', indent: 3 }
+      - { text: '}', indent: 2 }
+      - { text: '}', indent: 1 }
+      - { text: 'return a;', indent: 1 }
+      - { text: '}', indent: 0 }
+    distractors:
+      - 'if (j > 0 && a[j - 1] > a[j]) {'
+      - 'for (let i = 1; i < a.length - 1; i++) {'
+    function: insertionSort
+    solution: reference
+    tests: [[[5, 2, 4, 1]]]
+    hidden: vectors
+    hints:
+      - Внешний цикл перебирает элементы, которые вставляются; внутренний сдвигает элемент влево.
+      - Сдвиг повторяется, пока сосед слева больше — значит, нужен цикл, а не одно условие.
+
+  - id: algo.sorting.insertion.q.check-after-k
+    version: 1
+    level: fundament
+    role: check
+    skill: algo.sorting.insertion.s.after-k-steps
+    type: trace
+    format: generated
+    generator: afterKSteps
+
+  - id: algo.sorting.insertion.q.check-insert
+    version: 1
+    level: fundament
+    role: check
+    skill: algo.sorting.insertion.s.insert-one
+    type: trace
+    format: generated
+    generator: insertOne
+
+  - id: algo.sorting.insertion.q.check-idea
+    version: 1
+    level: fundament
+    role: check
+    skill: algo.sorting.insertion.s.idea
+    type: choice
+    format: choice
+    prompt: Сортировка вставками сделала три шага. Какая часть массива точно упорядочена?
+    options:
+      - text: Первые четыре элемента — между собой
+        correct: true
+      - text: Первые три элемента
+        misconception: algo.sorting.insertion.m.one-step-short
+      - text: Первые четыре элемента, и это четыре наименьших элемента массива
+        misconception: algo.sorting.insertion.m.selection
+
+  - id: algo.sorting.insertion.q.check-assemble-desc
+    version: 1
+    level: fundament
+    role: check
+    skill: algo.sorting.insertion.s.assemble
+    type: parsons
+    format: order
+    prompt: >-
+      Соберите функцию `insertionSortDesc(a)`: сортировку вставками по убыванию.
+      Две строки лишние.
+    indent: true
+    items:
+      - { text: 'function insertionSortDesc(a) {', indent: 0 }
+      - { text: 'for (let i = 1; i < a.length; i++) {', indent: 1 }
+      - { text: 'let j = i;', indent: 2 }
+      - { text: 'while (j > 0 && a[j - 1] < a[j]) {', indent: 2 }
+      - { text: '[a[j - 1], a[j]] = [a[j], a[j - 1]];', indent: 3 }
+      - { text: 'j--;', indent: 3 }
+      - { text: '}', indent: 2 }
+      - { text: '}', indent: 1 }
+      - { text: 'return a;', indent: 1 }
+      - { text: '}', indent: 0 }
+    distractors:
+      - 'while (j > 0 && a[j - 1] > a[j]) {'
+      - 'let j = 0;'
+    function: insertionSortDesc
+    solution: 'function insertionSortDesc(a) { return [...a].sort((x, y) => y - x); }'
+    tests: [[[3, 1, 2]], [[5, 5, 1, 9]]]
+    hidden: vectors
+
+  - id: algo.sorting.insertion.q.check-explain
+    version: 1
+    level: fundament
+    role: check
+    skill: algo.sorting.insertion.s.idea
+    type: explain
+    format: self
+    prompt: Объясните своими словами, почему после k шагов сортировки вставками упорядочены первые k + 1 элементов массива.
+    reference: >-
+      До первого шага упорядоченная часть состоит из одного элемента — с индексом 0.
+      Каждый шаг берёт следующий элемент и вставляет его на своё место в эту часть:
+      она растёт на один элемент и остаётся упорядоченной. После k шагов в ней
+      1 + k элементов.
+    criteria:
+      - Сказано, что до первого шага упорядочен один элемент.
+      - Сказано, что каждый шаг добавляет в упорядоченную часть один элемент и порядок в ней сохраняется.
+      - Сделан вывод — после k шагов упорядочены k + 1 элементов.
+
+  # ---------- База: черновые задания для проверки движка; тема дописывается отдельной правкой ----------
+  - id: algo.sorting.insertion.q.base-write
+    version: 1
+    level: base
+    role: practice
+    step: 4
+    skill: algo.sorting.insertion.s.write
+    type: write
+    format: code
+    prompt: Напишите функцию `insertionSort(a)`, которая упорядочивает массив чисел по возрастанию сортировкой вставками и возвращает его.
+    function: insertionSort
+    starter: |
+      function insertionSort(a) {
+        // Ваш код
+        return a;
+      }
+    solution: reference
+    tests: [[[7, 3, 5, 1, 4]], [[]], [[2, 1, 2]]]
+    hidden: vectors
+    hints:
+      - Внешний цикл — по индексу i от 1 до конца массива.
+      - Внутри — сдвиг элемента влево, пока сосед слева больше него.
+      - "Сдвиг можно сделать обменом соседей: `[a[j - 1], a[j]] = [a[j], a[j - 1]]`."
+
+  - id: algo.sorting.insertion.q.base-find-bug
+    version: 1
+    level: base
+    role: practice
+    step: 6
+    skill: algo.sorting.insertion.s.find-bug
+    type: find-bug
+    format: line
+    prompt: В этой версии сортировки вставками одна ошибка. На массиве `[2, 1]` она возвращает `[2, 1]`. Найдите строку и причину.
+    mutant: stop-before-zero
+    reasons:
+      - text: Элемент не может дойти до начала массива — до индекса 0
+        correct: true
+      - text: Первым вставляется элемент с индексом 0, а не 1
+        misconception: algo.sorting.insertion.m.off-by-one-start
+      - text: Ошибки в условии нет — нужен ещё один проход по массиву
+        misconception: algo.sorting.insertion.m.loop-bound
+
+  - id: algo.sorting.insertion.q.base-complexity
+    version: 1
+    level: base
+    role: practice
+    step: 5
+    skill: algo.sorting.insertion.s.complexity
+    type: complexity
+    format: free
+    normalize: complexity
+    prompt: Сколько операций делает сортировка вставками в худшем случае — на массиве, упорядоченном по убыванию? Ответьте оценкой Θ.
+    answers: ['Θ(n^2)']
+
+  - id: algo.sorting.insertion.q.base-output
+    version: 1
+    level: base
+    role: practice
+    step: 2
+    skill: algo.sorting.insertion.s.trace-code
+    type: output
+    format: free
+    prompt: Что выведет этот код?
+    code: |
+      const a = [3, 1, 2];
+      let swaps = 0;
+      for (let i = 1; i < a.length; i++) {
+        for (let j = i; j > 0 && a[j - 1] > a[j]; j--) {
+          [a[j - 1], a[j]] = [a[j], a[j - 1]];
+          swaps++;
+        }
+      }
+      console.log(swaps, a);
+

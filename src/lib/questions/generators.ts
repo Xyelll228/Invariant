@@ -15,7 +15,7 @@ export interface GeneratedOption {
 export interface GeneratedChoice {
   prompt: string;
   options: GeneratedOption[];
-  data: Record<string, unknown>;
+  data?: Record<string, unknown>;
 }
 
 export const choiceGenerators = {

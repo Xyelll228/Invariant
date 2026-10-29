@@ -27,27 +27,3 @@ const { topicId, topicTitle, targetId, targetTitle, version } = Astro.props;
 >
   Нашёл ошибку<span class="visually-hidden">: {targetTitle}</span>
 </button>
-
-<style>
-  .report-button {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--tap);
-    padding: 0 var(--space-2);
-    margin-left: calc(-1 * var(--space-2));
-    border: 0;
-    background: none;
-    color: var(--color-text-muted);
-    font: inherit;
-    font-size: var(--text-small);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.2em;
-    cursor: pointer;
-  }
-
-  .report-button:hover {
-    color: var(--color-text);
-    text-decoration-thickness: 2px;
-  }
-</style>

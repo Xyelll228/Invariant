@@ -64,18 +64,40 @@ export interface ReviewRecord {
   seed: number | null;
   contentVersion: number | null;
   misconception: string | null;
-  mode: 'review' | 'exam';
+  /**
+   * Где дан ответ: learn — по ходу темы, check — итоговая проверка уровня,
+   * delayed — отложенная проверка, review — повторение, exam — «Контрольная».
+   */
+  mode: ReviewMode;
 }
 
+export type ReviewMode = 'learn' | 'check' | 'delayed' | 'review' | 'exam';
+
 export type ProgressStatus = 'not-started' | 'in-progress' | 'mastered';
+
+export interface LevelCheckRecord {
+  at: number;
+  correct: number;
+  total: number;
+  passed: boolean;
+}
 
 export interface ProgressRecord {
   topicId: string;
   level: Level;
   status: ProgressStatus;
+  /** Пройденные шаги цикла: «0» — предвопросы, «1»–«6». */
   completedSteps: string[];
   paused: boolean;
   updatedAt: number;
+  /** Задания уровня, на которые уже есть верный ответ (на предвопросы — любой). */
+  done?: string[];
+  /** Последняя итоговая проверка уровня (лучшая: пройденная не затирается непройденной). */
+  check?: LevelCheckRecord;
+  /** Отложенная проверка. */
+  delayed?: LevelCheckRecord;
+  /** Задание, на котором человек остановился: туда ведёт «Продолжить». */
+  lastQuestion?: string;
 }
 
 export interface AttemptRecord {

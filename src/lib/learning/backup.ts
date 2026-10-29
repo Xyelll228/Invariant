@@ -111,7 +111,7 @@ const RECORD_FIELDS: Record<keyof LearningData, Record<string, Check>> = {
     seed: nullable(isInteger),
     contentVersion: nullable(isInteger),
     misconception: nullable(isString),
-    mode: oneOf('review', 'exam'),
+    mode: oneOf('learn', 'check', 'delayed', 'review', 'exam'),
   },
   attempts: { id: isString, exerciseId: isString, language: oneOf('js', 'cpp', 'py', 'sql'), at: isNumber, code: isString, passed: isInteger, total: isInteger },
   errors: { id: isString, cardId: isString, misconception: nullable(isString), at: isNumber, note: isString, resolved: isBoolean, updatedAt: isNumber },

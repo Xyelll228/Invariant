@@ -14,6 +14,7 @@ import type {
   CardRecord,
   ErrorRecord,
   ExamRecord,
+  LevelCheckRecord,
   NoteRecord,
   ProgressRecord,
   ProgressStatus,
@@ -81,11 +82,26 @@ function newer<T extends { updatedAt: number }>(a: T, b: T): T {
 
 const STATUS_ORDER: Record<ProgressStatus, number> = { 'not-started': 0, 'in-progress': 1, mastered: 2 };
 
+/** Лучшая проверка: пройденная важнее непройденной, при равенстве — более поздняя. */
+function betterCheck(a: LevelCheckRecord | undefined, b: LevelCheckRecord | undefined): LevelCheckRecord | undefined {
+  if (!a || !b) return a ?? b;
+  if (a.passed !== b.passed) return a.passed ? a : b;
+  if (a.at !== b.at) return a.at > b.at ? a : b;
+  return pickStable(a, b);
+}
+
 function mergeProgress(a: ProgressRecord, b: ProgressRecord): ProgressRecord {
   const latest = newer(a, b);
   const status = STATUS_ORDER[a.status] >= STATUS_ORDER[b.status] ? a.status : b.status;
   const completedSteps = [...new Set([...a.completedSteps, ...b.completedSteps])].sort();
-  return { ...latest, status, completedSteps, updatedAt: Math.max(a.updatedAt, b.updatedAt) };
+  const merged: ProgressRecord = { ...latest, status, completedSteps, updatedAt: Math.max(a.updatedAt, b.updatedAt) };
+  const done = [...new Set([...(a.done ?? []), ...(b.done ?? [])])].sort();
+  if (done.length > 0) merged.done = done;
+  const check = betterCheck(a.check, b.check);
+  if (check) merged.check = check;
+  const delayed = betterCheck(a.delayed, b.delayed);
+  if (delayed) merged.delayed = delayed;
+  return merged;
 }
 
 function mergeCardMeta(a: CardRecord, b: CardRecord): CardRecord {

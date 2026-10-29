@@ -21,7 +21,9 @@ import {
   topicSchema,
 } from '../../src/content/schema.ts';
 import { createRandom, type Random } from '../../src/lib/random.ts';
+import { runFunction } from '../../src/lib/run/node-run.ts';
 import { countOperations, recordTrace, replayArray, type TraceSink } from '../../src/lib/trace.ts';
+import type { GeneratedVariant } from '../../src/lib/learning/question-types.ts';
 
 const repo = fileURLToPath(new URL('../../', import.meta.url));
 const content = join(repo, 'content', 'ru');
@@ -34,10 +36,8 @@ interface Mutant {
   id: string;
   description: string;
   sortBy: SortBy;
-}
-interface GeneratedChoice {
-  prompt: string;
-  options: { text: string; correct: boolean; misconception?: string }[];
+  code?: readonly string[];
+  bugLine?: number;
 }
 
 function topicDirs(dir: string): string[] {
@@ -126,6 +126,30 @@ for (const dir of topicDirs(content)) {
         const copy = [...input];
         expect(sort(input), JSON.stringify(input)).toEqual(sorted(input));
         expect(input, 'эталон не меняет исходный массив').toEqual(copy);
+      }
+    });
+
+    it('код, который видит ученик, запускается и даёт тот же результат, что эталон', () => {
+      const shown = (reference.code as readonly string[] | undefined)?.join('\n');
+      expect(shown, 'экспорт code в reference.ts').toBeTruthy();
+      for (const input of vectors) {
+        expect(runFunction(shown as string, code.js, [input]), JSON.stringify(input)).toEqual(sorted(input));
+      }
+    });
+
+    it('код испорченных версий для «Найти ошибку»: ведёт себя как мутант, падает на тестах, отличается в строке с ошибкой', () => {
+      const shownReference = reference.code as readonly string[];
+      for (const mutant of mutants.filter((item) => item.code)) {
+        const lines = mutant.code as readonly string[];
+        const differing = lines.flatMap((line, index) => (line !== shownReference[index] ? [index + 1] : []));
+        expect(differing, `${mutant.id}: отличается от эталона только строкой bugLine`).toEqual([mutant.bugLine]);
+        let fails = false;
+        for (const input of vectors) {
+          const got = runFunction(lines.join('\n'), code.js, [input]);
+          expect(got, `${mutant.id} на ${JSON.stringify(input)}: код и мутант ведут себя одинаково`).toEqual(mutant.sortBy(input, (x) => x));
+          if (JSON.stringify(got) !== JSON.stringify(sorted(input))) fails = true;
+        }
+        expect(fails, `${mutant.id}: код с ошибкой должен падать хотя бы на одном тесте`).toBe(true);
       }
     });
 
@@ -260,31 +284,37 @@ for (const dir of topicDirs(content)) {
   const questionsFile = join(dir, 'questions.yaml');
   if (!existsSync(questionsFile)) continue;
   const data = questionsFileSchema.parse(parseYaml(readFileSync(questionsFile, 'utf8')));
-  const generatedQuestions = data.questions.filter((question) => question.type === 'generated');
+  const generatedQuestions = data.questions.filter((question) => question.format === 'generated');
   if (generatedQuestions.length === 0) continue;
-  const generators = (await import(pathToFileURL(join(dir, 'generators.ts')).href)) as Record<string, (random: Random) => GeneratedChoice>;
+  const generators = (await import(pathToFileURL(join(dir, 'generators.ts')).href)) as Record<string, (random: Random) => GeneratedVariant>;
   const misconceptions = new Set(data.misconceptions.map((item) => item.id));
 
   describe(`генераторы заданий: ${data.topic}`, () => {
     for (const question of generatedQuestions) {
-      if (question.type !== 'generated') continue;
+      if (question.format !== 'generated') continue;
       it(`${question.generator}: ${GENERATOR_VARIANTS} вариантов однозначны и воспроизводимы`, () => {
         const generate = generators[question.generator];
         expect(typeof generate, `функция ${question.generator}`).toBe('function');
         const failures: string[] = [];
         for (let seed = 1; seed <= GENERATOR_VARIANTS && failures.length < 5; seed++) {
-          const variant = (generate as (random: Random) => GeneratedChoice)(createRandom(seed));
-          const again = (generate as (random: Random) => GeneratedChoice)(createRandom(seed));
+          const variant = (generate as (random: Random) => GeneratedVariant)(createRandom(seed));
+          const again = (generate as (random: Random) => GeneratedVariant)(createRandom(seed));
           if (JSON.stringify(variant) !== JSON.stringify(again)) failures.push(`зерно ${seed}: вариант не воспроизводится`);
-          if (!variant.prompt.trim()) failures.push(`зерно ${seed}: пустое условие`);
-          const correct = variant.options.filter((option) => option.correct).length;
-          if (correct !== 1) failures.push(`зерно ${seed}: верных вариантов ${correct}`);
-          const texts = variant.options.map((option) => option.text);
-          if (new Set(texts).size !== texts.length) failures.push(`зерно ${seed}: варианты повторяются: ${texts.join(' | ')}`);
-          for (const option of variant.options) {
-            if (!option.correct && (!option.misconception || !misconceptions.has(option.misconception))) {
-              failures.push(`зерно ${seed}: у неверного варианта ${option.text} нет заблуждения из questions.yaml`);
+          if (!('prompt' in variant) || !variant.prompt.trim()) failures.push(`зерно ${seed}: пустое условие`);
+          if (variant.format === 'choice') {
+            const correct = variant.options.filter((option) => option.correct).length;
+            if (!variant.multiple && correct !== 1) failures.push(`зерно ${seed}: верных вариантов ${correct}`);
+            const texts = variant.options.map((option) => option.text);
+            if (new Set(texts).size !== texts.length) failures.push(`зерно ${seed}: варианты повторяются: ${texts.join(' | ')}`);
+            for (const option of variant.options) {
+              if (!option.correct && (!option.misconception || !misconceptions.has(option.misconception))) {
+                failures.push(`зерно ${seed}: у неверного варианта ${option.text} нет заблуждения из questions.yaml`);
+              }
             }
+          } else if (variant.format === 'free') {
+            if (variant.answers.length === 0 || variant.answers.some((answer) => !answer.trim())) failures.push(`зерно ${seed}: нет верного ответа`);
+          } else {
+            failures.push(`зерно ${seed}: формат ${variant.format} генераторы пока не дают`);
           }
         }
         expect(failures).toEqual([]);

@@ -4,11 +4,12 @@ import type { Level } from '../../content/schema.ts';
 import { url } from '../../lib/site.ts';
 
 interface Props {
+  topicId: string;
   levels: { level: Level; title: string; path: string; minutes: number }[];
   current: Level;
 }
 
-const { levels, current } = Astro.props;
+const { topicId, levels, current } = Astro.props;
 ---
 
 <nav class="level-tabs" aria-label="Уровни темы">
@@ -18,7 +19,9 @@ const { levels, current } = Astro.props;
         <li>
           <a href={url(item.path)} aria-current={item.level === current ? 'page' : undefined}>
             <span class="level-tabs__title">{item.title}</span>
-            <span class="level-tabs__time">≈ {item.minutes} мин чтения</span>
+            <span class="level-tabs__time">
+              ≈ {item.minutes} мин чтения<span class="level-tabs__state" data-level-state={`${topicId}:${item.level}`} hidden />
+            </span>
           </a>
         </li>
       ))
@@ -26,7 +29,19 @@ const { levels, current } = Astro.props;
   </ul>
 </nav>
 
+<script>
+  import '../../scripts/progress-marks.ts';
+</script>
+
 <style>
+  .level-tabs__state::before {
+    content: ' · ';
+  }
+
+  .level-tabs__state {
+    font-weight: 650;
+  }
+
   .level-tabs ul {
     display: flex;
     flex-wrap: wrap;

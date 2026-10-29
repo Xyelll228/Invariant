@@ -20,7 +20,7 @@ import {
   lineNumbers,
 } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
-import { DEFAULT_TIMEOUT_MS, Sandbox, type SandboxReply, type SandboxTest } from '../../lib/sandbox/client.ts';
+import { DEFAULT_TIMEOUT_MS, sharedSandbox, type SandboxReply, type SandboxTest } from '../../lib/sandbox/client.ts';
 import { explainError, explainTimeout } from '../../lib/sandbox/explain.ts';
 import './code-lab.css';
 
@@ -46,19 +46,11 @@ export interface CodeLabProps {
   hiddenTests: SandboxTest[];
   runnerUrl: string;
   examples?: CodeLabExample[];
+  /** Сообщает текущий код при каждом изменении: задание с кодом сдаёт его на проверку. */
+  onCodeChange?: (code: string) => void;
 }
 
 const SYMBOLS = ['{', '}', '[', ']', '(', ')', ';', '=', '<', '>'];
-
-const sandboxes = new Map<string, Sandbox>();
-function sandboxFor(url: string): Sandbox {
-  let sandbox = sandboxes.get(url);
-  if (!sandbox) {
-    sandbox = new Sandbox(url);
-    sandboxes.set(url, sandbox);
-  }
-  return sandbox;
-}
 
 const monochrome = HighlightStyle.define([
   {
@@ -107,13 +99,15 @@ const STATUS_TEXT: Record<Status, string> = {
 };
 
 export default function CodeLab(props: CodeLabProps) {
-  const { label, functionName, starterCode, visibleTests, hiddenTests, runnerUrl, examples = [] } = props;
+  const { label, functionName, starterCode, visibleTests, hiddenTests, runnerUrl, examples = [], onCodeChange } = props;
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [running, setRunning] = useState(false);
   const [reply, setReply] = useState<SandboxReply | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
-  const sandbox = useMemo(() => sandboxFor(runnerUrl), [runnerUrl]);
+  const sandbox = useMemo(() => sharedSandbox(runnerUrl), [runnerUrl]);
+  const onChange = useRef(onCodeChange);
+  onChange.current = onCodeChange;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -143,6 +137,9 @@ export default function CodeLab(props: CodeLabProps) {
           // tabindex явно: длинные строки прокручиваются, и область прокрутки должна
           // быть доступна с клавиатуры (WCAG, правило axe scrollable-region-focusable).
           EditorView.contentAttributes.of({ 'aria-label': `${label}: редактор кода`, tabindex: '0' }),
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) onChange.current?.(update.state.doc.toString());
+          }),
           theme,
         ],
       }),

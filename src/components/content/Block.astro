@@ -7,6 +7,7 @@
  * Доказательства на уровнях Фундамент и База свёрнуты (ТЗ, «Справочник»).
  */
 import type { BlockKind } from '../../content/schema.ts';
+import QuestionList from '../learn/QuestionList.tsx';
 import ReportButton from '../report/ReportButton.astro';
 
 interface Props {
@@ -19,6 +20,8 @@ interface Props {
 const { id, kind, version, title } = Astro.props;
 const topic = Astro.locals.topic;
 const collapsed = kind === 'proof' && topic !== undefined && topic.level !== 'depth';
+// Короткие вопросы после блока (ТЗ, шаг «Понять»).
+const attached = topic?.byBlock?.[id] ?? [];
 ---
 
 <section class="block" id={id} data-kind={kind} data-version={version}>
@@ -51,6 +54,20 @@ const collapsed = kind === 'proof' && topic !== undefined && topic.level !== 'de
       <div class="block__footer">
         <ReportButton topicId={topic.id} topicTitle={topic.title} targetId={id} targetTitle={title} version={version} />
       </div>
+    )
+  }
+  {
+    topic?.context && attached.length > 0 && (
+      <QuestionList
+        client:visible
+        topic={topic.context}
+        level={topic.level}
+        questions={attached}
+        mode="learn"
+        base={topic.base ?? ''}
+        runnerUrl={topic.runnerUrl ?? ''}
+        title="Проверьте себя"
+      />
     )
   }
 </section>

@@ -9,7 +9,8 @@ import PreviewBanner from '../components/PreviewBanner.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import { t } from '../i18n/index.ts';
-import { previewPr, url } from '../lib/site.ts';
+import { databaseName, previewPr, url } from '../lib/site.ts';
+import { progressFlagKey } from '../lib/learning/flag.ts';
 import { scriptHash } from '../lib/csp.ts';
 import themeInit from '../scripts/theme-init.js?raw';
 import { runnerScriptHash } from '../sandbox/runner-page.ts';
@@ -38,6 +39,10 @@ Astro.csp?.insertScriptHash(scriptHash(themeInitCode));
 // странице приложения он ничего не делает — выполняет код, только если его
 // источник непрозрачный (src/sandbox/runner.js).
 Astro.csp?.insertScriptHash(runnerScriptHash());
+// Отметка «есть прогресс» до отрисовки: главная заранее оставляет место под
+// «Продолжить», и карточка не сдвигает страницу (CLS ≤ 0,1 из ТЗ).
+const progressFlagCode = `(function(){try{if(localStorage.getItem(${JSON.stringify(progressFlagKey(databaseName))}))document.documentElement.setAttribute('data-progress','');}catch(e){}})();`;
+Astro.csp?.insertScriptHash(scriptHash(progressFlagCode));
 ---
 
 <!doctype html>
@@ -56,6 +61,7 @@ Astro.csp?.insertScriptHash(runnerScriptHash());
     <link rel="preload" href={interCyrillic} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
     <script is:inline set:html={themeInitCode} />
+    <script is:inline set:html={progressFlagCode} />
   </head>
   <body>
     <a class="skip-link" href="#main">{t('nav.skip')}</a>

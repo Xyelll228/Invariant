@@ -32,6 +32,15 @@ const { module, pages, summaries = false } = Astro.props;
             {page?.draft && <span class="badge">черновик</span>}
             {!page && module.waves.length > 1 && <span class="muted module-topics__wave">волна {topic.wave}</span>}
           </span>
+          {page && (
+            <span class="module-topics__states">
+              {page.levels.map((level) => (
+                <span class="module-topics__state" data-state-holder hidden>
+                  {level.title}: <span data-level-state={`${topic.id}:${level.level}`} />
+                </span>
+              ))}
+            </span>
+          )}
           {page && summaries && <span class="module-topics__summary muted">{page.topic.summary}</span>}
         </li>
       );
@@ -39,7 +48,19 @@ const { module, pages, summaries = false } = Astro.props;
   }
 </ol>
 
+<script>
+  import '../../scripts/progress-marks.ts';
+</script>
+
 <style>
+  .module-topics__states {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
+    font-size: var(--text-small);
+    color: var(--color-text-muted);
+  }
+
   .module-topics {
     padding-left: 1.75rem;
   }
