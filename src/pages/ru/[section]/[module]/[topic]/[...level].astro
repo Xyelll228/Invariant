@@ -12,6 +12,8 @@ import PropertiesTable from '../../../../../components/topic/PropertiesTable.ast
 import TopicSources from '../../../../../components/topic/TopicSources.astro';
 import TopicTerms from '../../../../../components/topic/TopicTerms.astro';
 import ReportDialog from '../../../../../components/report/ReportDialog.astro';
+import BlockTools from '../../../../../components/content/BlockTools.astro';
+import NoteSlot from '../../../../../components/content/NoteSlot.astro';
 import LevelCheck from '../../../../../components/learn/LevelCheck.tsx';
 import LevelProgress from '../../../../../components/learn/LevelProgress.tsx';
 import QuestionList from '../../../../../components/learn/QuestionList.tsx';
@@ -83,7 +85,7 @@ const base = url();
 const runnerUrl = url('sandbox/runner.html');
 
 // Компоненты текста темы читают тему и уровень из Astro.locals (src/env.d.ts).
-Astro.locals.topic = { id: topic.id, title: topic.title, level, dir: page.dir, byBlock, context, base, runnerUrl };
+Astro.locals.topic = { id: topic.id, title: topic.title, level, dir: page.dir, topicPath: page.path, levelPath: current.path, byBlock, context, base, runnerUrl };
 
 const module = catalog.module;
 const section = module.section;
@@ -147,6 +149,13 @@ const levelTitle = `${topic.title}: ${current.title}`;
         </dd>
       </div>
     </dl>
+
+    <div class="topic__tools">
+      <button type="button" class="block-tool" data-block-note="" data-block-title={topic.title} data-block-path={page.path} aria-haspopup="dialog">
+        Заметка к теме
+      </button>
+    </div>
+    <NoteSlot blockId="" />
 
     <LevelTabs topicId={topic.id} levels={page.levels} current={level} />
 
@@ -212,6 +221,7 @@ const levelTitle = `${topic.title}: ${current.title}`;
     {page.sources && <TopicSources sources={page.sources} />}
   </article>
   <ReportDialog />
+  <BlockTools topicId={topic.id} />
 </BaseLayout>
 
 <script>

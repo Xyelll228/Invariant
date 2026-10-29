@@ -403,7 +403,8 @@ legend {
 
 /* «Нашёл ошибку»: тихая текстовая кнопка у блока, термина и задания. */
 
-.report-button {
+.report-button,
+.block-tool {
   display: inline-flex;
   align-items: center;
   min-height: var(--tap);
@@ -420,9 +421,58 @@ legend {
   cursor: pointer;
 }
 
-.report-button:hover {
+.report-button:hover,
+.block-tool:hover {
   color: var(--color-text);
   text-decoration-thickness: 2px;
+}
+
+/* Окна: «Нашёл ошибку», заметка, своя карточка. */
+.report-dialog {
+  width: min(36rem, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100vh - 2 * var(--space-4));
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: var(--space-5);
+}
+
+.report-dialog::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.report-dialog__title {
+  margin-top: 0;
+}
+
+.report-dialog textarea + label {
+  display: block;
+  margin-top: var(--space-3);
+}
+
+.report-dialog__hint {
+  font-size: var(--text-small);
+  margin-top: var(--space-3);
+}
+
+/* Заметка к теме или блоку: текст человека, переносы строк сохраняются. */
+.block-note {
+  border-left: 4px solid var(--color-border-strong);
+  padding: var(--space-2) var(--space-4);
+  margin: var(--space-3) 0;
+  background: var(--color-surface);
+}
+
+.block-note__label {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-small);
+  font-weight: 650;
+}
+
+.block-note__text {
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 /* Служебное */

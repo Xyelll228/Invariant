@@ -24,7 +24,8 @@ export interface Evaluation {
 
 export interface RankedItem {
   title: string;
-  kind: 'topic' | 'term' | 'block';
+  /** note — личные заметки; в контрольных запросах их нет. */
+  kind: 'topic' | 'term' | 'block' | 'note';
 }
 
 /** search возвращает выдачу в порядке показа; место считается внутри группы ответа. */

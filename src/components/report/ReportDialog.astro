@@ -110,24 +110,7 @@ import { repositoryUrl, url } from '../../lib/site.ts';
 </script>
 
 <style>
-  .report-dialog {
-    width: min(36rem, calc(100vw - 2 * var(--space-4)));
-    max-height: calc(100vh - 2 * var(--space-4));
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius);
-    background: var(--color-bg);
-    color: var(--color-text);
-    padding: var(--space-5);
-  }
-
-  .report-dialog::backdrop {
-    background: rgb(0 0 0 / 55%);
-  }
-
-  .report-dialog__title {
-    margin-top: 0;
-  }
-
+  /* Окно, заголовок и подсказка — общие стили окон в base.css (.report-dialog). */
   .report-dialog__facts {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -145,10 +128,5 @@ import { repositoryUrl, url } from '../../lib/site.ts';
 
   .report-dialog__facts [hidden] {
     display: none;
-  }
-
-  .report-dialog__hint {
-    font-size: var(--text-small);
-    margin-top: var(--space-3);
   }
 </style>

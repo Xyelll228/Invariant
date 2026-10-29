@@ -126,3 +126,7 @@
   outline: 3px solid var(--color-text);
   outline-offset: 2px;
 }
+
+.user-card__text {
+  white-space: pre-wrap;
+}

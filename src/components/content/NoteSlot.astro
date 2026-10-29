@@ -1,0 +1,17 @@
+---
+/**
+ * Место под заметку к теме или блоку. Заметки хранятся только в браузере,
+ * поэтому текст подставляет скрипт заметок (src/scripts/block-tools.ts).
+ */
+interface Props {
+  /** id блока; пустая строка — заметка ко всей теме. */
+  blockId: string;
+}
+
+const { blockId } = Astro.props;
+---
+
+<aside class="block-note" data-note-for={blockId} aria-label="Ваша заметка" hidden>
+  <p class="block-note__label">Ваша заметка</p>
+  <p class="block-note__text" data-note-text></p>
+</aside>

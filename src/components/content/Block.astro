@@ -9,6 +9,7 @@
 import type { BlockKind } from '../../content/schema.ts';
 import QuestionList from '../learn/QuestionList.tsx';
 import ReportButton from '../report/ReportButton.astro';
+import NoteSlot from './NoteSlot.astro';
 
 interface Props {
   id: string;
@@ -51,9 +52,34 @@ const attached = topic?.byBlock?.[id] ?? [];
   }
   {
     topic && (
-      <div class="block__footer">
-        <ReportButton topicId={topic.id} topicTitle={topic.title} targetId={id} targetTitle={title} version={version} />
-      </div>
+      <>
+        <NoteSlot blockId={id} />
+        <div class="block__footer">
+          <ReportButton topicId={topic.id} topicTitle={topic.title} targetId={id} targetTitle={title} version={version} />
+          <button
+            type="button"
+            class="block-tool"
+            data-block-note={id}
+            data-block-title={title}
+            data-block-path={`${topic.levelPath ?? ''}#${id}`}
+            aria-label={`Заметка: ${title}`}
+            aria-haspopup="dialog"
+          >
+            Заметка
+          </button>
+          <button
+            type="button"
+            class="block-tool"
+            data-block-card={id}
+            data-block-title={title}
+            data-block-path={`${topic.levelPath ?? ''}#${id}`}
+            aria-label={`Сделать карточку: ${title}`}
+            aria-haspopup="dialog"
+          >
+            Сделать карточку
+          </button>
+        </div>
+      </>
     )
   }
   {
@@ -125,6 +151,9 @@ const attached = topic?.byBlock?.[id] ?? [];
   }
 
   .block__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
     margin-top: var(--space-2);
   }
 </style>

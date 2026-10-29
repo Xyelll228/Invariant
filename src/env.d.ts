@@ -26,6 +26,9 @@ declare namespace App {
       level: 'fundament' | 'base' | 'depth';
       /** Папка темы относительно content/ru. */
       dir: string;
+      /** Адреса темы и текущего уровня без base: к ним ведут заметки и свои карточки. */
+      topicPath?: string;
+      levelPath?: string;
       /** Задания уровня, которые стоят после блоков: id блока → задания. */
       byBlock?: Record<string, import('./lib/learning/question-types.ts').PreparedQuestion[]>;
       /** Тема для островов с заданиями. */

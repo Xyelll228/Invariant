@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type MiniSearch from 'minisearch';
-import { groupHits, KIND_TITLES, loadIndex, searchDocs, SEARCH_INDEX_VERSION, type SearchDoc, type SearchIndexFile } from '../../lib/search/engine.ts';
+import { buildIndex, groupHits, KIND_TITLES, loadIndex, searchDocs, SEARCH_INDEX_VERSION, type SearchDoc, type SearchIndexFile } from '../../lib/search/engine.ts';
 import type { CompiledSynonyms } from '../../lib/search/synonyms.ts';
 import './search.css';
 
@@ -22,15 +22,31 @@ const PER_GROUP = 5;
 
 type LoadState = { status: 'idle' | 'loading' } | { status: 'ready'; index: MiniSearch<SearchDoc>; synonyms: CompiledSynonyms } | { status: 'error'; message: string };
 
+/**
+ * Заметки и свои карточки человека лежат только в браузере: их маленький индекс
+ * строится здесь же. Хранилище подключается отдельным файлом — только в поиске.
+ */
+async function loadPersonalIndex(): Promise<MiniSearch<SearchDoc> | null> {
+  try {
+    const { personalSearchDocs } = await import('../../lib/learning/personal.ts');
+    const docs = await personalSearchDocs();
+    return docs.length > 0 ? buildIndex(docs) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function SearchBox({ indexUrl, base }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
   const [state, setState] = useState<LoadState>({ status: 'idle' });
+  const [personal, setPersonal] = useState<MiniSearch<SearchDoc> | null>(null);
   const loading = useRef<Promise<void> | null>(null);
 
   function ensureIndex(): void {
     if (loading.current) return;
     setState({ status: 'loading' });
+    void loadPersonalIndex().then(setPersonal);
     loading.current = (async () => {
       try {
         const response = await fetch(indexUrl);
@@ -52,8 +68,9 @@ export default function SearchBox({ indexUrl, base }: SearchBoxProps) {
 
   const groups = useMemo(() => {
     if (state.status !== 'ready' || debounced.trim() === '') return null;
-    return groupHits(searchDocs(state.index, debounced, state.synonyms, 60));
-  }, [state, debounced]);
+    const own = personal ? searchDocs(personal, debounced, state.synonyms, 20) : [];
+    return groupHits([...searchDocs(state.index, debounced, state.synonyms, 60), ...own]);
+  }, [state, personal, debounced]);
 
   const found = groups?.reduce((sum, group) => sum + group.hits.length, 0) ?? 0;
 

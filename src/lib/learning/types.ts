@@ -122,20 +122,29 @@ export interface ErrorRecord {
   updatedAt: number;
 }
 
+/** Заметка к теме (blockId — пустая строка) или к блоку. Одна на тему или блок. */
 export interface NoteRecord {
   id: string;
   topicId: string;
   blockId: string;
   text: string;
   updatedAt: number;
+  /** Адрес блока или темы без base и их название — для поиска по заметкам. */
+  path?: string;
+  title?: string;
 }
 
+/** Своя карточка: вопрос и ответ пишет сам человек; повторяется наравне с навыками. */
 export interface UserCardRecord {
   id: string;
   question: string;
   answer: string;
   blockId: string | null;
   updatedAt: number;
+  topicId?: string;
+  /** Адрес блока, из которого сделана карточка, без base, и его название. */
+  path?: string;
+  blockTitle?: string;
 }
 
 export interface AiChatRecord {
