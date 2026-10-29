@@ -99,6 +99,27 @@ describe('объединение копий с двух устройств', () 
     expect(merged).toEqual({ topicId: 't', level: 'base', status: 'mastered', completedSteps: ['code', 'pre', 'read'], paused: true, updatedAt: 9 });
   });
 
+  it('прогресс: пройденные задания складываются, сданная проверка важнее несданной; порядок устройств не важен', () => {
+    const base: ProgressRecord = { topicId: 't', level: 'fundament', status: 'in-progress', completedSteps: [], paused: false, updatedAt: 1 };
+    const passed = { at: 100, correct: 5, total: 5, passed: true };
+    const failed = { at: 200, correct: 2, total: 5, passed: false };
+    const local = { ...emptyData(), progress: [{ ...base, done: ['t.q.a', 't.q.b'], check: passed, updatedAt: 5 }] };
+    const incoming = {
+      ...emptyData(),
+      progress: [{ ...base, done: ['t.q.c'], check: failed, delayed: { at: 300, correct: 3, total: 3, passed: true }, lastQuestion: 't.q.c', updatedAt: 9 }],
+    };
+    const [merged] = mergeData(local, incoming, scheduler).progress;
+    expect(merged?.done).toEqual(['t.q.a', 't.q.b', 't.q.c']);
+    expect(merged?.check).toEqual(passed);
+    expect(merged?.delayed?.passed).toBe(true);
+    expect(merged?.lastQuestion).toBe('t.q.c');
+    expect(mergeData(incoming, local, scheduler).progress).toEqual(mergeData(local, incoming, scheduler).progress);
+    // Две проверки в одно и то же время с разным счётом — выбор не зависит от порядка.
+    const x = { ...emptyData(), progress: [{ ...base, check: { at: 7, correct: 4, total: 5, passed: true } }] };
+    const y = { ...emptyData(), progress: [{ ...base, check: { at: 7, correct: 5, total: 5, passed: true } }] };
+    expect(mergeData(x, y, scheduler).progress).toEqual(mergeData(y, x, scheduler).progress);
+  });
+
   it('заметки: побеждает более поздняя правка, настройки остаются от текущего устройства', () => {
     const local = { ...emptyData(), settings: [{ key: 'retention', value: 0.85 }], notes: [{ id: 'n', topicId: 't', blockId: 'b', text: 'старая', updatedAt: 1 }] };
     const incoming = { ...emptyData(), settings: [{ key: 'retention', value: 0.95 }], notes: [{ id: 'n', topicId: 't', blockId: 'b', text: 'новая', updatedAt: 2 }] };

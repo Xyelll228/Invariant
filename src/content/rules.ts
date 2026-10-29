@@ -1,7 +1,7 @@
 /**
  * Правила шаблона темы (ТЗ, «Из чего состоит тема» и чек-лист «Тема готова»).
  */
-import type { BlockKind, Level, Topic } from './schema.ts';
+import type { BlockKind, Level, Step, Topic } from './schema.ts';
 
 /** Обязательные блоки текста на уровне — по виду темы. */
 export function requiredBlocks(topic: Pick<Topic, 'kind' | 'confusableWith'>, level: Level): BlockKind[] {
@@ -16,9 +16,42 @@ export function requiredBlocks(topic: Pick<Topic, 'kind' | 'confusableWith'>, le
   return kinds;
 }
 
+/**
+ * Шаги цикла на уровне (ТЗ, «Шаги по уровням»). Фундамент: предвопросы,
+ * «понять», «разобрать» и из «написать самому» — сборка кода из строк. База —
+ * все шаги. Глубина: полное доказательство, точный подсчёт, тонкие ошибки;
+ * разобранный пример на Глубине не обязателен. Шаг 7 «Повторять» идёт через FSRS.
+ */
+export function requiredSteps(level: Level): Step[] {
+  if (level === 'fundament') return [0, 1, 2, 4];
+  if (level === 'base') return [0, 1, 2, 3, 4, 5, 6];
+  return [0, 1, 3, 4, 5, 6];
+}
+
+/** Шаги, которые тема пропускает на уровне с указанной причиной. */
+export function skippedSteps(topic: Pick<Topic, 'skippedSteps'>, level: Level): Set<number> {
+  return new Set(topic.skippedSteps.filter((item) => item.levels.includes(level)).map((item) => item.step));
+}
+
+/** Шаги уровня, которые нужно пройти: обязательные без пропущенных. */
+export function levelSteps(topic: Pick<Topic, 'skippedSteps'>, level: Level): Step[] {
+  const skipped = skippedSteps(topic, level);
+  return requiredSteps(level).filter((step) => !skipped.has(step));
+}
+
 /** Блоки, которые тема пропускает с указанной причиной. */
 export function skippedBlocks(topic: Pick<Topic, 'skipped'>, level: Level): Set<BlockKind> {
   return new Set(topic.skipped.filter((item) => item.levels.includes(level)).map((item) => item.block));
+}
+
+/**
+ * Состав итоговой проверки (ТЗ, «Когда уровень считается освоенным»): есть
+ * свободный ввод, а у алгоритма — код: на Фундаменте собранный из строк,
+ * на Базе и Глубине написанный самостоятельно.
+ */
+export function requiredCheckTypes(topic: Pick<Topic, 'kind'>, level: Level): ('free' | 'parsons' | 'write')[] {
+  if (topic.kind !== 'algorithm') return ['free'];
+  return ['free', level === 'fundament' ? 'parsons' : 'write'];
 }
 
 /** Минимум заданий на уровне для публикации: 10 вопросов или шаблонов, 4 типа, есть свободный ввод. */

@@ -3,7 +3,7 @@
  * для обмена. Каждый шаг сверяется со следом эталона. При ошибке показывается
  * правильный шаг и причина; шаг можно повторить. Итог — число верных шагов.
  */
-import { useId, useMemo, useState } from 'preact/hooks';
+import { useEffect, useId, useMemo, useRef, useState } from 'preact/hooks';
 import type { TargetedSubmitEvent } from 'preact';
 import { recordTrace } from '../../lib/trace.ts';
 import { arrayAlgorithms, type ArrayAlgorithmId } from '../../lib/viz/algorithms.ts';
@@ -12,9 +12,20 @@ import { limitsHint, parseArrayInput } from '../../lib/viz/input.ts';
 import { ArrayBars } from './ArrayBars.tsx';
 import './viz.css';
 
+export interface SimulationStats {
+  firstTry: number;
+  errors: number;
+  shown: number;
+  steps: number;
+}
+
 export interface ArraySimulationProps {
   algorithm: ArrayAlgorithmId;
   input: number[];
+  /** Вызывается один раз, когда массив упорядочен: итог для задания «Ручная симуляция». */
+  onFinish?: (stats: SimulationStats) => void;
+  /** В задании свои данные не вводятся: проверяется заданный вариант. */
+  ownData?: boolean;
 }
 
 interface Feedback {
@@ -22,7 +33,7 @@ interface Feedback {
   text: string;
 }
 
-export default function ArraySimulation({ algorithm, input: initialInput }: ArraySimulationProps) {
+export default function ArraySimulation({ algorithm, input: initialInput, onFinish, ownData = true }: ArraySimulationProps) {
   const spec = arrayAlgorithms[algorithm];
   const [input, setInput] = useState<number[]>(initialInput);
   const swaps = useMemo(
@@ -42,6 +53,12 @@ export default function ArraySimulation({ algorithm, input: initialInput }: Arra
 
   const expected = swaps[done];
   const finished = done >= swaps.length;
+  const reported = useRef(false);
+  useEffect(() => {
+    if (!finished || reported.current || !onFinish) return;
+    reported.current = true;
+    onFinish({ ...stats, steps: swaps.length });
+  }, [finished, onFinish, stats, swaps.length]);
 
   const restart = (next: number[]) => {
     setInput(next);
@@ -52,6 +69,7 @@ export default function ArraySimulation({ algorithm, input: initialInput }: Arra
     setFeedback(null);
     setStats({ firstTry: 0, errors: 0, shown: 0 });
     setFailedCurrent(false);
+    reported.current = false;
   };
 
   const applySwap = (i: number, j: number) => {
@@ -163,6 +181,7 @@ export default function ArraySimulation({ algorithm, input: initialInput }: Arra
           Начать заново
         </button>
       </div>
+      {ownData && (
       <form class="viz-own-data" onSubmit={applyInput}>
         <label>
           Свои данные
@@ -182,6 +201,7 @@ export default function ArraySimulation({ algorithm, input: initialInput }: Arra
           {inputError ?? limitsHint({ minLength: 3, maxLength: 8, min: 0, max: 99 })}
         </p>
       </form>
+      )}
     </section>
   );
 }

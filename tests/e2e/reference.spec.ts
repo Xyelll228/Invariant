@@ -93,7 +93,7 @@ test('«Нашёл ошибку» открывает форму с темой, �
     selection?.removeAllRanges();
     selection?.addRange(range);
   });
-  await block.getByRole('button', { name: /Нашёл ошибку/ }).click();
+  await block.locator('.block__footer').getByRole('button', { name: /Нашёл ошибку/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Нашёл ошибку' });
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Сортировка вставками — Идея');

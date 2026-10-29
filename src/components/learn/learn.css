@@ -1,0 +1,319 @@
+/* Задания, шаги цикла, проверки уровня. Монохром: смысл несут слова и форма, а не цвет. */
+
+.question {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin: 0 0 var(--space-4);
+  background: var(--color-bg);
+  scroll-margin-top: var(--space-5);
+}
+
+.question--answered {
+  border-color: var(--color-border-strong);
+}
+
+.question__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.question__prompt {
+  font-weight: 600;
+  margin: 0 0 var(--space-3);
+}
+
+.question__code {
+  margin: 0 0 var(--space-3);
+}
+
+.question fieldset {
+  margin: 0 0 var(--space-3);
+}
+
+.question__options {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.question__options .choice {
+  align-items: flex-start;
+  padding: var(--space-1) 0;
+}
+
+.question__options .choice input {
+  margin-top: 0.2rem;
+  flex: none;
+}
+
+.question__confidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-5);
+}
+
+.question__confidence legend {
+  width: 100%;
+}
+
+.question__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
+.question__hints {
+  margin: 0 0 var(--space-3);
+}
+
+.question__hints ol {
+  margin: var(--space-2) 0 0;
+}
+
+.question__feedback,
+.question__reference {
+  border-left: 4px solid var(--color-text);
+  padding: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-3);
+  background: var(--color-surface);
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+}
+
+.question__feedback > :last-child,
+.question__reference > :last-child {
+  margin-bottom: 0;
+}
+
+.question__reference {
+  border-left-style: dashed;
+}
+
+.question__verdict {
+  font-weight: 700;
+}
+
+.question__note {
+  margin: var(--space-3) 0 0;
+}
+
+.question__note textarea {
+  min-height: 4.5rem;
+}
+
+.question__footer {
+  margin-top: var(--space-2);
+}
+
+/* Порядок строк: задачи Парсонса и шаги доказательства. Перетаскивание не нужно — всё делается кнопками. */
+
+.order {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+}
+
+@media (min-width: 52rem) {
+  .order {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.order__column {
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-small);
+  padding: var(--space-2);
+  min-height: 6rem;
+}
+
+.order__title {
+  font-size: var(--text-small);
+  font-weight: 650;
+  margin: 0 0 var(--space-2);
+}
+
+.order__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.order__list li + li {
+  margin-top: 0;
+}
+
+.order__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  padding: var(--space-1);
+  background: var(--color-bg);
+}
+
+.order__text {
+  flex: 1 1 12rem;
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  white-space: pre-wrap;
+  padding: 0 var(--space-1);
+}
+
+.order__text--prose {
+  font-family: var(--font-sans);
+  font-size: 1em;
+}
+
+.order__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.order__buttons .button {
+  min-width: var(--tap);
+  padding: 0 var(--space-2);
+}
+
+/* Отступы задачи Парсонса: ширина шага — две позиции кода. */
+.order__indent-0 { padding-left: var(--space-1); }
+.order__indent-1 { padding-left: calc(var(--space-1) + 2ch); }
+.order__indent-2 { padding-left: calc(var(--space-1) + 4ch); }
+.order__indent-3 { padding-left: calc(var(--space-1) + 6ch); }
+.order__indent-4 { padding-left: calc(var(--space-1) + 8ch); }
+.order__indent-5 { padding-left: calc(var(--space-1) + 10ch); }
+.order__indent-6 { padding-left: calc(var(--space-1) + 12ch); }
+
+/* «Найти ошибку»: строки кода с выбором. */
+
+.code-lines {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  overflow-x: auto;
+}
+
+.code-lines li + li {
+  margin-top: 0;
+}
+
+.code-lines label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  padding: 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  font-weight: 400;
+  white-space: pre;
+  cursor: pointer;
+}
+
+.code-lines input {
+  flex: none;
+  accent-color: var(--color-text);
+}
+
+.code-lines__number {
+  color: var(--color-text-subtle);
+  min-width: 2ch;
+  text-align: right;
+}
+
+.code-lines__selected {
+  background: var(--color-surface-strong);
+}
+
+/* Шаги цикла и состояние уровня. */
+
+.level-progress {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+  margin: 0 0 var(--space-6);
+}
+
+.level-progress__status {
+  font-weight: 650;
+  margin: 0 0 var(--space-2);
+}
+
+.level-progress__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-2);
+}
+
+.level-progress__steps li + li {
+  margin-top: 0;
+}
+
+.level-progress__step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  font-size: var(--text-small);
+  text-decoration: none;
+}
+
+.level-progress__step--done {
+  background: var(--color-inverse-bg);
+  border-color: var(--color-inverse-bg);
+  color: var(--color-inverse-text);
+}
+
+.level-progress__conditions {
+  margin: 0;
+  font-size: var(--text-small);
+}
+
+.step-section {
+  margin: var(--space-6) 0;
+}
+
+.check-panel {
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin: var(--space-6) 0;
+}
+
+.check-panel > :last-child {
+  margin-bottom: 0;
+}
+
+.check-panel__title {
+  margin-top: 0;
+}
+
+.question-list {
+  margin: var(--space-4) 0 var(--space-6);
+}
+
+.question-list__title {
+  margin: 0 0 var(--space-3);
+}
+
+.question-list__done {
+  font-size: var(--text-small);
+  margin: 0 0 var(--space-1);
+}

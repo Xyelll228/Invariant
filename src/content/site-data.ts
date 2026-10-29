@@ -7,7 +7,9 @@
  * правок и сборке для автопроверок он виден с пометкой «черновик».
  */
 import { getCollection, type CollectionEntry } from 'astro:content';
+import type { PreparedTopic } from '../lib/learning/question-types.ts';
 import { showDrafts } from '../lib/site.ts';
+import { prepareTopic, type MutantLike } from './prepare.ts';
 import { catalogTopics, folders } from './catalog-data.ts';
 import type { TopicWithModule } from './catalog.ts';
 import { levelPath, modulePath, sectionPath, topicPath } from './paths.ts';
@@ -134,4 +136,36 @@ let cached: Promise<SiteData> | null = null;
 export function loadSite(): Promise<SiteData> {
   cached ??= build();
   return cached;
+}
+
+const referenceModules = import.meta.glob<Record<string, unknown>>('/content/ru/**/reference.ts', { eager: true });
+const mutantModules = import.meta.glob<{ mutants?: MutantLike[] }>('/content/ru/**/mutants.ts', { eager: true });
+const vectorFiles = import.meta.glob<{ inputs?: unknown[][] }>('/content/ru/**/vectors.json', { eager: true, import: 'default' });
+const prepared = new Map<string, PreparedTopic>();
+
+/**
+ * Задания темы для браузера: всё вычислимое уже вычислено (src/content/prepare.ts).
+ * Ошибка подготовки останавливает сборку с понятным текстом.
+ */
+export async function preparedTopicFor(topicId: string): Promise<PreparedTopic> {
+  const cached = prepared.get(topicId);
+  if (cached) return cached;
+  const site = await loadSite();
+  const page = site.pages.get(topicId);
+  if (!page) throw new Error(`Нет страницы темы ${topicId}`);
+  const blockPaths = new Map([...site.blocks.entries()].map(([id, block]) => [id, block.path]));
+  const levelPaths = Object.fromEntries(page.levels.map((level) => [level.level, level.path]));
+  const root = `/content/ru/${page.dir}`;
+  const result = prepareTopic({
+    topic: page.topic,
+    dir: page.dir,
+    questions: page.questions,
+    levelPaths,
+    blockPaths,
+    reference: referenceModules[`${root}/reference.ts`],
+    mutants: mutantModules[`${root}/mutants.ts`]?.mutants ?? [],
+    vectors: vectorFiles[`${root}/vectors.json`]?.inputs ?? [],
+  });
+  prepared.set(topicId, result);
+  return result;
 }

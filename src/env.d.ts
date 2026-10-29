@@ -26,6 +26,13 @@ declare namespace App {
       level: 'fundament' | 'base' | 'depth';
       /** Папка темы относительно content/ru. */
       dir: string;
+      /** Задания уровня, которые стоят после блоков: id блока → задания. */
+      byBlock?: Record<string, import('./lib/learning/question-types.ts').PreparedQuestion[]>;
+      /** Тема для островов с заданиями. */
+      context?: import('./lib/learning/question-types.ts').TopicContext;
+      /** base сайта и адрес песочницы — для островов с заданиями. */
+      base?: string;
+      runnerUrl?: string;
     };
   }
 }

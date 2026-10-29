@@ -29,9 +29,15 @@ import {
   READY_MIN_TYPES,
   childIdPrefix,
   findCycle,
+  levelSteps,
   requiredBlocks,
+  requiredCheckTypes,
+  requiredSteps,
   skippedBlocks,
 } from '../src/content/rules.ts';
+import { prepareTopic, PrepareError, type MutantLike } from '../src/content/prepare.ts';
+import { DELAYED_QUESTIONS } from '../src/lib/learning/progress.ts';
+import { createRandom } from '../src/lib/random.ts';
 import {
   ADAPTABLE_LICENSES,
   BLOCK_KINDS,
@@ -39,8 +45,11 @@ import {
   LEVELS,
   LEVEL_TITLES,
   REFERENCE_LICENSES,
+  STEP_TITLES,
+  TYPE_FORMATS,
   type Level,
   type QuestionsFile,
+  type Step,
   type Term,
   type Topic,
   levelFrontmatterSchema,
@@ -149,6 +158,8 @@ interface LoadedTopic {
   dir: string;
   file: string;
   blockIds: Set<string>;
+  /** Уровень каждого блока: задание ставится после блока своего уровня. */
+  blockLevels: Map<string, Level>;
 }
 
 const topics = new Map<string, LoadedTopic>();
@@ -186,7 +197,7 @@ for (const dir of topicDirs) {
     continue;
   }
   claimId(topic.id, file);
-  topics.set(topic.id, { topic, dir, file, blockIds: new Set() });
+  topics.set(topic.id, { topic, dir, file, blockIds: new Set(), blockLevels: new Map() });
 }
 
 for (const loaded of topics.values()) {
@@ -292,6 +303,7 @@ for (const loaded of topics.values()) {
       } else {
         claimId(block.id, levelFile);
         loaded.blockIds.add(block.id);
+        loaded.blockLevels.set(block.id, level);
       }
       if (!(BLOCK_KINDS as readonly string[]).includes(block.kind)) {
         report('error', levelFile, `неизвестный вид блока «${block.kind}»; допустимы: ${BLOCK_KINDS.join(', ')}`, block.line);
@@ -390,12 +402,13 @@ for (const loaded of topics.values()) {
   if (!data) continue;
   if (data.topic !== topic.id) report('error', file, `topic: ${data.topic}, а тема — ${topic.id}`);
 
-  const skills = new Set<string>();
+  const skills = new Map<string, Level>();
   for (const skill of data.skills) {
     if (!skill.id.startsWith(childIdPrefix(topic.id, 's'))) report('error', file, `id навыка начинается с ${childIdPrefix(topic.id, 's')}: ${skill.id}`);
     claimId(skill.id, file);
-    skills.add(skill.id);
+    skills.set(skill.id, skill.level);
     if (!topic.levels.includes(skill.level)) report('error', file, `навык ${skill.id}: у темы нет уровня ${skill.level}`);
+    for (const problem of checkProse(proseOf(skill.title), forbiddenVariants)) report('error', file, problem.message);
   }
   const misconceptions = new Set<string>();
   for (const item of data.misconceptions) {
@@ -403,60 +416,198 @@ for (const loaded of topics.values()) {
     claimId(item.id, file);
     misconceptions.add(item.id);
     if (item.block && !loaded.blockIds.has(item.block)) report('error', file, `заблуждение ${item.id}: блока ${item.block} нет в текстах темы`);
+    if (item.prerequisite && !registry.has(item.prerequisite)) report('error', file, `заблуждение ${item.id}: темы ${item.prerequisite} нет в каталоге`);
     for (const problem of checkProse(proseOf(item.text, item.explanation), forbiddenVariants)) report('error', file, problem.message);
   }
 
   let generators: Record<string, unknown> = {};
-  if (data.questions.some((question) => question.type === 'generated')) {
+  if (data.questions.some((question) => question.format === 'generated')) {
     const generatorsFile = join(dir, 'generators.ts');
     if (!existsSync(generatorsFile)) report('error', file, 'есть задания с генератором, но нет generators.ts');
     else generators = (await import(pathToFileURL(generatorsFile).href)) as Record<string, unknown>;
   }
+  let mutants: MutantLike[] = [];
+  if (existsSync(join(dir, 'mutants.ts'))) {
+    mutants = ((await import(pathToFileURL(join(dir, 'mutants.ts')).href)) as { mutants?: typeof mutants }).mutants ?? [];
+  }
 
-  const perLevel = new Map<Level, { total: number; types: Set<string>; pre: number }>();
+  const checkOptions = (id: string, options: readonly { text: string; correct?: boolean; misconception?: string }[], computed: boolean, multiple = false): void => {
+    if (!computed) {
+      const correct = options.filter((option) => option.correct).length;
+      if (!multiple && correct !== 1) report('error', file, `вопрос ${id}: верных вариантов ${correct}, нужен ровно один`);
+      if (multiple && correct < 1) report('error', file, `вопрос ${id}: нет ни одного верного варианта`);
+    } else if (options.some((option) => option.correct !== undefined)) {
+      report('error', file, `вопрос ${id}: у задания «Что выведет код» верный вариант вычисляет запуск кода — уберите correct`);
+    }
+    const texts = options.map((option) => option.text);
+    if (new Set(texts).size !== texts.length) report('error', file, `вопрос ${id}: варианты повторяются`);
+    for (const option of options) {
+      if (!computed && !option.correct && !option.misconception) report('error', file, `вопрос ${id}: у неверного варианта «${option.text}» нет заблуждения`);
+      if (option.misconception && !misconceptions.has(option.misconception)) report('error', file, `вопрос ${id}: заблуждения ${option.misconception} нет в misconceptions`);
+    }
+  };
+
+  interface LevelStats {
+    total: number;
+    types: Set<string>;
+    pre: number;
+    free: number;
+    graded: number;
+    steps: Set<number>;
+    checkTypes: Set<string>;
+    checkFree: boolean;
+  }
+  const perLevel = new Map<Level, LevelStats>();
   for (const question of data.questions) {
-    if (!question.id.startsWith(childIdPrefix(topic.id, 'q'))) report('error', file, `id вопроса начинается с ${childIdPrefix(topic.id, 'q')}: ${question.id}`);
-    claimId(question.id, file);
-    if (!topic.levels.includes(question.level)) report('error', file, `вопрос ${question.id}: у темы нет уровня ${question.level}`);
-    if (question.skill && !skills.has(question.skill)) report('error', file, `вопрос ${question.id}: навыка ${question.skill} нет в skills`);
+    const id = question.id;
+    if (!id.startsWith(childIdPrefix(topic.id, 'q'))) report('error', file, `id вопроса начинается с ${childIdPrefix(topic.id, 'q')}: ${id}`);
+    claimId(id, file);
+    if (!topic.levels.includes(question.level)) report('error', file, `вопрос ${id}: у темы нет уровня ${question.level}`);
 
-    const stats = perLevel.get(question.level) ?? { total: 0, types: new Set<string>(), pre: 0 };
-    stats.total++;
-    if (question.role === 'pre') stats.pre++;
-    perLevel.set(question.level, stats);
-
-    if (question.type === 'choice') {
-      stats.types.add('choice');
-      const correct = question.options.filter((option) => option.correct).length;
-      if (!question.multiple && correct !== 1) report('error', file, `вопрос ${question.id}: верных вариантов ${correct}, нужен ровно один`);
-      if (question.multiple && correct < 1) report('error', file, `вопрос ${question.id}: нет ни одного верного варианта`);
-      const texts = question.options.map((option) => option.text);
-      if (new Set(texts).size !== texts.length) report('error', file, `вопрос ${question.id}: варианты повторяются`);
-      for (const option of question.options) {
-        if (!option.correct && !option.misconception) report('error', file, `вопрос ${question.id}: у неверного варианта «${option.text}» нет заблуждения`);
-        if (option.misconception && !misconceptions.has(option.misconception)) {
-          report('error', file, `вопрос ${question.id}: заблуждения ${option.misconception} нет в misconceptions`);
-        }
-      }
-      for (const problem of checkProse(proseOf(question.prompt), forbiddenVariants)) report('error', file, problem.message);
-    } else if (question.type === 'free') {
-      stats.types.add('free');
-      for (const problem of checkProse(proseOf(question.prompt), forbiddenVariants)) report('error', file, problem.message);
+    // Роль, шаг, навык и место на странице
+    if (question.role === 'pre') {
+      if (question.step !== undefined && question.step !== 0) report('error', file, `вопрос ${id}: предвопрос — шаг 0`);
     } else {
-      stats.types.add(question.questionType);
-      if (typeof generators[question.generator] !== 'function') {
-        report('error', file, `вопрос ${question.id}: в generators.ts нет функции ${question.generator}`);
+      if (question.role === 'practice' && (question.step === undefined || question.step < 1)) report('error', file, `вопрос ${id}: укажите шаг цикла step: 1–6`);
+      if (question.role === 'check' && question.step !== undefined) report('error', file, `вопрос ${id}: у итоговой проверки шага нет`);
+      if (!question.skill) report('error', file, `вопрос ${id}: нет навыка skill — ответ не попадёт в повторение`);
+    }
+    if (question.skill) {
+      const level = skills.get(question.skill);
+      if (!level) report('error', file, `вопрос ${id}: навыка ${question.skill} нет в skills`);
+      else if (level !== question.level) report('error', file, `вопрос ${id}: навык ${question.skill} — с уровня ${level}, а вопрос — с уровня ${question.level}`);
+    }
+    if (question.block) {
+      const level = loaded.blockLevels.get(question.block);
+      if (!level) report('error', file, `вопрос ${id}: блока ${question.block} нет в текстах темы`);
+      else if (level !== question.level) report('error', file, `вопрос ${id}: блок ${question.block} — на уровне ${level}, а вопрос — ${question.level}`);
+      if (question.role !== 'practice') report('error', file, `вопрос ${id}: после блока ставятся только задания по ходу темы (role: practice)`);
+    }
+    if (!TYPE_FORMATS[question.type].includes(question.format)) {
+      report('error', file, `вопрос ${id}: тип «${question.type}» отвечается в форматах ${TYPE_FORMATS[question.type].join(', ')}, а не ${question.format}`);
+    }
+    for (const hint of question.hints) for (const problem of checkProse(proseOf(hint), forbiddenVariants)) report('error', file, problem.message);
+    if (question.explanation) for (const problem of checkProse(proseOf(question.explanation), forbiddenVariants)) report('error', file, problem.message);
+
+    // Формат ответа
+    let format: string = question.format;
+    switch (question.format) {
+      case 'choice':
+        checkOptions(id, question.options, question.type === 'output', question.multiple);
+        if (question.type === 'output' && !question.code) report('error', file, `вопрос ${id}: у задания «Что выведет код» нет кода code`);
+        for (const problem of checkProse(proseOf(question.prompt), forbiddenVariants)) report('error', file, problem.message);
+        break;
+      case 'free':
+        if (question.type === 'output') {
+          if (!question.code) report('error', file, `вопрос ${id}: у задания «Что выведет код» нет кода code`);
+          if (question.answers) report('error', file, `вопрос ${id}: ответ задания «Что выведет код» вычисляет запуск кода — уберите answers`);
+        } else if (!question.answers) report('error', file, `вопрос ${id}: нет верных ответов answers`);
+        for (const problem of checkProse(proseOf(question.prompt), forbiddenVariants)) report('error', file, problem.message);
+        break;
+      case 'order': {
+        const itemTexts = new Set(question.items.map((item) => item.text));
+        for (const distractor of question.distractors) {
+          if (itemTexts.has(distractor)) report('error', file, `вопрос ${id}: лишняя строка «${distractor}» совпадает со строкой ответа`);
+        }
+        if (new Set(question.distractors).size !== question.distractors.length) report('error', file, `вопрос ${id}: лишние строки повторяются`);
+        if (question.type === 'parsons' && !question.function && question.language === 'js') {
+          report('error', file, `вопрос ${id}: у задачи Парсонса на JS укажите function, solution и тесты — собранный код запускается при сборке`);
+        }
+        for (const variant of question.alternatives) {
+          if (variant.length !== question.items.length || new Set(variant).size !== variant.length || variant.some((item) => item >= question.items.length)) {
+            report('error', file, `вопрос ${id}: alternatives — перестановки номеров строк items`);
+          }
+        }
+        for (const problem of checkProse(proseOf(question.prompt), forbiddenVariants)) report('error', file, problem.message);
+        break;
+      }
+      case 'code':
+        if (question.solution === 'reference' && !topic.code) report('error', file, `вопрос ${id}: solution: reference — у темы нет эталона (code в topic.yaml)`);
+        if (question.hidden === 'vectors' && !existsSync(join(dir, 'vectors.json'))) report('error', file, `вопрос ${id}: hidden: vectors — у темы нет vectors.json`);
+        for (const problem of checkProse(proseOf(question.prompt), forbiddenVariants)) report('error', file, problem.message);
+        break;
+      case 'line': {
+        const mutant = mutants.find((item) => item.id === question.mutant);
+        if (!mutant) report('error', file, `вопрос ${id}: испорченной версии ${question.mutant} нет в mutants.ts`);
+        else if (!mutant.code || !mutant.bugLine) report('error', file, `вопрос ${id}: у испорченной версии ${question.mutant} нет кода code и строки bugLine`);
+        checkOptions(id, question.reasons, false);
+        for (const problem of checkProse(proseOf(question.prompt), forbiddenVariants)) report('error', file, problem.message);
+        break;
+      }
+      case 'self':
+        for (const problem of checkProse(proseOf(question.prompt, question.reference, ...question.criteria), forbiddenVariants)) report('error', file, problem.message);
+        break;
+      case 'simulation':
+        if (!(question.algorithm in arrayAlgorithms)) report('error', file, `вопрос ${id}: эталона ${question.algorithm} нет в src/lib/viz/algorithms.ts`);
+        break;
+      case 'generated': {
+        const generate = generators[question.generator];
+        if (typeof generate !== 'function') {
+          report('error', file, `вопрос ${id}: в generators.ts нет функции ${question.generator}`);
+          break;
+        }
+        try {
+          const variant = (generate as (random: ReturnType<typeof createRandom>) => { format?: string })(createRandom(1));
+          format = variant.format ?? 'choice';
+          if (!TYPE_FORMATS[question.type].includes(format as never) && format !== 'generated') {
+            report('error', file, `вопрос ${id}: генератор даёт формат ${format}, а тип «${question.type}» отвечается в форматах ${TYPE_FORMATS[question.type].join(', ')}`);
+          }
+        } catch (error) {
+          report('error', file, `вопрос ${id}: генератор ${question.generator} упал: ${(error as Error).message}`);
+        }
+        break;
       }
     }
+
+    const stats: LevelStats = perLevel.get(question.level) ?? { total: 0, types: new Set(), pre: 0, free: 0, graded: 0, steps: new Set(), checkTypes: new Set(), checkFree: false };
+    stats.total++;
+    stats.types.add(question.type);
+    if (format === 'free') stats.free++;
+    if (question.role === 'pre') {
+      stats.pre++;
+      stats.steps.add(0);
+    } else {
+      stats.graded++;
+      if (question.role === 'practice' && question.step !== undefined) stats.steps.add(question.step);
+      if (question.role === 'check') {
+        stats.checkTypes.add(question.type);
+        if (format === 'free') stats.checkFree = true;
+      }
+    }
+    perLevel.set(question.level, stats);
+  }
+
+  // Вычислимое — вычисляется: ответы «Что выведет код», тесты по эталону, код испорченной версии.
+  try {
+    const reference = topic.code && existsSync(join(dir, 'reference.ts')) ? ((await import(pathToFileURL(join(dir, 'reference.ts')).href)) as Record<string, unknown>) : undefined;
+    const vectors = existsSync(join(dir, 'vectors.json')) ? ((JSON.parse(readFileSync(join(dir, 'vectors.json'), 'utf8')) as { inputs?: unknown[][] }).inputs ?? []) : [];
+    prepareTopic({ topic, dir: relative(CONTENT, dir), questions: data, levelPaths: {}, blockPaths: new Map(), reference, mutants, vectors });
+  } catch (error) {
+    if (error instanceof PrepareError) report('error', file, `вопрос ${error.message}`);
+    else report('error', file, `задания не подготовить: ${(error as Error).message}`);
   }
 
   for (const level of topic.levels) {
-    const stats = perLevel.get(level) ?? { total: 0, types: new Set<string>(), pre: 0 };
+    const stats = perLevel.get(level) ?? { total: 0, types: new Set<string>(), pre: 0, free: 0, graded: 0, steps: new Set<number>(), checkTypes: new Set<string>(), checkFree: false };
     const title = LEVEL_TITLES[level];
     if (stats.total < READY_MIN_QUESTIONS) report(incomplete, file, `${title}: заданий ${stats.total}, нужно не меньше ${READY_MIN_QUESTIONS}`);
     if (stats.types.size < READY_MIN_TYPES) report(incomplete, file, `${title}: типов заданий ${stats.types.size}, нужно не меньше ${READY_MIN_TYPES}`);
-    if (!stats.types.has('free')) report(incomplete, file, `${title}: нет задания со свободным вводом`);
+    if (stats.free === 0) report(incomplete, file, `${title}: нет задания со свободным вводом`);
     if (stats.pre < READY_MIN_PRE_QUESTIONS) report(incomplete, file, `${title}: предвопросов ${stats.pre}, нужно не меньше ${READY_MIN_PRE_QUESTIONS}`);
+    for (const step of levelSteps(topic, level)) {
+      if (!stats.steps.has(step)) report(incomplete, file, `${title}: нет заданий шага ${step} «${STEP_TITLES[step]}» — добавьте или пропустите шаг с причиной (skippedSteps)`);
+    }
+    for (const item of topic.skippedSteps.filter((entry) => entry.levels.includes(level))) {
+      if (!requiredSteps(level).includes(item.step as Step)) report('error', topicFile, `skippedSteps: шага ${item.step} на уровне «${title}» и так нет`);
+    }
+    if (stats.checkTypes.size === 0) report(incomplete, file, `${title}: нет итоговой проверки — заданий с role: check`);
+    else {
+      if (!stats.checkFree) report(incomplete, file, `${title}: в итоговой проверке нет свободного ввода`);
+      for (const type of requiredCheckTypes(topic, level).filter((type) => type !== 'free')) {
+        if (!stats.checkTypes.has(type)) report(incomplete, file, `${title}: в итоговой проверке алгоритма нет задания «${type === 'parsons' ? 'сборка кода из строк' : 'написать функцию'}»`);
+      }
+    }
+    if (stats.graded < DELAYED_QUESTIONS) report(incomplete, file, `${title}: оцениваемых заданий ${stats.graded}, для отложенной проверки нужно не меньше ${DELAYED_QUESTIONS}`);
   }
 }
 

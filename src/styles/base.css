@@ -293,6 +293,8 @@ fieldset {
   border-radius: var(--radius);
   padding: var(--space-3) var(--space-4) var(--space-4);
   margin: 0 0 var(--space-4);
+  /* Иначе fieldset растягивается по самой широкой строке кода и ломает вёрстку на телефоне. */
+  min-width: 0;
 }
 
 legend {
@@ -381,6 +383,30 @@ legend {
   background: var(--color-inverse-bg);
   border-color: var(--color-inverse-bg);
   color: var(--color-inverse-text);
+}
+
+/* «Нашёл ошибку»: тихая текстовая кнопка у блока, термина и задания. */
+
+.report-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-2);
+  margin-left: calc(-1 * var(--space-2));
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--text-small);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.report-button:hover {
+  color: var(--color-text);
+  text-decoration-thickness: 2px;
 }
 
 /* Служебное */

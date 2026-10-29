@@ -3,23 +3,11 @@
  * Ответ вычисляет эталон (reference.ts), неверные варианты — «неправильные
  * алгоритмы», каждый из которых воспроизводит одно заблуждение из questions.yaml.
  */
+import type { PreparedOption } from '../../../../../src/lib/learning/question-types.ts';
+import { choiceVariant, freeVariant, type ChoiceVariant, type FreeVariant } from '../../../../../src/lib/questions/make.ts';
 import type { Random } from '../../../../../src/lib/random.ts';
 import { recordTrace, replayArray } from '../../../../../src/lib/trace.ts';
 import { insertionSort } from './reference.ts';
-
-export interface GeneratedOption {
-  text: string;
-  correct: boolean;
-  /** Заблуждение за неверным вариантом (id из questions.yaml). */
-  misconception?: string;
-}
-
-export interface GeneratedChoice {
-  prompt: string;
-  options: GeneratedOption[];
-  /** Параметры варианта — для разбора и воспроизведения. */
-  data: Record<string, unknown>;
-}
 
 const MISCONCEPTION = {
   short: 'algo.sorting.insertion.m.one-step-short',
@@ -62,12 +50,12 @@ function format(values: readonly number[]): string {
 }
 
 /** «Каким станет массив после k шагов?» — для уровня Фундамент. */
-export function afterKSteps(random: Random): GeneratedChoice {
+export function afterKSteps(random: Random): ChoiceVariant {
   for (;;) {
     const n = random.int(6, 8);
     const input = random.distinctInts(n, 1, 99);
     const k = random.int(1, n - 2);
-    const options: GeneratedOption[] = [
+    const options: PreparedOption[] = [
       { text: format(insertionStateAfter(input, k)), correct: true },
       { text: format(insertionStateAfter(input, k - 1)), correct: false, misconception: MISCONCEPTION.short },
       { text: format(insertionStateAfter(input, k + 1)), correct: false, misconception: MISCONCEPTION.extra },
@@ -75,14 +63,39 @@ export function afterKSteps(random: Random): GeneratedChoice {
     ];
     // Все варианты должны различаться, иначе данные генерируются заново.
     if (new Set(options.map((option) => option.text)).size !== options.length) continue;
-    return {
+    return choiceVariant({
       prompt:
         `Сортировка вставками упорядочивает массив ${format(input)} по возрастанию. ` +
         'Шаг — вставка одного элемента в уже упорядоченную левую часть; первым шагом ' +
         `вставляется элемент с индексом 1. Каким станет массив после ${k} ${stepsWord(k)}?`,
       options: random.shuffle(options),
       data: { input, k },
-    };
+    });
+  }
+}
+
+/**
+ * «Каким станет массив после вставки одного элемента?» — свободный ввод.
+ * Левая часть уже упорядочена, поэтому первые i − 1 шагов ничего не меняют,
+ * а i-й шаг вставляет элемент с индексом i: ответ — состояние после i шагов эталона.
+ */
+export function insertOne(random: Random): FreeVariant {
+  for (;;) {
+    const n = random.int(5, 7);
+    const values = random.distinctInts(n, 1, 99);
+    const i = random.int(2, n - 1);
+    const input = [...values.slice(0, i).sort((a, b) => a - b), ...values.slice(i)];
+    // Вставляемый элемент должен сдвинуться хотя бы на одну позицию.
+    if ((input[i] as number) > (input[i - 1] as number)) continue;
+    const answer = insertionStateAfter(input, i);
+    return freeVariant({
+      prompt:
+        `В массиве ${format(input)} левая часть до индекса ${i - 1} включительно уже упорядочена. ` +
+        `Сортировка вставками вставляет в неё элемент ${input[i]} с индексом ${i}. Каким станет массив после этой вставки?`,
+      answers: [format(answer)],
+      normalize: 'list',
+      data: { input, i },
+    });
   }
 }
 

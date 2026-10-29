@@ -5,6 +5,7 @@
  * и подсказка, с чего начать.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContinueCard from '../../components/home/ContinueCard.tsx';
 import { catalog, folders } from '../../content/catalog-data.ts';
 import { catalogTotals } from '../../content/catalog.ts';
 import { modulePath, sectionPath } from '../../content/paths.ts';
@@ -15,6 +16,12 @@ import { url } from '../../lib/site.ts';
 const site = await loadSite();
 const published = [...site.pages.values()].filter((page) => !page.draft).length;
 const totals = catalogTotals(catalog);
+// Темы, у которых есть страницы, — для карточки «Продолжить».
+const continueTopics = [...site.pages.values()].map((page) => ({
+  id: page.topic.id,
+  title: page.topic.title,
+  levels: page.levels.map((level) => ({ level: level.level, title: level.title, path: level.path })),
+}));
 ---
 
 <BaseLayout>
@@ -28,6 +35,10 @@ const totals = catalogTotals(catalog);
       Цель — чтобы вы умели объяснить, доказать, написать код сам, измерить его и помнили это через месяцы, а не узнавали
       правильный ответ среди вариантов.
     </p>
+
+    <div class="continue-slot">
+      <ContinueCard client:load topics={continueTopics} base={url()} />
+    </div>
 
     <h2>С чего начать</h2>
     <ul>
@@ -64,6 +75,17 @@ const totals = catalogTotals(catalog);
 </BaseLayout>
 
 <style>
+  /* Место под «Продолжить» есть, только если в браузере уже есть прогресс. */
+  .continue-slot {
+    display: none;
+  }
+
+  :global(:root[data-progress]) .continue-slot {
+    display: block;
+    min-height: 11rem;
+    margin: var(--space-5) 0;
+  }
+
   .home__section-link {
     display: inline-block;
     text-decoration: none;

@@ -131,6 +131,18 @@ export const topicSchema = z
       })
       .strict()
       .optional(),
+    /** Шаги цикла, которые теме не подходят, — с причиной (ТЗ, «Темы без алгоритма»). */
+    skippedSteps: z
+      .array(
+        z
+          .object({
+            step: z.number().int().min(1).max(6),
+            levels: z.array(levelSchema).min(1),
+            reason: z.string().trim().min(15, 'причина пропуска — хотя бы одно предложение'),
+          })
+          .strict(),
+      )
+      .default([]),
     /** Необязательные блоки, которых нет, — с причиной. */
     skipped: z
       .array(
@@ -165,10 +177,42 @@ export const levelFrontmatterSchema = z
 
 // ---------- questions.yaml ----------
 
+export { STEPS, STEP_TITLES, type Step } from '../lib/learning/steps.ts';
+
+/**
+ * Как отвечают на задание: выбор, свободный ввод, порядок строк, код с
+ * тестами, строка с ошибкой, объяснение с самопроверкой, ручная симуляция
+ * или вариант генератора.
+ */
+export const ANSWER_FORMATS = ['choice', 'free', 'order', 'code', 'line', 'self', 'simulation', 'generated'] as const;
+export type AnswerFormat = (typeof ANSWER_FORMATS)[number];
+
+/** Какие форматы ответа подходят каждому типу задания. */
+export const TYPE_FORMATS: Record<(typeof QUESTION_TYPES)[number], readonly AnswerFormat[]> = {
+  choice: ['choice'],
+  free: ['free'],
+  trace: ['choice', 'free', 'generated'],
+  output: ['choice', 'free', 'generated'],
+  simulation: ['simulation'],
+  predict: ['choice', 'generated'],
+  parsons: ['order'],
+  fill: ['code'],
+  write: ['code'],
+  'find-bug': ['line', 'generated'],
+  'which-algorithm': ['choice', 'generated'],
+  complexity: ['free', 'choice', 'generated'],
+  terms: ['free', 'choice', 'generated'],
+  confusion: ['choice'],
+  proof: ['order', 'choice'],
+  sql: ['generated'],
+  explain: ['self'],
+};
+
 const optionSchema = z
   .object({
     text: textSchema,
-    correct: z.boolean().default(false),
+    /** Верный ли вариант. У задания «Что выведет код» верный вариант вычисляет запуск кода — поле не пишется. */
+    correct: z.boolean().optional(),
     /** Заблуждение, которое стоит за неверным вариантом. */
     misconception: idSchema.optional(),
   })
@@ -180,15 +224,33 @@ const questionBase = {
   level: levelSchema,
   /** pre — предвопрос, practice — по ходу темы, check — итоговая и отложенная проверка. */
   role: z.enum(['pre', 'practice', 'check']),
+  /** Шаг цикла: 0 — предвопросы, 1–6 — шаги уровня. У итоговой проверки шага нет. */
+  step: z.number().int().min(0).max(6).optional(),
+  /** Блок, после которого задание стоит на странице уровня. */
+  block: idSchema.optional(),
+  /** Навык — карточка повторения. Нужен у всех заданий, кроме предвопросов. */
   skill: idSchema.optional(),
+  /** Тип задания из 17 типов тренажёра. */
+  type: z.enum(QUESTION_TYPES),
+  /** Подсказки ступенями: намёк → подцель → часть решения. Открытая подсказка снижает оценку до Hard. */
+  hints: z.array(textSchema).max(3).default([]),
+  /** Почему верный ответ верен: показывается после ответа. */
+  explanation: textSchema.optional(),
 };
 
-export const questionSchema = z.discriminatedUnion('type', [
+/** Условие: текст, в котором `код` выделяется обратными кавычками, и необязательный фрагмент кода под ним. */
+const promptFields = {
+  prompt: textSchema,
+  code: z.string().optional(),
+  language: z.enum(['js', 'cpp', 'py', 'text']).default('js'),
+};
+
+export const questionSchema = z.discriminatedUnion('format', [
   z
     .object({
       ...questionBase,
-      type: z.literal('choice'),
-      prompt: textSchema,
+      ...promptFields,
+      format: z.literal('choice'),
       multiple: z.boolean().default(false),
       options: z.array(optionSchema).min(2),
     })
@@ -196,29 +258,104 @@ export const questionSchema = z.discriminatedUnion('type', [
   z
     .object({
       ...questionBase,
-      type: z.literal('free'),
-      prompt: textSchema,
-      answers: z.array(textSchema).min(1),
-      normalize: z.enum(['text', 'number', 'complexity']).default('text'),
+      ...promptFields,
+      format: z.literal('free'),
+      /** Верные ответы. У задания «Что выведет код» ответ вычисляет запуск кода — поле не пишется. */
+      answers: z.array(textSchema).min(1).optional(),
+      /** Как сравнивать: текст, число, сложность, вывод программы, список чисел («[1, 2, 3]», «1 2 3»). */
+      normalize: z.enum(['text', 'number', 'complexity', 'output', 'list']).default('text'),
+      /** Засчитывать ответ с одной опечаткой (в словах от пяти букв). */
+      typos: z.boolean().default(false),
     })
     .strict(),
   z
     .object({
       ...questionBase,
-      type: z.literal('generated'),
-      /** Какой тип задания даёт генератор. */
-      questionType: z.enum(QUESTION_TYPES),
+      ...promptFields,
+      format: z.literal('order'),
+      /** Строки в верном порядке; indent — отступ строки в шагах (для задач Парсонса). */
+      items: z.array(z.object({ text: textSchema, indent: z.number().int().min(0).max(6).default(0) }).strict()).min(3),
+      /** Лишние строки, которые не входят в ответ. */
+      distractors: z.array(textSchema).default([]),
+      /** Проверять ли отступы. */
+      indent: z.boolean().default(false),
+      /** Другие допустимые порядки: номера строк из items (с нуля). */
+      alternatives: z.array(z.array(z.number().int().min(0))).default([]),
+      /**
+       * Для задачи Парсонса: имя функции, которую собирают. Собранный из строк
+       * код запускается при сборке на тестах и сверяется с эталоном solution.
+       */
+      function: z.string().regex(/^[a-zA-Z_$][a-zA-Z0-9_$]*$/).optional(),
+      solution: z.string().min(1).optional(),
+      tests: z.array(z.array(z.unknown())).default([]),
+      hidden: z.union([z.array(z.array(z.unknown())), z.literal('vectors')]).default([]),
+    })
+    .strict(),
+  z
+    .object({
+      ...questionBase,
+      ...promptFields,
+      format: z.literal('code'),
+      /** Имя функции, которую пишет человек. */
+      function: z.string().regex(/^[a-zA-Z_$][a-zA-Z0-9_$]*$/),
+      /** Начальный код: заготовка или код с пропусками ___. */
+      starter: z.string().min(1),
+      /** Эталонное решение на JS: по нему вычисляются ожидаемые ответы тестов. «reference» — эталон темы. */
+      solution: z.string().min(1),
+      /** Аргументы видимых тестов: список вызовов, у каждого — список аргументов. */
+      tests: z.array(z.array(z.unknown())).min(1),
+      /** Аргументы скрытых тестов. «vectors» — общие тестовые данные темы. */
+      hidden: z.union([z.array(z.array(z.unknown())), z.literal('vectors')]).default([]),
+    })
+    .strict(),
+  z
+    .object({
+      ...questionBase,
+      prompt: textSchema,
+      format: z.literal('line'),
+      /** Испорченная версия эталона из mutants.ts: её код и строка с ошибкой. */
+      mutant: z.string().regex(/^[a-z][a-z0-9-]*$/),
+      /** Почему это ошибка: варианты, ровно один верный. */
+      reasons: z.array(optionSchema).min(2),
+    })
+    .strict(),
+  z
+    .object({
+      ...questionBase,
+      ...promptFields,
+      format: z.literal('self'),
+      /** Эталонное объяснение для сравнения. */
+      reference: textSchema,
+      /** Критерии самопроверки. */
+      criteria: z.array(textSchema).min(2),
+    })
+    .strict(),
+  z
+    .object({
+      ...questionBase,
+      prompt: textSchema,
+      format: z.literal('simulation'),
+      /** Эталон из src/lib/viz/algorithms.ts. */
+      algorithm: topicIdSchema,
+      input: z.array(z.number().int()).min(5).max(8),
+    })
+    .strict(),
+  z
+    .object({
+      ...questionBase,
+      format: z.literal('generated'),
       /** Имя функции в generators.ts темы. */
       generator: z.string().regex(/^[a-z][a-zA-Z0-9]*$/),
     })
     .strict(),
 ]);
+export type Question = z.infer<typeof questionSchema>;
 
 export const questionsFileSchema = z
   .object({
     topic: topicIdSchema,
     /** Навыки — карточки повторения. Повторяется навык, а не конкретный вопрос. */
-    skills: z.array(z.object({ id: idSchema, title: textSchema, level: levelSchema }).strict()).default([]),
+    skills: z.array(z.object({ id: idSchema, version: versionSchema.default(1), title: textSchema, level: levelSchema }).strict()).default([]),
     misconceptions: z
       .array(
         z
@@ -229,6 +366,8 @@ export const questionsFileSchema = z
             explanation: textSchema,
             /** Блок справочника, где это объясняется. */
             block: idSchema.optional(),
+            /** Тема-предпосылка, к которой ведёт это заблуждение: при повторах приложение предложит к ней вернуться. */
+            prerequisite: topicIdSchema.optional(),
           })
           .strict(),
       )

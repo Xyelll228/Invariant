@@ -12,11 +12,16 @@ import PropertiesTable from '../../../../../components/topic/PropertiesTable.ast
 import TopicSources from '../../../../../components/topic/TopicSources.astro';
 import TopicTerms from '../../../../../components/topic/TopicTerms.astro';
 import ReportDialog from '../../../../../components/report/ReportDialog.astro';
+import LevelCheck from '../../../../../components/learn/LevelCheck.tsx';
+import LevelProgress from '../../../../../components/learn/LevelProgress.tsx';
+import QuestionList from '../../../../../components/learn/QuestionList.tsx';
 import { catalogTopics, folders } from '../../../../../content/catalog-data.ts';
 import { mdxComponents } from '../../../../../content/mdx-components.ts';
 import { catalogTopicPath, levelPath } from '../../../../../content/paths.ts';
 import { LEVEL_TITLES, type Level } from '../../../../../content/schema.ts';
-import { loadSite } from '../../../../../content/site-data.ts';
+import { loadSite, preparedTopicFor } from '../../../../../content/site-data.ts';
+import { topicContext, type PreparedQuestion } from '../../../../../lib/learning/question-types.ts';
+import { stepTitle } from '../../../../../lib/learning/steps.ts';
 import { capitalize, formatDate } from '../../../../../lib/format.ts';
 import { url } from '../../../../../lib/site.ts';
 
@@ -50,8 +55,35 @@ const entry = await getEntry('levels', current.entryId);
 if (!entry) throw new Error(`Нет текста уровня ${current.entryId}`);
 const { Content } = await render(entry);
 
+// Задания уровня (ТЗ, «Цикл изучения темы»): предвопросы, вопросы после блоков,
+// задания шагов, итоговая и отложенная проверки. Всё вычислимое уже вычислено.
+const prepared = await preparedTopicFor(topic.id);
+const context = topicContext(prepared, level);
+const own = prepared.questions.filter((question) => question.level === level);
+const preQuestions = own.filter((question) => question.role === 'pre');
+const practice = own.filter((question) => question.role === 'practice');
+const checkQuestions = own.filter((question) => question.role === 'check');
+const graded = own.filter((question) => question.role !== 'pre');
+const blockIds = new Set(current.blocks.map((block) => block.id));
+const byBlock: Record<string, PreparedQuestion[]> = {};
+for (const question of practice) {
+  if (question.block && blockIds.has(question.block)) (byBlock[question.block] ??= []).push(question);
+}
+const unattached = practice.filter((question) => !question.block || !blockIds.has(question.block));
+const stepGroups = [...new Set(unattached.map((question) => question.step ?? 0))]
+  .sort((a, b) => a - b)
+  .map((step) => ({ step, questions: unattached.filter((question) => (question.step ?? 0) === step) }));
+// Ссылки шагов в «Прохождении уровня» ведут к первому заданию шага на странице.
+const anchors: Record<number, string> = {};
+for (const question of [...preQuestions, ...practice]) {
+  const step = question.role === 'pre' ? 0 : (question.step ?? 0);
+  anchors[step] ??= question.id;
+}
+const base = url();
+const runnerUrl = url('sandbox/runner.html');
+
 // Компоненты текста темы читают тему и уровень из Astro.locals (src/env.d.ts).
-Astro.locals.topic = { id: topic.id, title: topic.title, level, dir: page.dir };
+Astro.locals.topic = { id: topic.id, title: topic.title, level, dir: page.dir, byBlock, context, base, runnerUrl };
 
 const module = catalog.module;
 const section = module.section;
@@ -116,12 +148,55 @@ const levelTitle = `${topic.title}: ${current.title}`;
       </div>
     </dl>
 
-    <LevelTabs levels={page.levels} current={level} />
+    <LevelTabs topicId={topic.id} levels={page.levels} current={level} />
 
     <h2 class="topic__level-title">{current.title}</h2>
+    {
+      own.length > 0 && (
+        <>
+          <LevelProgress client:load topic={context} level={level} levelTitle={current.title} anchors={anchors} />
+          <LevelCheck client:load kind="delayed" topic={context} level={level} levelTitle={current.title} questions={graded} base={base} runnerUrl={runnerUrl} />
+        </>
+      )
+    }
     {level !== 'fundament' && <PropertiesTable topic={topic} />}
 
+    {
+      preQuestions.length > 0 && (
+        <section class="step-section" aria-labelledby="step-0-title">
+          <h3 id="step-0-title">Предвопросы</h3>
+          <p>
+            Перед чтением — несколько вопросов. Ошибаться здесь нормально: ответы не оцениваются и показывают, на что обратить
+            внимание.
+          </p>
+          <QuestionList client:visible topic={context} level={level} questions={preQuestions} mode="pre" base={base} runnerUrl={runnerUrl} />
+        </section>
+      )
+    }
+
     <Content components={mdxComponents} />
+
+    {
+      stepGroups.length > 0 && (
+        <section class="step-section" aria-labelledby="tasks-title">
+          <h2 id="tasks-title">Задания</h2>
+          {stepGroups.map((group) => (
+            <>
+              <h3 id={`step-${group.step}`}>
+                Шаг {group.step}. {stepTitle(group.step)}
+              </h3>
+              <QuestionList client:visible topic={context} level={level} questions={group.questions} mode="learn" base={base} runnerUrl={runnerUrl} />
+            </>
+          ))}
+        </section>
+      )
+    }
+
+    {
+      checkQuestions.length > 0 && (
+        <LevelCheck client:visible kind="check" topic={context} level={level} levelTitle={current.title} questions={checkQuestions} base={base} runnerUrl={runnerUrl} />
+      )
+    }
 
     {
       next && (
