@@ -75,6 +75,11 @@ describe('освоение уровня (ТЗ, «Когда уровень сч�
   it('«не начат» → «изучается» → «освоен» только при всех четырёх условиях', () => {
     expect(levelStatus({ topic, level: 'fundament', record: undefined, reviews: [] })).toBe('not-started');
     expect(levelStatus({ topic, level: 'fundament', record: record({ done: ['t.q.a'] }), reviews: [] })).toBe('in-progress');
+    // Только неверный ответ — уровень уже начат.
+    expect(levelStatus({ topic, level: 'fundament', record: record({ lastQuestion: 't.q.a' }), reviews: [] })).toBe('in-progress');
+    expect(levelStatus({ topic, level: 'fundament', record: record(), reviews: [review('t.s.a', at(2, 10), false)] })).toBe('in-progress');
+    // Запись о паузе без ответов — ещё не начат.
+    expect(levelStatus({ topic, level: 'fundament', record: record({ paused: true }), reviews: [] })).toBe('not-started');
     // Все шаги и итоговая, но нет отложенной.
     expect(levelStatus({ topic, level: 'fundament', record: record({ done: allDone, check: passed }), reviews: [] })).toBe('in-progress');
     // Всё есть.

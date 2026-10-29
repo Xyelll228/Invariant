@@ -105,7 +105,9 @@ export interface StatusInput {
 
 export function levelStatus({ topic, level, record, reviews, dayStartHour = DEFAULT_DAY_START_HOUR }: StatusInput): ProgressStatus {
   const done = new Set(record?.done ?? []);
-  if (done.size === 0 && !record?.check) return 'not-started';
+  // Начат, как только на уровне есть хоть один ответ — даже неверный.
+  const started = done.size > 0 || record?.check !== undefined || record?.lastQuestion !== undefined || reviews.length > 0;
+  if (!started) return 'not-started';
   const allSteps = remainingSteps(topic, level, done).length === 0;
   const skills = new Set(levelQuestions(topic, level).flatMap((question) => (question.skill ? [question.skill] : [])));
   const errorsResolved = openConfidentErrors(reviews, skills, dayStartHour).length === 0;
