@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { replaceEditorText } from './editor.ts';
+import { editorModifier, replaceEditorText } from './editor.ts';
 import { expect, test } from './fixtures.ts';
 
 /**
@@ -203,7 +203,7 @@ test('на телефоне есть строка символов над ред
   const symbols = lab.getByRole('group', { name: 'Символы для набора кода' });
   await expect(symbols).toBeVisible();
   await lab.locator('.cm-content').click();
-  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.press(`${await editorModifier(page)}+End`);
   await symbols.getByRole('button', { name: 'Вставить ;' }).click();
   await expect(lab.locator('.cm-line').last()).toHaveText(';');
 });

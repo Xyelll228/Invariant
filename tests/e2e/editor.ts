@@ -10,9 +10,20 @@ import { expect } from './fixtures.ts';
  * Ввод текста напрямую в contenteditable заставил бы браузер создавать
  * элементы со style="…", которые строгая CSP справедливо блокирует.
  */
+/**
+ * Клавиша-модификатор сочетаний CodeMirror: Cmd там, где он считает систему
+ * Apple (в том числе эмуляция iPhone на Linux), и Ctrl в остальных.
+ */
+export async function editorModifier(page: Page): Promise<'Meta' | 'Control'> {
+  const apple = await page.evaluate(
+    () => /Mac/.test(navigator.platform) || (/Apple/.test(navigator.vendor) && (/Mobile\/\w+/.test(navigator.userAgent) || navigator.maxTouchPoints > 2)),
+  );
+  return apple ? 'Meta' : 'Control';
+}
+
 export async function replaceEditorText(page: Page, content: Locator, text: string): Promise<void> {
   await content.click();
-  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.press(`${await editorModifier(page)}+A`);
   await content.evaluate((element, value) => {
     const event = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
     const clipboard = { types: ['text/plain'], getData: (type: string) => (type === 'text/plain' ? value : '') };
