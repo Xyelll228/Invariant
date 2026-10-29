@@ -1,0 +1,160 @@
+---
+/**
+ * Код темы во вкладках JavaScript, C++ и Python (ТЗ, «Справочник»). Код на JS
+ * — тот, что видит ученик в эталоне (reference.ts, экспорт code); его можно
+ * изменить и запустить в песочнице. Версии на C++ и Python при каждой сборке
+ * прогоняются на тех же тестовых данных, что и эталон (npm run check:code).
+ *
+ * Тему компонент берёт из страницы: <TopicCode /> в тексте уровня.
+ */
+import CodeLab from '../code/CodeLab.tsx';
+import { getEntry } from 'astro:content';
+import { formatDate } from '../../lib/format.ts';
+import { buildDate, url } from '../../lib/site.ts';
+
+interface Props {
+  /** Входные массивы примеров для кнопки «Запустить». */
+  inputs?: number[][];
+}
+
+const topic = Astro.locals.topic;
+if (!topic) throw new Error('<TopicCode /> работает только в тексте темы');
+const entry = await getEntry('topics', topic.id);
+const spec = entry?.data.code;
+if (!spec) throw new Error(`У темы ${topic.id} нет поля code в topic.yaml`);
+
+const references = import.meta.glob<Record<string, unknown>>('/content/ru/**/reference.ts', { eager: true });
+const cppFiles = import.meta.glob<string>('/content/ru/**/impl.cpp', { query: '?raw', import: 'default', eager: true });
+const pyFiles = import.meta.glob<string>('/content/ru/**/impl.py', { query: '?raw', import: 'default', eager: true });
+const reference = references[`/content/ru/${topic.dir}/reference.ts`];
+const jsLines = reference?.code as readonly string[] | undefined;
+const run = reference?.[spec.js] as ((input: readonly number[]) => unknown) | undefined;
+const cpp = cppFiles[`/content/ru/${topic.dir}/impl.cpp`]?.trim();
+const py = pyFiles[`/content/ru/${topic.dir}/impl.py`]?.trim();
+if (!jsLines || !run || !cpp || !py) throw new Error(`У темы ${topic.id} нет кода на одном из языков`);
+
+const { inputs = [[7, 3, 5, 1, 4], [], [2, 1, 2]] } = Astro.props;
+const format = (value: unknown) => JSON.stringify(value).replace(/,/g, ', ');
+// Ожидаемый результат примеров вычисляет эталон темы.
+const visibleTests = inputs.map((input) => {
+  const expected = run(input);
+  return { args: [input], expected, call: `${spec.js}(${format(input)})`, expectedText: format(expected) };
+});
+const checked = formatDate(buildDate);
+const prefix = `code-${topic.level}`;
+const tabs = [
+  { id: 'js', label: 'JavaScript' },
+  { id: 'cpp', label: 'C++' },
+  { id: 'py', label: 'Python' },
+];
+---
+
+<div class="topic-code" data-tabs>
+  <div class="topic-code__tabs" role="tablist" aria-label="Язык кода">
+    {
+      tabs.map((tab, index) => (
+        <button
+          type="button"
+          role="tab"
+          class="topic-code__tab"
+          id={`${prefix}-tab-${tab.id}`}
+          aria-controls={`${prefix}-panel-${tab.id}`}
+          aria-selected={index === 0 ? 'true' : 'false'}
+          tabindex={index === 0 ? '0' : '-1'}
+          data-tab
+        >
+          {tab.label}
+        </button>
+      ))
+    }
+  </div>
+  <div class="topic-code__panel" role="tabpanel" id={`${prefix}-panel-js`} aria-labelledby={`${prefix}-tab-js`}>
+    <p class="muted topic-code__note">Код можно изменить и запустить: он выполняется в песочнице прямо в браузере.</p>
+    <CodeLab
+      client:visible
+      label={`Код на JavaScript: ${topic.title}`}
+      functionName={spec.js}
+      starterCode={`${jsLines.join('\n')}\n`}
+      visibleTests={visibleTests}
+      hiddenTests={[]}
+      runnerUrl={url('sandbox/runner.html')}
+    />
+  </div>
+  <div class="topic-code__panel" role="tabpanel" id={`${prefix}-panel-cpp`} aria-labelledby={`${prefix}-tab-cpp`} hidden>
+    <p class="muted topic-code__note">
+      Проверено автоматически {checked}: компилируется с предупреждениями как ошибками и санитайзерами и даёт тот же
+      результат, что эталон на JavaScript.
+    </p>
+    <pre tabindex="0"><code>{cpp}</code></pre>
+  </div>
+  <div class="topic-code__panel" role="tabpanel" id={`${prefix}-panel-py`} aria-labelledby={`${prefix}-tab-py`} hidden>
+    <p class="muted topic-code__note">Проверено автоматически {checked}: даёт тот же результат, что эталон на JavaScript.</p>
+    <pre tabindex="0"><code>{py}</code></pre>
+  </div>
+</div>
+
+<script>
+  // Вкладки по образцу WAI-ARIA: стрелки переключают вкладку, Home и End — первая и последняя.
+  for (const root of document.querySelectorAll<HTMLElement>('[data-tabs]')) {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const select = (tab: HTMLButtonElement, focus: boolean) => {
+      for (const other of tabs) {
+        const selected = other === tab;
+        other.setAttribute('aria-selected', String(selected));
+        other.tabIndex = selected ? 0 : -1;
+        const panel = document.getElementById(other.getAttribute('aria-controls') ?? '');
+        if (panel) panel.hidden = !selected;
+      }
+      if (focus) tab.focus();
+    };
+    for (const tab of tabs) {
+      tab.addEventListener('click', () => select(tab, false));
+      tab.addEventListener('keydown', (event) => {
+        const index = tabs.indexOf(tab);
+        const target =
+          event.key === 'ArrowRight' ? tabs[(index + 1) % tabs.length]
+          : event.key === 'ArrowLeft' ? tabs[(index - 1 + tabs.length) % tabs.length]
+          : event.key === 'Home' ? tabs[0]
+          : event.key === 'End' ? tabs[tabs.length - 1]
+          : undefined;
+        if (!target) return;
+        event.preventDefault();
+        select(target, true);
+      });
+    }
+  }
+</script>
+
+<style>
+  .topic-code__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    border-bottom: 1px solid var(--color-border-strong);
+    margin-bottom: var(--space-4);
+  }
+
+  .topic-code__tab {
+    min-height: var(--tap);
+    padding: 0 var(--space-4);
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-radius: var(--radius-small) var(--radius-small) 0 0;
+    background: none;
+    color: var(--color-text-muted);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: -1px;
+  }
+
+  .topic-code__tab[aria-selected='true'] {
+    color: var(--color-text);
+    border-color: var(--color-border-strong);
+    background: var(--color-bg);
+  }
+
+  .topic-code__note {
+    font-size: var(--text-small);
+  }
+</style>

@@ -4,4 +4,4 @@
  * темы он сломал бы рендер. Сами компоненты передаются в <Content components>
  * из src/content/mdx-components.ts.
  */
-export const MDX_COMPONENTS = ['Block', 'TraceSteps', 'ArrayTrace', 'ArraySimulation'] as const;
+export const MDX_COMPONENTS = ['Block', 'Term', 'TopicCode', 'TraceSteps', 'ArrayTrace', 'ArraySimulation'] as const;

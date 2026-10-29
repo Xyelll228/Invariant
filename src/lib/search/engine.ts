@@ -17,14 +17,16 @@ export interface SearchDoc {
   /** Где находится: раздел и модуль темы, английское название термина. */
   context: string;
   text: string;
-  /** Адрес на сайте без base или null, если страницы ещё нет. */
+  /** Адрес на сайте без base: страница темы, термина или блока, а у невышедшей темы — её место в каталоге. */
   url: string | null;
+  /** Волна выхода темы, которой ещё нет на сайте. */
+  wave?: number;
 }
 
 export type StoredDoc = Omit<SearchDoc, 'text'>;
 
 /** Версия формата файла индекса: клиент сверяет её, чтобы не прочитать устаревший файл. */
-export const SEARCH_INDEX_VERSION = 1;
+export const SEARCH_INDEX_VERSION = 2;
 
 export interface SearchIndexFile {
   version: number;
@@ -37,7 +39,7 @@ const BLOCK_WEIGHT = 0.6;
 export const SEARCH_OPTIONS: Options<SearchDoc> = {
   idField: 'id',
   fields: ['title', 'context', 'text'],
-  storeFields: ['kind', 'title', 'context', 'url'],
+  storeFields: ['kind', 'title', 'context', 'url', 'wave'],
   tokenize,
   processTerm: (term) => (isStopWord(term) ? null : stemToken(term)),
   searchOptions: {
@@ -85,6 +87,7 @@ export function searchDocs(index: MiniSearch<SearchDoc>, query: string, synonyms
     title: String(result.title),
     context: String(result.context),
     url: (result.url as string | null) ?? null,
+    ...(typeof result.wave === 'number' ? { wave: result.wave } : {}),
     score: result.score,
   }));
 }

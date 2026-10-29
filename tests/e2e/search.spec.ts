@@ -19,7 +19,9 @@ test('формы слов: «сортировкой вставками» нах�
   await expect(box.getByRole('status')).toContainText('Найдено:');
   const topics = box.getByRole('region', { name: 'Темы' });
   await expect(topics.locator('.search__title').first()).toHaveText('Вставками и бинарными вставками');
-  await expect(topics.locator('.search__context').first()).toContainText('1.5 Сортировки · тема ещё не написана');
+  // Сборка для автопроверок показывает черновик: тема ведёт на свою страницу.
+  await expect(topics.locator('.search__context').first()).toContainText('1.5 Сортировки');
+  await expect(topics.getByRole('link').first()).toHaveAttribute('href', /\/ru\/algorithms\/sorting\/insertion\/$/);
 });
 
 test('опечатки и синонимы: «дийкстра», «heap», «хэш»', async ({ page }) => {
@@ -35,9 +37,10 @@ test('результаты по группам: темы, термины, бло
   const box = await search(page, 'сортировка вставками');
   await expect(box.locator('.search__group-title')).toHaveText(['Темы', 'Термины', 'Блоки тем']);
   const block = box.getByRole('region', { name: 'Блоки тем' }).getByRole('link').first();
-  await expect(block).toHaveAttribute('href', /\/ru\/prototypes\/topic\/#algo\.sorting\.insertion\.b\./);
+  const target = /\/ru\/algorithms\/sorting\/insertion\/(?:base\/|depth\/)?#algo\.sorting\.insertion\.b\./;
+  await expect(block).toHaveAttribute('href', target);
   await block.click();
-  await expect(page).toHaveURL(/\/ru\/prototypes\/topic\/#algo\.sorting\.insertion\.b\./);
+  await expect(page).toHaveURL(target);
 });
 
 test('ничего не найдено — понятное сообщение', async ({ page }) => {

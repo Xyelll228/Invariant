@@ -10,7 +10,8 @@ import { compileSynonyms, expandQuery, PROTOTYPE_SYNONYMS, synonymGroupsFromGlos
 import { normalize, searchTerms, tokenize } from '../../src/lib/search/text.ts';
 
 const root = new URL('../../', import.meta.url).pathname;
-const { docs, glossary } = buildCorpus(root);
+// Черновики в индексе, как в превью правок: блоки пока есть только у черновика-образца.
+const { docs, glossary } = buildCorpus(root, { showDrafts: true });
 const synonyms = compileSynonyms([...synonymGroupsFromGlossary(glossary), ...PROTOTYPE_SYNONYMS]);
 const index = buildIndex(docs);
 

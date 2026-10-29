@@ -74,7 +74,8 @@ export default defineConfig({
         "font-src 'self'",
         "connect-src 'self'",
         "frame-src 'self'",
-        "worker-src 'self'",
+        // blob: — для фонового потока песочницы: её окно со srcdoc получает и эту CSP.
+        "worker-src 'self' blob:",
         "manifest-src 'self'",
         "object-src 'none'",
         "base-uri 'self'",

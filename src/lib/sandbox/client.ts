@@ -2,6 +2,11 @@
  * Запуск кода человека в песочнице. Создаёт скрытое вложенное окно
  * (sandbox="allow-scripts", без allow-same-origin) со страницей
  * sandbox/runner.html и обменивается с ним сообщениями.
+ *
+ * Страница песочницы попадает в окно атрибутом srcdoc, а не src. Окно без
+ * allow-same-origin не обслуживается Service Worker: по адресу src оно без
+ * сети не загрузилось бы. Текст страницы берёт fetch страницы приложения —
+ * его Service Worker отдаёт из кеша и без сети.
  */
 export interface SandboxTest {
   args: unknown[];
@@ -55,16 +60,31 @@ export class Sandbox {
   constructor(private readonly src: string) {}
 
   #ensure(): Promise<void> {
-    if (this.#ready) return this.#ready;
+    if (!this.#ready) {
+      this.#ready = this.#load().catch((error: unknown) => {
+        // Не загрузилась — следующий запуск попробует снова.
+        this.#frame?.remove();
+        this.#frame = null;
+        this.#ready = null;
+        throw error;
+      });
+    }
+    return this.#ready;
+  }
+
+  async #load(): Promise<void> {
+    const response = await fetch(this.src);
+    if (!response.ok) throw new Error('Песочница не загрузилась');
+    const page = await response.text();
     const frame = document.createElement('iframe');
     frame.setAttribute('sandbox', 'allow-scripts');
     frame.setAttribute('title', 'Песочница для кода');
     frame.setAttribute('aria-hidden', 'true');
     frame.tabIndex = -1;
     frame.className = 'sandbox-frame';
-    frame.src = this.src;
+    frame.srcdoc = page;
     this.#frame = frame;
-    this.#ready = new Promise<void>((resolve, reject) => {
+    const ready = new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('Песочница не загрузилась')), 15000);
       window.addEventListener('message', (event: MessageEvent) => {
         // Ответы принимаем только от своего окна песочницы с непрозрачным источником.
@@ -81,7 +101,7 @@ export class Sandbox {
       });
     });
     document.body.append(frame);
-    return this.#ready;
+    await ready;
   }
 
   async run(request: SandboxRequest): Promise<SandboxReply> {

@@ -4,9 +4,16 @@ import { expect, test } from './fixtures.ts';
 
 const pages = [
   { path: 'ru/', heading: 'Инвариант' },
+  { path: 'ru/catalog/', heading: 'Каталог' },
+  { path: 'ru/algorithms/', heading: '1. Алгоритмы и структуры данных' },
+  { path: 'ru/algorithms/sorting/', heading: '1.5 Сортировки' },
+  { path: 'ru/algorithms/sorting/insertion/', heading: 'Сортировка вставками' },
+  { path: 'ru/algorithms/sorting/insertion/base/', heading: 'Сортировка вставками' },
+  { path: 'ru/algorithms/sorting/insertion/depth/', heading: 'Сортировка вставками' },
+  { path: 'ru/glossary/', heading: 'Глоссарий' },
+  { path: 'ru/search/', heading: 'Поиск' },
   { path: 'ru/prototypes/', heading: 'Прототипы' },
   { path: 'ru/prototypes/design/', heading: 'Основа дизайна' },
-  { path: 'ru/prototypes/topic/', heading: 'Сортировка вставками' },
   { path: 'ru/prototypes/trace/', heading: 'След алгоритма' },
   { path: 'ru/prototypes/sandbox/', heading: 'Песочница кода' },
   { path: 'ru/prototypes/review/', heading: 'Хранилище, повторение и экспорт' },

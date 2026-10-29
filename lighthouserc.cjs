@@ -16,15 +16,17 @@ module.exports = {
       startServerCommand: `npx astro preview --port ${port} --ignore-lock`,
       startServerReadyPattern: 'localhost',
       startServerReadyTimeout: 60000,
+      // Сборка для автопроверок показывает черновики: страницы темы-образца есть.
       url: [
         `${origin}ru/`,
-        `${origin}ru/prototypes/design/`,
-        `${origin}ru/prototypes/topic/`,
+        `${origin}ru/catalog/`,
+        `${origin}ru/algorithms/sorting/insertion/`,
+        `${origin}ru/algorithms/sorting/insertion/base/`,
+        `${origin}ru/glossary/`,
+        `${origin}ru/search/`,
         `${origin}ru/prototypes/trace/`,
         `${origin}ru/prototypes/sandbox/`,
         `${origin}ru/prototypes/review/`,
-        `${origin}ru/prototypes/search/`,
-        `${origin}ru/prototypes/offline/`,
       ],
       numberOfRuns: 3,
       settings: {

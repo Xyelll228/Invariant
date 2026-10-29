@@ -1,10 +1,20 @@
 ---
+/**
+ * Главная (ТЗ, «Экраны»): «Продолжить», «Повторение» и разделы. «Продолжить»
+ * и «Повторение» появятся вместе с прохождением тем — до тех пор здесь разделы
+ * и подсказка, с чего начать.
+ */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { catalog, folders } from '../../content/catalog-data.ts';
+import { catalogTotals } from '../../content/catalog.ts';
+import { modulePath, sectionPath } from '../../content/paths.ts';
+import { loadSite } from '../../content/site-data.ts';
 import { t } from '../../i18n/index.ts';
-import { repositoryUrl, url } from '../../lib/site.ts';
+import { url } from '../../lib/site.ts';
 
-const tzUrl = `${repositoryUrl}/blob/main/docs/tz.md`;
-const catalogUrl = `${repositoryUrl}/blob/main/docs/catalog.md`;
+const site = await loadSite();
+const published = [...site.pages.values()].filter((page) => !page.draft).length;
+const totals = catalogTotals(catalog);
 ---
 
 <BaseLayout>
@@ -19,17 +29,47 @@ const catalogUrl = `${repositoryUrl}/blob/main/docs/catalog.md`;
       правильный ответ среди вариантов.
     </p>
 
+    <h2>С чего начать</h2>
+    <ul>
+      <li>
+        Если программируете впервые — с раздела <a href={url(sectionPath('js', folders))}>«Основы JavaScript»</a>: на нём
+        написаны все упражнения.
+      </li>
+      <li>
+        Если основы знаете — с любого модуля, например с <a href={url(modulePath('algo.sorting', folders))}>«Сортировок»</a>.
+        Предпосылки каждой темы видны в её шапке.
+      </li>
+    </ul>
+
+    <h2>Разделы</h2>
+    <ul class="card-list home__sections">
+      {
+        catalog.sections.map((section) => (
+          <li class="card">
+            <a class="card__title home__section-link" href={url(sectionPath(section.id, folders))}>
+              {section.number}. {section.title}
+            </a>
+            <p class="muted">{section.intro}</p>
+          </li>
+        ))
+      }
+    </ul>
+
     <h2>Что сейчас</h2>
     <p>
-      Идёт этап 0 «Подготовка»: на прототипах проверяем самые рискованные части приложения. Затем выйдет первая волна —
-      59 тем, от основ JavaScript до сортировок.
-    </p>
-    <div class="button-row">
-      <a class="button button--primary" href={url('ru/prototypes/')}>{t('nav.prototypes')}</a>
-      <a class="button" href={url('ru/about/')}>{t('nav.about')}</a>
-    </div>
-    <p class="muted">
-      Техническое задание и каталог тем открыты на GitHub: <a href={tzUrl}>ТЗ</a> и <a href={catalogUrl}>каталог из 427 тем</a>.
+      Идёт первая волна: 59 тем, от основ JavaScript до сортировок. Вышло тем: {published} из {totals.topics}. Полный
+      список — в <a href={url('ru/catalog/')}>каталоге</a>.
     </p>
   </div>
 </BaseLayout>
+
+<style>
+  .home__section-link {
+    display: inline-block;
+    text-decoration: none;
+  }
+
+  .home__section-link:hover {
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,51 @@
+---
+/** Путь до страницы: каталог, раздел, модуль. */
+import { url } from '../../lib/site.ts';
+
+interface Props {
+  items: { href: string; label: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav class="breadcrumbs" aria-label="Путь">
+  <ol>
+    {
+      items.map((item) => (
+        <li>
+          <a href={url(item.href)}>{item.label}</a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: var(--space-5) 0 0;
+    font-size: var(--text-small);
+    color: var(--color-text-muted);
+  }
+
+  .breadcrumbs li + li {
+    margin-top: 0;
+  }
+
+  .breadcrumbs li + li::before {
+    content: '/';
+    margin-right: var(--space-2);
+    color: var(--color-text-subtle);
+  }
+
+  .breadcrumbs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+</style>

@@ -1,3 +1,4 @@
+// cspell:ignore дийкстра хэш — нарочно написанные с ошибкой примеры запросов
 /**
  * Поиск по справочнику: результаты появляются при вводе и группируются —
  * темы, термины, блоки. Индекс загружается при первом обращении к полю и
@@ -88,7 +89,7 @@ export default function SearchBox({ indexUrl, base }: SearchBoxProps) {
                   {hit.url === null ? <span class="search__title">{hit.title}</span> : <a class="search__title" href={`${base}${hit.url}`}>{hit.title}</a>}
                   <span class="search__context muted">
                     {hit.context}
-                    {hit.url === null && hit.kind === 'topic' ? ' · тема ещё не написана' : ''}
+                    {hit.wave !== undefined ? ` · тема выйдет в волне ${hit.wave}` : ''}
                   </span>
                 </li>
               ))}

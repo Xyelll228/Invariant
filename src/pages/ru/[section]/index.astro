@@ -1,0 +1,49 @@
+---
+/** Раздел каталога: его модули и темы. */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/topic/Breadcrumbs.astro';
+import ModuleTopics from '../../../components/catalog/ModuleTopics.astro';
+import { catalog, catalogModules, folders } from '../../../content/catalog-data.ts';
+import type { CatalogSection } from '../../../content/catalog.ts';
+import { modulePath } from '../../../content/paths.ts';
+import { loadSite } from '../../../content/site-data.ts';
+import { url } from '../../../lib/site.ts';
+
+export function getStaticPaths() {
+  return catalog.sections.map((section) => ({ params: { section: section.folder }, props: { section } }));
+}
+
+interface Props {
+  section: CatalogSection;
+}
+
+const { section } = Astro.props;
+const site = await loadSite();
+const topics = section.modules.reduce((sum, module) => sum + module.topics.length, 0);
+---
+
+<BaseLayout title={`${section.number}. ${section.title}`} description={section.intro}>
+  <div class="prose">
+    <Breadcrumbs items={[{ href: 'ru/catalog/', label: 'Каталог' }]} />
+    <h1>{section.number}. {section.title}</h1>
+    <p class="lead">{section.intro}</p>
+    <p class="muted">Модулей: {section.modules.length}, тем: {topics}.</p>
+    {
+      section.modules.map((module) => {
+        const full = catalogModules.get(module.id);
+        return (
+          full && (
+            <>
+              <h2 id={module.id}>
+                <a href={url(modulePath(module.id, folders))}>
+                  {module.number} {module.title}
+                </a>
+              </h2>
+              <ModuleTopics module={full} pages={site.pages} />
+            </>
+          )
+        );
+      })
+    }
+  </div>
+</BaseLayout>

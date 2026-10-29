@@ -1,0 +1,610 @@
+# Постоянные идентификаторы тем каталога (docs/catalog.md).
+#
+# Идентификатор не меняется при переименовании и никогда не используется
+# повторно: на нём держится история повторений. Последняя часть id — часть
+# адреса страницы темы: algo.sorting.insertion → /ru/algorithms/sorting/insertion/.
+# Новая тема каталога получает новую строку на своём месте.
+#
+# title — название из каталога; проверка сверяет его с docs/catalog.md.
+# wave — волна темы, если модуль выходит в нескольких волнах (ТЗ, «Темы-предпосылки волны 1»).
+
+# 0.1 Первые шаги
+js.basics:
+  - { id: js.basics.program, title: 'Что такое программа и как её запустить' }
+  - { id: js.basics.console-log, title: 'вывод через console.log' }
+  - { id: js.basics.types, title: 'значения и типы: number, string, boolean, null, undefined' }
+  - { id: js.basics.variables, title: 'переменные let и const' }
+  - { id: js.basics.operators, title: 'операторы: арифметика, сравнение (=== и ==), логические' }
+  - { id: js.basics.strings, title: 'строки и шаблонные строки' }
+
+# 0.2 Управление
+js.control:
+  - { id: js.control.conditions, title: 'Условия: if/else и тернарный оператор' }
+  - { id: js.control.loops, title: 'циклы for, while, for…of' }
+  - { id: js.control.break-continue, title: 'break и continue' }
+
+# 0.3 Функции
+js.functions:
+  - { id: js.functions.declaration, title: 'Объявление, параметры и return' }
+  - { id: js.functions.scope, title: 'область видимости' }
+  - { id: js.functions.arrow, title: 'стрелочные функции и функции как значения' }
+  - { id: js.functions.recursion-intro, title: 'рекурсия: первое знакомство' }
+
+# 0.4 Данные
+js.data:
+  - { id: js.data.arrays, title: 'Массивы: индексы с нуля, length, перебор' }
+  - { id: js.data.array-methods, title: 'методы массивов: push/pop, shift/unshift, slice/splice, map/filter/reduce' }
+  - { id: js.data.objects, title: 'объекты' }
+  - { id: js.data.map-set, title: 'Map и Set' }
+  - { id: js.data.references, title: 'ссылки и копирование: почему массив, изменённый в функции, меняется снаружи' }
+
+# 0.5 Ошибки и проверка
+js.errors:
+  - { id: js.errors.reading, title: 'Чтение ошибок: SyntaxError, ReferenceError, TypeError' }
+  - { id: js.errors.debugging, title: 'отладка через console.log и пошаговое выполнение' }
+  - { id: js.errors.tests, title: 'что такое тест и как читать его результат' }
+
+# 1.1 Анализ алгоритмов
+algo.analysis:
+  - { id: algo.analysis.algorithm, title: 'Что такое алгоритм; корректность и завершаемость', wave: 1 }
+  - { id: algo.analysis.ram-model, title: 'модель вычислений (RAM) и подсчёт операций', wave: 1 }
+  - { id: algo.analysis.asymptotics, title: 'асимптотика: O, Ω, Θ, o, ω', wave: 1 }
+  - { id: algo.analysis.cases, title: 'лучший, средний и худший случай', wave: 1 }
+  - { id: algo.analysis.code-complexity, title: 'оценка сложности по коду: циклы, вложенные и логарифмические циклы, вызовы функций', wave: 1 }
+  - { id: algo.analysis.space, title: 'память: пространственная сложность и стек вызовов', wave: 1 }
+  - { id: algo.analysis.doubling, title: 'эксперимент удвоения: измерить, а не угадать', wave: 1 }
+  - { id: algo.analysis.recurrences, title: 'рекуррентные соотношения: подстановка, дерево рекурсии, основная теорема', wave: 1 }
+  - { id: algo.analysis.akra-bazzi, title: 'метод Акры–Бацци', wave: 2 }
+  - { id: algo.analysis.amortized, title: 'амортизированный анализ: групповой, бухгалтерский, метод потенциалов', wave: 2 }
+  - { id: algo.analysis.cache, title: 'кеш и локальность данных: почему асимптотика — не всё', wave: 2 }
+
+# 1.2 Линейные структуры
+algo.linear:
+  - { id: algo.linear.array, title: 'Массив и доступ по индексу за O(1)', wave: 1 }
+  - { id: algo.linear.dynamic-array, title: 'динамический массив: рост ёмкости и амортизированная вставка в конец', wave: 2 }
+  - { id: algo.linear.matrices, title: 'многомерные массивы и матрицы в памяти', wave: 2 }
+  - { id: algo.linear.linked-list, title: 'связный список: одно- и двусвязный, кольцевой, фиктивный узел', wave: 1 }
+  - { id: algo.linear.stack, title: 'стек на массиве и на списке; применения: скобки, обратная польская запись', wave: 2 }
+  - { id: algo.linear.queue, title: 'очередь на кольцевом буфере и на двух стеках', wave: 2 }
+  - { id: algo.linear.deque, title: 'дек', wave: 2 }
+  - { id: algo.linear.array-vs-list, title: 'массив против связного списка: асимптотика и кеш', wave: 2 }
+
+# 1.3 Рекурсия и перебор
+algo.recursion:
+  - { id: algo.recursion.basics, title: 'Рекурсия: базовый случай, шаг, стек вызовов', wave: 1 }
+  - { id: algo.recursion.iteration, title: 'рекурсия и итерация; хвостовая рекурсия', wave: 2 }
+  - { id: algo.recursion.divide-conquer, title: 'разделяй и властвуй', wave: 1 }
+  - { id: algo.recursion.backtracking, title: 'перебор с возвратом: подмножества, перестановки, сочетания', wave: 2 }
+  - { id: algo.recursion.queens-sudoku, title: 'классические задачи перебора: N ферзей, судоку', wave: 2 }
+  - { id: algo.recursion.memoization, title: 'мемоизация', wave: 2 }
+
+# 1.4 Поиск
+algo.search:
+  - { id: algo.search.linear, title: 'Линейный поиск и барьерный элемент' }
+  - { id: algo.search.binary, title: 'бинарный поиск и его типичные ошибки' }
+  - { id: algo.search.bounds, title: 'левая и правая граница (lower_bound, upper_bound)' }
+  - { id: algo.search.on-answer, title: 'бинарный поиск по ответу и на вещественных числах' }
+  - { id: algo.search.ternary, title: 'тернарный поиск' }
+  - { id: algo.search.exponential, title: 'экспоненциальный и интерполяционный поиск' }
+
+# 1.5 Сортировки
+algo.sorting:
+  - { id: algo.sorting.basics, title: 'Постановка задачи и свойства: устойчивость, сортировка на месте, адаптивность' }
+  - { id: algo.sorting.bubble, title: 'пузырьком' }
+  - { id: algo.sorting.selection, title: 'выбором' }
+  - { id: algo.sorting.insertion, title: 'вставками и бинарными вставками' }
+  - { id: algo.sorting.shell, title: 'Шелла' }
+  - { id: algo.sorting.merge, title: 'слиянием: сверху вниз и снизу вверх' }
+  - { id: algo.sorting.quick, title: 'быстрая: разбиения Ломуто и Хоара' }
+  - { id: algo.sorting.pivot, title: 'выбор опорного элемента и худший случай быстрой сортировки' }
+  - { id: algo.sorting.three-way, title: 'трёхпутевое разбиение (задача о голландском флаге)' }
+  - { id: algo.sorting.heap, title: 'пирамидальная' }
+  - { id: algo.sorting.lower-bound, title: 'нижняя граница Ω(n log n) для сортировок сравнениями: дерево решений' }
+  - { id: algo.sorting.counting, title: 'подсчётом' }
+  - { id: algo.sorting.radix, title: 'поразрядная: LSD и MSD' }
+  - { id: algo.sorting.bucket, title: 'блочная' }
+  - { id: algo.sorting.hybrid, title: 'гибридные сортировки в библиотеках: TimSort, introsort, pdqsort' }
+  - { id: algo.sorting.external, title: 'внешняя сортировка' }
+  - { id: algo.sorting.quickselect, title: 'порядковые статистики: quickselect' }
+  - { id: algo.sorting.median-of-medians, title: 'медиана медиан' }
+  - { id: algo.sorting.comparators, title: 'компараторы и устойчивость сортировки в JS, Python и C++' }
+
+# 1.6 Хеширование
+algo.hashing:
+  - { id: algo.hashing.hash-function, title: 'Хеш-функция и её свойства; хеширование строк' }
+  - { id: algo.hashing.chaining, title: 'хеш-таблица с цепочками' }
+  - { id: algo.hashing.open-addressing, title: 'открытая адресация: линейное и квадратичное пробирование, двойное хеширование' }
+  - { id: algo.hashing.deletion, title: 'удаление при открытой адресации' }
+  - { id: algo.hashing.load-factor, title: 'коэффициент заполнения и рехеширование' }
+  - { id: algo.hashing.universal, title: 'универсальное хеширование и атаки на хеш-таблицы' }
+  - { id: algo.hashing.cuckoo-robin-hood, title: 'кукушкино хеширование и Robin Hood' }
+  - { id: algo.hashing.in-languages, title: 'хеш-таблицы в языках: Map и Set в JS, dict и set в Python, unordered_map в C++' }
+  - { id: algo.hashing.bloom-filter, title: 'фильтр Блума' }
+  - { id: algo.hashing.consistent, title: 'согласованное хеширование' }
+  - { id: algo.hashing.lru-cache, title: 'LRU-кеш' }
+
+# 1.7 Деревья и кучи
+algo.trees:
+  - { id: algo.trees.terms, title: 'Термины: корень, лист, высота, глубина, уровень; с какого числа считаются уровни', wave: 1 }
+  - { id: algo.trees.binary-kinds, title: 'виды двоичных деревьев (full, perfect, complete): русские названия различаются по источникам, в глоссарии закрепляем одни', wave: 2 }
+  - { id: algo.trees.traversals, title: 'обходы: прямой, симметричный, обратный, в ширину; рекурсивно и итеративно', wave: 2 }
+  - { id: algo.trees.morris, title: 'обход Морриса', wave: 2 }
+  - { id: algo.trees.bst, title: 'двоичное дерево поиска: поиск, вставка, удаление, преемник', wave: 2 }
+  - { id: algo.trees.avl, title: 'АВЛ-дерево и повороты', wave: 2 }
+  - { id: algo.trees.red-black, title: 'красно-чёрное дерево', wave: 2 }
+  - { id: algo.trees.treap, title: 'декартово дерево (treap)', wave: 2 }
+  - { id: algo.trees.splay, title: 'splay-дерево', wave: 2 }
+  - { id: algo.trees.b-trees, title: '2-3-деревья, B-деревья и B+-деревья', wave: 2 }
+  - { id: algo.trees.binary-heap, title: 'двоичная куча и очередь с приоритетом; построение кучи за O(n)', wave: 1 }
+  - { id: algo.trees.advanced-heaps, title: 'd-ичная куча; биномиальная и фибоначчиева кучи', wave: 2 }
+  - { id: algo.trees.dsu, title: 'система непересекающихся множеств (DSU)', wave: 2 }
+  - { id: algo.trees.segment-tree, title: 'дерево отрезков и отложенные обновления', wave: 2 }
+  - { id: algo.trees.fenwick, title: 'дерево Фенвика', wave: 2 }
+  - { id: algo.trees.trie, title: 'префиксное дерево (trie)', wave: 2 }
+  - { id: algo.trees.sparse-table, title: 'разреженная таблица', wave: 2 }
+  - { id: algo.trees.kd-tree, title: 'k-d-дерево и дерево квадрантов', wave: 2 }
+
+# 1.8 Графы
+algo.graphs:
+  - { id: algo.graphs.definitions, title: 'Определения: ориентированные и взвешенные графы, степени, пути, циклы' }
+  - { id: algo.graphs.representations, title: 'представления: матрица смежности, списки смежности, список рёбер' }
+  - { id: algo.graphs.bfs, title: 'обход в ширину (BFS) и кратчайшие пути без весов' }
+  - { id: algo.graphs.zero-one-bfs, title: '0-1 BFS' }
+  - { id: algo.graphs.dfs, title: 'обход в глубину (DFS): времена входа и выхода, типы рёбер, поиск цикла' }
+  - { id: algo.graphs.components, title: 'компоненты связности и проверка на двудольность' }
+  - { id: algo.graphs.topological-sort, title: 'топологическая сортировка: алгоритм Кана и через DFS' }
+  - { id: algo.graphs.scc, title: 'сильно связные компоненты: Косарайю, Тарьян' }
+  - { id: algo.graphs.bridges, title: 'мосты и точки сочленения' }
+  - { id: algo.graphs.dijkstra, title: 'алгоритм Дейкстры; почему он не работает с отрицательными весами' }
+  - { id: algo.graphs.bellman-ford, title: 'Беллман–Форд и отрицательные циклы' }
+  - { id: algo.graphs.floyd-warshall, title: 'Флойд–Уоршелл' }
+  - { id: algo.graphs.dag-paths, title: 'кратчайшие пути в ациклическом графе' }
+  - { id: algo.graphs.a-star, title: 'A*' }
+  - { id: algo.graphs.mst, title: 'минимальное остовное дерево: Краскал, Прим, свойство разреза' }
+  - { id: algo.graphs.max-flow, title: 'потоки: Форд–Фалкерсон, Эдмондс–Карп; максимальный поток и минимальный разрез' }
+  - { id: algo.graphs.dinic, title: 'алгоритм Диница' }
+  - { id: algo.graphs.kuhn, title: 'паросочетания в двудольных графах: алгоритм Куна' }
+  - { id: algo.graphs.hopcroft-karp, title: 'Хопкрофт–Карп' }
+  - { id: algo.graphs.euler-hamilton, title: 'эйлеровы и гамильтоновы пути' }
+  - { id: algo.graphs.lca, title: 'наименьший общий предок (LCA): двоичные подъёмы' }
+  - { id: algo.graphs.coloring, title: 'раскраска графов' }
+
+# 1.9 Жадные алгоритмы
+algo.greedy:
+  - { id: algo.greedy.exchange, title: 'Идея и доказательство обменом' }
+  - { id: algo.greedy.interval-scheduling, title: 'выбор заявок (интервалов)' }
+  - { id: algo.greedy.huffman, title: 'коды Хаффмана' }
+  - { id: algo.greedy.knapsack-coins, title: 'дробный рюкзак; размен монет — когда жадность ошибается' }
+  - { id: algo.greedy.matroids, title: 'матроиды' }
+
+# 1.10 Динамическое программирование
+algo.dp:
+  - { id: algo.dp.principles, title: 'Подзадачи, оптимальная подструктура, перекрывающиеся подзадачи' }
+  - { id: algo.dp.memo-tabulation, title: 'мемоизация и табуляция; восстановление ответа' }
+  - { id: algo.dp.one-dimensional, title: 'одномерное ДП: лестница, максимальная сумма подотрезка (Кадане)' }
+  - { id: algo.dp.knapsack, title: 'рюкзак: 0/1 и неограниченный' }
+  - { id: algo.dp.lis, title: 'наибольшая возрастающая подпоследовательность за O(n²) и O(n log n)' }
+  - { id: algo.dp.lcs-edit-distance, title: 'наибольшая общая подпоследовательность; расстояние Левенштейна' }
+  - { id: algo.dp.intervals, title: 'ДП на отрезках: порядок перемножения матриц' }
+  - { id: algo.dp.trees, title: 'ДП на деревьях' }
+  - { id: algo.dp.bitmask, title: 'ДП по маскам: задача коммивояжёра' }
+  - { id: algo.dp.profile, title: 'ДП по профилю' }
+  - { id: algo.dp.optimizations, title: 'оптимизации ДП: Кнута, «разделяй и властвуй», convex hull trick' }
+
+# 1.11 Строки
+algo.strings:
+  - { id: algo.strings.encodings, title: 'Кодировки: ASCII, Unicode, UTF-8, UTF-16; почему length в JS считает не символы' }
+  - { id: algo.strings.naive-search, title: 'наивный поиск подстроки' }
+  - { id: algo.strings.kmp, title: 'префикс-функция и алгоритм Кнута–Морриса–Пратта' }
+  - { id: algo.strings.z-function, title: 'Z-функция' }
+  - { id: algo.strings.rabin-karp, title: 'алгоритм Рабина–Карпа' }
+  - { id: algo.strings.boyer-moore, title: 'алгоритм Бойера–Мура' }
+  - { id: algo.strings.aho-corasick, title: 'алгоритм Ахо–Корасик' }
+  - { id: algo.strings.suffix-array, title: 'суффиксный массив и LCP' }
+  - { id: algo.strings.suffix-tree, title: 'суффиксное дерево и суффиксный автомат' }
+  - { id: algo.strings.manacher, title: 'алгоритм Манакера' }
+
+# 1.12 Числовые и битовые алгоритмы
+algo.numeric:
+  - { id: algo.numeric.bits, title: 'Битовые операции и маски' }
+  - { id: algo.numeric.euclid, title: 'алгоритм Евклида и расширенный алгоритм Евклида' }
+  - { id: algo.numeric.fast-power, title: 'быстрое возведение в степень, в том числе по модулю' }
+  - { id: algo.numeric.sieve, title: 'решето Эратосфена и проверка на простоту' }
+  - { id: algo.numeric.factorization, title: 'разложение на множители' }
+  - { id: algo.numeric.binomial-mod, title: 'биномиальные коэффициенты по модулю' }
+  - { id: algo.numeric.matrix-power, title: 'возведение матрицы в степень: числа Фибоначчи за O(log n)' }
+  - { id: algo.numeric.karatsuba, title: 'длинная арифметика и умножение Карацубы' }
+  - { id: algo.numeric.fft, title: 'быстрое преобразование Фурье' }
+
+# 1.13 Вычислительная геометрия
+algo.geometry:
+  - { id: algo.geometry.vectors, title: 'Векторы, скалярное и векторное произведение, ориентация трёх точек' }
+  - { id: algo.geometry.segment-intersection, title: 'пересечение отрезков' }
+  - { id: algo.geometry.polygon-area, title: 'площадь многоугольника' }
+  - { id: algo.geometry.convex-hull, title: 'выпуклая оболочка: Грэхем, Эндрю' }
+  - { id: algo.geometry.point-in-polygon, title: 'точка внутри многоугольника' }
+  - { id: algo.geometry.sweep-line, title: 'метод заметающей прямой' }
+
+# 1.14 Вероятностные алгоритмы
+algo.randomized:
+  - { id: algo.randomized.las-vegas-monte-carlo, title: 'Алгоритмы Лас-Вегас и Монте-Карло' }
+  - { id: algo.randomized.skip-list, title: 'список с пропусками (skip list)' }
+  - { id: algo.randomized.shuffle-sampling, title: 'перемешивание Фишера–Йетса и выборка из потока (reservoir sampling)' }
+  - { id: algo.randomized.sketches, title: 'HyperLogLog и Count-Min Sketch' }
+
+# 1.15 Сложность задач
+algo.complexity:
+  - { id: algo.complexity.p-np, title: 'Классы P и NP; сводимость' }
+  - { id: algo.complexity.np-complete, title: 'NP-полные задачи: SAT, клика, вершинное покрытие, рюкзак, коммивояжёр' }
+  - { id: algo.complexity.np-hard-practice, title: 'NP-трудные задачи на практике: приближённые алгоритмы и эвристики' }
+  - { id: algo.complexity.computability, title: 'вычислимость и проблема остановки' }
+
+# 2.1 Основы
+db.basics:
+  - { id: db.basics.dbms, title: 'Что такое база данных и СУБД' }
+  - { id: db.basics.data-models, title: 'модели данных: реляционная, документная, «ключ–значение», графовая, колоночная' }
+  - { id: db.basics.relational-model, title: 'реляционная модель: отношение, кортеж, атрибут, домен' }
+  - { id: db.basics.keys, title: 'ключи: суперключ, потенциальный, первичный, внешний; суррогатный и естественный' }
+  - { id: db.basics.constraints, title: 'ограничения целостности' }
+  - { id: db.basics.null, title: 'NULL и трёхзначная логика' }
+
+# 2.2 Реляционная алгебра
+db.algebra:
+  - { id: db.algebra.selection-projection, title: 'Выборка и проекция' }
+  - { id: db.algebra.joins, title: 'декартово произведение и соединения: тета, естественное, внешние' }
+  - { id: db.algebra.set-operations, title: 'объединение, пересечение, разность' }
+  - { id: db.algebra.division, title: 'деление' }
+  - { id: db.algebra.calculus, title: 'реляционное исчисление' }
+
+# 2.3 Проектирование
+db.design:
+  - { id: db.design.er-model, title: 'ER-модель: сущности, атрибуты, связи, кардинальность' }
+  - { id: db.design.weak-entities, title: 'слабые сущности и нотации: Чена, «воронья лапка»' }
+  - { id: db.design.er-to-tables, title: 'переход от ER-модели к таблицам' }
+  - { id: db.design.functional-dependencies, title: 'функциональные зависимости, аксиомы Армстронга, замыкание, минимальное покрытие' }
+  - { id: db.design.normal-forms, title: 'нормальные формы: 1НФ, 2НФ, 3НФ, НФБК' }
+  - { id: db.design.higher-normal-forms, title: '4НФ и 5НФ' }
+  - { id: db.design.decomposition, title: 'декомпозиция без потерь и с сохранением зависимостей' }
+  - { id: db.design.denormalization, title: 'денормализация: когда и зачем' }
+
+# 2.4 SQL: определение данных
+db.ddl:
+  - { id: db.ddl.create-alter-drop, title: 'CREATE, ALTER, DROP' }
+  - { id: db.ddl.data-types, title: 'типы данных' }
+  - { id: db.ddl.constraints, title: 'ограничения: PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, CHECK, DEFAULT' }
+  - { id: db.ddl.referential-actions, title: 'ссылочные действия: ON DELETE и ON UPDATE' }
+
+# 2.5 SQL: изменение данных
+db.dml:
+  - { id: db.dml.insert-update-delete, title: 'INSERT, UPDATE, DELETE' }
+  - { id: db.dml.upsert, title: 'вставка с обновлением при конфликте (UPSERT)' }
+  - { id: db.dml.truncate, title: 'TRUNCATE и DELETE' }
+
+# 2.6 SQL: запросы
+db.queries:
+  - { id: db.queries.select, title: 'SELECT и логический порядок выполнения запроса' }
+  - { id: db.queries.filtering, title: 'фильтрация: WHERE, LIKE, IN, BETWEEN, IS NULL' }
+  - { id: db.queries.order-limit, title: 'ORDER BY, LIMIT и OFFSET, DISTINCT' }
+  - { id: db.queries.aggregates, title: 'агрегатные функции' }
+  - { id: db.queries.group-by, title: 'GROUP BY и HAVING; WHERE против HAVING' }
+  - { id: db.queries.joins, title: 'соединения: INNER, LEFT, RIGHT, FULL, CROSS, соединение таблицы с собой' }
+  - { id: db.queries.subqueries, title: 'подзапросы: скалярные, коррелированные, IN и EXISTS; ловушка NOT IN с NULL' }
+  - { id: db.queries.set-operations, title: 'UNION, INTERSECT, EXCEPT' }
+  - { id: db.queries.expressions, title: 'CASE, COALESCE, NULLIF; функции для строк и дат' }
+  - { id: db.queries.cte, title: 'CTE (WITH) и рекурсивные запросы' }
+  - { id: db.queries.window-functions, title: 'оконные функции: ROW_NUMBER, RANK, DENSE_RANK, LAG, LEAD, нарастающие итоги, рамки окна' }
+  - { id: db.queries.views, title: 'представления и материализованные представления' }
+
+# 2.7 Индексы
+db.indexes:
+  - { id: db.indexes.why, title: 'Зачем нужен индекс' }
+  - { id: db.indexes.b-plus-tree, title: 'индекс на B+-дереве' }
+  - { id: db.indexes.hash, title: 'хеш-индексы' }
+  - { id: db.indexes.composite, title: 'составные индексы и порядок столбцов' }
+  - { id: db.indexes.covering, title: 'покрывающие индексы' }
+  - { id: db.indexes.selectivity, title: 'селективность и когда индекс не помогает; цена индекса при записи' }
+
+# 2.8 Выполнение запросов
+db.execution:
+  - { id: db.execution.explain, title: 'План запроса и EXPLAIN' }
+  - { id: db.execution.join-algorithms, title: 'алгоритмы соединения: вложенные циклы, хеш-соединение, соединение слиянием' }
+  - { id: db.execution.external-sort, title: 'сортировка и группировка на диске' }
+  - { id: db.execution.cardinality, title: 'оценка кардинальности и статистика' }
+  - { id: db.execution.optimizer, title: 'как работает оптимизатор' }
+
+# 2.9 Транзакции
+db.transactions:
+  - { id: db.transactions.acid, title: 'ACID' }
+  - { id: db.transactions.anomalies, title: 'аномалии: грязное чтение, неповторяющееся чтение, фантомы, потерянное обновление, перекос записи' }
+  - { id: db.transactions.isolation-levels, title: 'уровни изоляции: по стандарту SQL и в реальных СУБД' }
+  - { id: db.transactions.two-phase-locking, title: 'блокировки и двухфазная блокировка' }
+  - { id: db.transactions.deadlocks, title: 'взаимоблокировки' }
+  - { id: db.transactions.mvcc, title: 'MVCC и снимки данных' }
+  - { id: db.transactions.serializability, title: 'сериализуемость' }
+  - { id: db.transactions.app-locking, title: 'оптимистичные и пессимистичные блокировки в приложении' }
+
+# 2.10 Хранение и восстановление
+db.storage:
+  - { id: db.storage.pages-buffer-pool, title: 'Страницы, файлы и буферный пул' }
+  - { id: db.storage.wal, title: 'журнал предзаписи (WAL)' }
+  - { id: db.storage.recovery, title: 'восстановление после сбоя; ARIES' }
+  - { id: db.storage.row-column, title: 'строковое и колоночное хранение' }
+
+# 2.11 Программирование и безопасность
+db.programming:
+  - { id: db.programming.procedures, title: 'Хранимые процедуры и функции' }
+  - { id: db.programming.triggers, title: 'триггеры' }
+  - { id: db.programming.sql-injection, title: 'SQL-инъекции и параметризованные запросы' }
+  - { id: db.programming.grant-revoke, title: 'права и роли: GRANT, REVOKE' }
+  - { id: db.programming.drivers-orm, title: 'работа с базой из кода: драйверы и ORM' }
+
+# 2.12 Масштабирование и NoSQL
+db.scaling:
+  - { id: db.scaling.replication, title: 'Репликация' }
+  - { id: db.scaling.sharding, title: 'шардирование и секционирование' }
+  - { id: db.scaling.cap, title: 'теорема CAP и модели согласованности' }
+  - { id: db.scaling.document-db, title: 'документные базы' }
+  - { id: db.scaling.key-value-columnar, title: '«ключ–значение» и колоночные базы' }
+  - { id: db.scaling.choosing, title: 'как выбрать базу под задачу' }
+
+# 2.13 Практикум
+db.practice:
+  - { id: db.practice.schema-design, title: 'Проектирование схемы от требований до запросов' }
+  - { id: db.practice.migrations, title: 'миграции схемы' }
+  - { id: db.practice.backup, title: 'резервное копирование и восстановление' }
+
+# 3.1 Как работает программа
+cpp.toolchain:
+  - { id: cpp.toolchain.compilation, title: 'Препроцессор, компилятор, компоновщик' }
+  - { id: cpp.toolchain.translation-units, title: 'единицы трансляции и заголовочные файлы' }
+  - { id: cpp.toolchain.build-flags, title: 'сборка: gcc и clang, важные флаги' }
+  - { id: cpp.toolchain.sanitizers, title: 'санитайзеры: AddressSanitizer, UndefinedBehaviorSanitizer' }
+  - { id: cpp.toolchain.gdb, title: 'отладчик gdb' }
+  - { id: cpp.toolchain.undefined-behavior, title: 'неопределённое поведение: что это и почему опасно' }
+
+# 3.2 Язык C
+cpp.c:
+  - { id: cpp.c.types, title: 'Типы и их размеры' }
+  - { id: cpp.c.signed-unsigned, title: 'signed и unsigned; переполнение' }
+  - { id: cpp.c.operators, title: 'операторы и приоритеты' }
+  - { id: cpp.c.casts, title: 'приведение типов' }
+  - { id: cpp.c.control, title: 'управляющие конструкции' }
+  - { id: cpp.c.functions, title: 'функции и передача аргументов по значению' }
+  - { id: cpp.c.storage-duration, title: 'области видимости и время жизни: auto, static, extern' }
+  - { id: cpp.c.arrays, title: 'массивы' }
+  - { id: cpp.c.strings, title: 'строки C и нулевой символ' }
+  - { id: cpp.c.pointers, title: 'указатели и адресная арифметика' }
+  - { id: cpp.c.pointers-to-pointers, title: 'указатели на указатели и массивы указателей' }
+  - { id: cpp.c.function-pointers, title: 'указатели на функции' }
+  - { id: cpp.c.structs, title: 'struct, union, enum, typedef' }
+  - { id: cpp.c.dynamic-memory, title: 'динамическая память: malloc, calloc, realloc, free' }
+  - { id: cpp.c.memory-errors, title: 'ошибки памяти: утечки, висячие указатели, двойное освобождение, выход за границы' }
+  - { id: cpp.c.io, title: 'ввод-вывод: printf, scanf, файлы' }
+  - { id: cpp.c.preprocessor, title: 'препроцессор: макросы, условная компиляция, защита от повторного включения' }
+
+# 3.3 Память программы
+cpp.memory:
+  - { id: cpp.memory.stack-heap, title: 'Стек и куча' }
+  - { id: cpp.memory.segments, title: 'сегменты: код, данные, BSS' }
+  - { id: cpp.memory.alignment, title: 'выравнивание и размер структур' }
+  - { id: cpp.memory.stack-frame, title: 'кадр стека и соглашения о вызове' }
+
+# 3.4 C++: основы
+cpp.basics:
+  - { id: cpp.basics.references, title: 'Ссылки и их отличие от указателей' }
+  - { id: cpp.basics.const-constexpr, title: 'const и constexpr' }
+  - { id: cpp.basics.overloading, title: 'перегрузка функций' }
+  - { id: cpp.basics.namespaces, title: 'пространства имён' }
+  - { id: cpp.basics.classes, title: 'классы: конструкторы, деструкторы, инкапсуляция' }
+  - { id: cpp.basics.raii, title: 'RAII' }
+  - { id: cpp.basics.rule-of-five, title: 'правило трёх, пяти и нуля' }
+  - { id: cpp.basics.move-semantics, title: 'семантика перемещения: rvalue-ссылки и std::move' }
+  - { id: cpp.basics.smart-pointers, title: 'умные указатели: unique_ptr, shared_ptr, weak_ptr' }
+  - { id: cpp.basics.exceptions, title: 'исключения и гарантии безопасности' }
+
+# 3.5 C++: ООП и шаблоны
+cpp.oop:
+  - { id: cpp.oop.inheritance, title: 'Наследование' }
+  - { id: cpp.oop.virtual-functions, title: 'виртуальные функции и таблица виртуальных функций' }
+  - { id: cpp.oop.abstract-classes, title: 'абстрактные классы' }
+  - { id: cpp.oop.operator-overloading, title: 'перегрузка операторов' }
+  - { id: cpp.oop.templates, title: 'шаблоны функций и классов' }
+  - { id: cpp.oop.auto-lambdas, title: 'auto, range-for, лямбды' }
+  - { id: cpp.oop.concepts-ranges, title: 'концепты и ranges из C++20' }
+
+# 3.6 STL
+cpp.stl:
+  - { id: cpp.stl.vector, title: 'vector: ёмкость, рост, инвалидация итераторов' }
+  - { id: cpp.stl.deque-list-array, title: 'deque, list, array' }
+  - { id: cpp.stl.map-set, title: 'map и set (обычно красно-чёрное дерево), multimap и multiset' }
+  - { id: cpp.stl.unordered, title: 'unordered_map и unordered_set' }
+  - { id: cpp.stl.adapters, title: 'stack, queue, priority_queue' }
+  - { id: cpp.stl.iterators, title: 'итераторы и их категории' }
+  - { id: cpp.stl.algorithms, title: 'алгоритмы: sort, stable_sort, nth_element, lower_bound и другие' }
+  - { id: cpp.stl.complexity, title: 'сложность операций по стандарту' }
+  - { id: cpp.stl.string, title: 'string и string_view' }
+
+# 3.7 Многопоточность
+cpp.threads:
+  - { id: cpp.threads.thread, title: 'std::thread' }
+  - { id: cpp.threads.mutex, title: 'мьютексы и гонки данных' }
+  - { id: cpp.threads.atomic, title: 'atomic и модель памяти' }
+  - { id: cpp.threads.condition-variable, title: 'условные переменные' }
+
+# 3.8 Алгоритмы на C++
+cpp.algorithms:
+  - { id: cpp.algorithms.manual-memory, title: 'Структуры данных с ручным управлением памятью: список, дерево' }
+  - { id: cpp.algorithms.contest-tricks, title: 'приёмы для задач и собеседований: быстрый ввод-вывод, полезные функции STL' }
+
+# 4.1 Основы
+py.basics:
+  - { id: py.basics.running, title: 'Как запускается программа; REPL' }
+  - { id: py.basics.types, title: 'типы: int произвольной точности, float, bool, str, None' }
+  - { id: py.basics.names-objects, title: 'имена и объекты: переменная — это ссылка' }
+  - { id: py.basics.mutability, title: 'изменяемые и неизменяемые объекты' }
+  - { id: py.basics.operators, title: 'операторы и условия' }
+  - { id: py.basics.loops, title: 'циклы for и while, range, else у цикла' }
+  - { id: py.basics.functions, title: 'функции: позиционные и именованные аргументы, *args, **kwargs' }
+  - { id: py.basics.mutable-default, title: 'ловушка изменяемого значения по умолчанию' }
+  - { id: py.basics.scope, title: 'области видимости: LEGB, global, nonlocal' }
+  - { id: py.basics.strings, title: 'строки: срезы, методы, f-строки' }
+  - { id: py.basics.lists-tuples, title: 'списки и кортежи' }
+  - { id: py.basics.dicts-sets, title: 'словари и множества' }
+  - { id: py.basics.comprehensions, title: 'генераторы списков, словарей и множеств' }
+  - { id: py.basics.exceptions, title: 'исключения' }
+  - { id: py.basics.files, title: 'файлы и with' }
+  - { id: py.basics.modules, title: 'модули, пакеты, pip, виртуальные окружения' }
+
+# 4.2 Глубже
+py.advanced:
+  - { id: py.advanced.generators, title: 'Итераторы и генераторы (yield)' }
+  - { id: py.advanced.decorators, title: 'декораторы' }
+  - { id: py.advanced.context-managers, title: 'контекстные менеджеры' }
+  - { id: py.advanced.classes, title: 'классы и магические методы' }
+  - { id: py.advanced.mro, title: 'наследование и порядок разрешения методов (MRO)' }
+  - { id: py.advanced.dataclasses, title: 'dataclasses' }
+  - { id: py.advanced.typing, title: 'аннотации типов и mypy' }
+  - { id: py.advanced.copying, title: 'поверхностное и глубокое копирование' }
+  - { id: py.advanced.identity-hashing, title: 'is и ==; хешируемость' }
+  - { id: py.advanced.concurrency, title: 'GIL, потоки, процессы, asyncio' }
+
+# 4.3 Python для алгоритмов
+py.algorithms:
+  - { id: py.algorithms.complexity, title: 'Сложность операций list, dict, set, deque' }
+  - { id: py.algorithms.collections, title: 'collections: deque, Counter, defaultdict' }
+  - { id: py.algorithms.heapq, title: 'heapq' }
+  - { id: py.algorithms.bisect, title: 'bisect' }
+  - { id: py.algorithms.itertools-functools, title: 'itertools и functools, включая lru_cache' }
+  - { id: py.algorithms.sorting, title: 'sorted и list.sort: key и устойчивость' }
+  - { id: py.algorithms.recursion-limit, title: 'ограничение глубины рекурсии и как обойтись без глубокой рекурсии' }
+
+# 4.4 Python изнутри
+py.internals:
+  - { id: py.internals.bytecode, title: 'Байт-код и интерпретатор CPython' }
+  - { id: py.internals.list-dict, title: 'как устроены list и dict' }
+  - { id: py.internals.memory, title: 'память: подсчёт ссылок и сборщик циклов' }
+  - { id: py.internals.performance, title: 'почему Python медленнее C и как ускорять' }
+
+# 5.1 Логика и доказательства
+math.logic:
+  - { id: math.logic.propositions, title: 'Высказывания и логические операции' }
+  - { id: math.logic.implication, title: 'импликация и равносильность' }
+  - { id: math.logic.quantifiers, title: 'кванторы и их отрицание' }
+  - { id: math.logic.proofs, title: 'доказательство прямое, от противного, через контрапозицию' }
+  - { id: math.logic.induction, title: 'математическая индукция: обычная и сильная' }
+  - { id: math.logic.invariants, title: 'инварианты' }
+
+# 5.2 Множества, отношения, функции
+math.sets:
+  - { id: math.sets.operations, title: 'Множества и операции над ними' }
+  - { id: math.sets.relations, title: 'отношения: эквивалентность и порядок' }
+  - { id: math.sets.functions, title: 'функции: инъекция, сюръекция, биекция' }
+  - { id: math.sets.cardinality, title: 'мощность; счётные и несчётные множества' }
+
+# 5.3 Комбинаторика
+math.combinatorics:
+  - { id: math.combinatorics.sum-product, title: 'Правила суммы и произведения' }
+  - { id: math.combinatorics.permutations, title: 'перестановки, размещения, сочетания' }
+  - { id: math.combinatorics.binomial, title: 'биномиальные коэффициенты и треугольник Паскаля' }
+  - { id: math.combinatorics.pigeonhole, title: 'принцип Дирихле' }
+  - { id: math.combinatorics.inclusion-exclusion, title: 'формула включений-исключений' }
+  - { id: math.combinatorics.recurrences, title: 'рекуррентные соотношения и их решение' }
+  - { id: math.combinatorics.generating-functions, title: 'производящие функции' }
+
+# 5.4 Логарифмы, суммы, асимптотика
+math.sums:
+  - { id: math.sums.powers-logs, title: 'Степени и логарифмы' }
+  - { id: math.sums.progressions, title: 'арифметическая и геометрическая прогрессии' }
+  - { id: math.sums.harmonic, title: 'гармонический ряд и ln n' }
+  - { id: math.sums.integrals, title: 'оценка сумм интегралами' }
+  - { id: math.sums.stirling, title: 'формула Стирлинга и log n! = Θ(n log n)' }
+
+# 5.5 Теория чисел
+math.numbers:
+  - { id: math.numbers.divisibility, title: 'Делимость, НОД и НОК' }
+  - { id: math.numbers.primes, title: 'простые числа и основная теорема арифметики' }
+  - { id: math.numbers.modular, title: 'сравнения по модулю' }
+  - { id: math.numbers.fermat, title: 'малая теорема Ферма и обратный элемент по модулю' }
+  - { id: math.numbers.crt, title: 'китайская теорема об остатках' }
+
+# 5.6 Вероятность
+math.probability:
+  - { id: math.probability.events, title: 'События и вероятность' }
+  - { id: math.probability.conditional, title: 'условная вероятность, независимость, формула Байеса' }
+  - { id: math.probability.expectation, title: 'случайные величины и математическое ожидание' }
+  - { id: math.probability.linearity, title: 'линейность ожидания: анализ быстрой сортировки и хеширования' }
+  - { id: math.probability.variance, title: 'дисперсия' }
+  - { id: math.probability.distributions, title: 'распределения: равномерное, Бернулли, биномиальное, геометрическое' }
+  - { id: math.probability.birthday, title: 'парадокс дней рождения и коллизии хешей' }
+  - { id: math.probability.markov-chebyshev, title: 'неравенства Маркова и Чебышёва' }
+
+# 5.7 Графы как математический объект
+math.graphs:
+  - { id: math.graphs.handshake, title: 'Определения и лемма о рукопожатиях' }
+  - { id: math.graphs.trees, title: 'деревья: в дереве на n вершинах ровно n − 1 ребро; равносильные определения' }
+  - { id: math.graphs.planarity, title: 'планарность и формула Эйлера' }
+  - { id: math.graphs.coloring, title: 'раскраска и хроматическое число' }
+
+# 5.8 Представление чисел
+math.representation:
+  - { id: math.representation.bases, title: 'Системы счисления: 2, 8, 16' }
+  - { id: math.representation.twos-complement, title: 'целые со знаком: дополнительный код' }
+  - { id: math.representation.overflow, title: 'переполнение' }
+  - { id: math.representation.floating-point, title: 'числа с плавающей точкой IEEE 754: почему 0.1 + 0.2 ≠ 0.3' }
+
+# 5.9 Линейная алгебра для программиста
+math.linear:
+  - { id: math.linear.vectors-matrices, title: 'Векторы и матрицы' }
+  - { id: math.linear.matrix-multiplication, title: 'умножение матриц и его сложность' }
+  - { id: math.linear.adjacency-powers, title: 'матрица смежности: степени матрицы и число путей' }
+
+# 6.1 Как проходит собеседование
+interview.process:
+  - { id: interview.process.format, title: 'Формат алгоритмического собеседования' }
+  - { id: interview.process.solving-order, title: 'порядок решения: уточнить условие, примеры, перебор, оптимизация, сложность, тесты' }
+  - { id: interview.process.thinking-aloud, title: 'как рассуждать вслух' }
+  - { id: interview.process.self-review, title: 'разбор своей попытки по критериям' }
+
+# 6.2 Паттерны задач
+interview.patterns:
+  - { id: interview.patterns.two-pointers, title: 'Два указателя' }
+  - { id: interview.patterns.sliding-window, title: 'скользящее окно' }
+  - { id: interview.patterns.prefix-sums, title: 'префиксные суммы и разности' }
+  - { id: interview.patterns.hash-counting, title: 'хеш-таблица для подсчёта и поиска пар' }
+  - { id: interview.patterns.sort-first, title: 'сортировка как подготовка' }
+  - { id: interview.patterns.binary-search-answer, title: 'бинарный поиск по ответу' }
+  - { id: interview.patterns.monotonic-stack, title: 'монотонный стек' }
+  - { id: interview.patterns.monotonic-queue, title: 'монотонная очередь' }
+  - { id: interview.patterns.intervals, title: 'интервалы: слияние и пересечение' }
+  - { id: interview.patterns.fast-slow-pointers, title: 'связный список: быстрый и медленный указатели, разворот' }
+  - { id: interview.patterns.tree-recursion, title: 'деревья: рекурсия с возвратом значений' }
+  - { id: interview.patterns.grid-bfs, title: 'BFS по сетке и графу' }
+  - { id: interview.patterns.topological, title: 'топологическая сортировка и зависимости' }
+  - { id: interview.patterns.dsu, title: 'система непересекающихся множеств' }
+  - { id: interview.patterns.heap-top-k, title: 'куча для top-k и слияния k списков' }
+  - { id: interview.patterns.backtracking, title: 'перебор с возвратом' }
+  - { id: interview.patterns.dp, title: 'динамическое программирование: одномерное, двумерное, на строках' }
+  - { id: interview.patterns.greedy, title: 'жадные решения' }
+  - { id: interview.patterns.bitmasks, title: 'битовые маски' }
+  - { id: interview.patterns.trie, title: 'префиксное дерево' }
+
+# 6.3 Практика
+interview.practice:
+  - { id: interview.practice.problem-sets, title: 'Подборки задач по паттернам: свои условия и ссылки на внешние площадки' }
+  - { id: interview.practice.mock-interview, title: 'пробное собеседование с таймером' }
+  - { id: interview.practice.pattern-review, title: 'повторение паттернов через FSRS' }
+
+# 6.4 Основы системного дизайна
+interview.system-design:
+  - { id: interview.system-design.format, title: 'Формат собеседования по системному дизайну и порядок ответа: требования, оценки, API, данные, схема, узкие места' }
+  - { id: interview.system-design.estimates, title: 'оценки «на салфетке»: задержки, пропускная способность, объём данных, запросы в секунду' }
+  - { id: interview.system-design.scaling, title: 'масштабирование: вертикальное и горизонтальное, сервисы без состояния, балансировка нагрузки' }
+  - { id: interview.system-design.caching, title: 'кеширование: стратегии чтения и записи, инвалидация, CDN' }
+  - { id: interview.system-design.data, title: 'данные в системе: выбор хранилища, репликация и шардирование на практике' }
+  - { id: interview.system-design.queues, title: 'очереди сообщений и асинхронная обработка; гарантии доставки и идемпотентность' }
+  - { id: interview.system-design.api, title: 'проектирование API: REST и RPC, пагинация, версии' }
+  - { id: interview.system-design.rate-limiting, title: 'ограничение частоты запросов: «ведро с токенами» и скользящее окно' }
+  - { id: interview.system-design.reliability, title: 'надёжность: тайм-ауты, повторы с экспоненциальной задержкой, предохранитель (circuit breaker), SLO' }
+  - { id: interview.system-design.observability, title: 'наблюдаемость: логи, метрики, трассировка' }
+  - { id: interview.system-design.consensus, title: 'распределённый консенсус: идея Raft' }
+  - { id: interview.system-design.case-studies, title: 'практикум: сокращатель ссылок, лента новостей, чат' }

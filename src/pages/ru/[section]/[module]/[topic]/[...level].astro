@@ -1,0 +1,192 @@
+---
+/**
+ * Страница уровня темы (ТЗ, «Справочник»). Первый уровень живёт по адресу
+ * темы, остальные — в подпапке: /ru/algorithms/sorting/insertion/base/.
+ * Адреса строятся из постоянных id (src/content/paths.ts).
+ */
+import { getEntry, render } from 'astro:content';
+import BaseLayout from '../../../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../../../components/topic/Breadcrumbs.astro';
+import LevelTabs from '../../../../../components/topic/LevelTabs.astro';
+import PropertiesTable from '../../../../../components/topic/PropertiesTable.astro';
+import TopicSources from '../../../../../components/topic/TopicSources.astro';
+import TopicTerms from '../../../../../components/topic/TopicTerms.astro';
+import ReportDialog from '../../../../../components/report/ReportDialog.astro';
+import { catalogTopics, folders } from '../../../../../content/catalog-data.ts';
+import { mdxComponents } from '../../../../../content/mdx-components.ts';
+import { catalogTopicPath, levelPath } from '../../../../../content/paths.ts';
+import { LEVEL_TITLES, type Level } from '../../../../../content/schema.ts';
+import { loadSite } from '../../../../../content/site-data.ts';
+import { capitalize, formatDate } from '../../../../../lib/format.ts';
+import { url } from '../../../../../lib/site.ts';
+
+export async function getStaticPaths() {
+  const site = await loadSite();
+  return [...site.pages.values()].flatMap((page) =>
+    page.levels.map((level, index) => {
+      const [, section, module, topic] = page.path.split('/');
+      return {
+        params: { section, module, topic, level: index === 0 ? undefined : level.level },
+        props: { topicId: page.topic.id, level: level.level },
+      };
+    }),
+  );
+}
+
+interface Props {
+  topicId: string;
+  level: Level;
+}
+
+const { topicId, level } = Astro.props;
+const site = await loadSite();
+const page = site.pages.get(topicId);
+if (!page) throw new Error(`Нет страницы темы ${topicId}`);
+const { topic, catalog } = page;
+const current = page.levels.find((item) => item.level === level);
+if (!current) throw new Error(`У темы ${topicId} нет уровня ${level}`);
+
+const entry = await getEntry('levels', current.entryId);
+if (!entry) throw new Error(`Нет текста уровня ${current.entryId}`);
+const { Content } = await render(entry);
+
+// Компоненты текста темы читают тему и уровень из Astro.locals (src/env.d.ts).
+Astro.locals.topic = { id: topic.id, title: topic.title, level, dir: page.dir };
+
+const module = catalog.module;
+const section = module.section;
+const prerequisites = topic.prerequisites.map((item) => {
+  const written = site.pages.get(item.topic);
+  const listed = catalogTopics.get(item.topic);
+  if (written) {
+    return { title: written.topic.title, level: LEVEL_TITLES[item.level], href: levelPath(item.topic, item.level, written.topic.levels, folders), wave: null };
+  }
+  return { title: capitalize(listed?.title ?? item.topic), level: LEVEL_TITLES[item.level], href: catalogTopicPath(item.topic), wave: listed?.wave ?? null };
+});
+const terms = topic.terms.map((id) => site.glossary.get(id)).filter((term) => term !== undefined);
+const statusTitle = { draft: 'черновик', auto: 'проверено автоматически', expert: 'проверено экспертом' }[topic.review.status];
+const index = page.levels.indexOf(current);
+const next = page.levels[index + 1];
+const levelTitle = `${topic.title}: ${current.title}`;
+---
+
+<BaseLayout title={index === 0 ? topic.title : levelTitle} description={topic.summary}>
+  <article class="topic" data-topic={topic.id} data-level={level}>
+    <Breadcrumbs
+      items={[
+        { href: 'ru/catalog/', label: 'Каталог' },
+        { href: page.sectionPath, label: `${section.number}. ${section.title}` },
+        { href: page.modulePath, label: `${module.number} ${module.title}` },
+      ]}
+    />
+    {
+      page.draft && (
+        <div class="note">
+          <span class="note__title">Черновик</span>
+          <p>Тема ещё не прошла проверку и на основном сайте не опубликована. Здесь её видно только в превью правки.</p>
+        </div>
+      )
+    }
+    <h1>{topic.title}</h1>
+    <p class="lead">{topic.summary}</p>
+
+    <dl class="topic__meta">
+      {
+        prerequisites.length > 0 && (
+          <div>
+            <dt>Нужно знать до</dt>
+            <dd>
+              <ul class="topic__list">
+                {prerequisites.map((item) => (
+                  <li>
+                    <a href={url(item.href)}>{item.title}</a>, {item.level}
+                    {item.wave !== null && <span class="muted"> — тема выйдет в волне {item.wave}</span>}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )
+      }
+      <div>
+        <dt>Статус проверки</dt>
+        <dd>
+          {statusTitle}, {formatDate(topic.review.date)}
+        </dd>
+      </div>
+    </dl>
+
+    <LevelTabs levels={page.levels} current={level} />
+
+    <h2 class="topic__level-title">{current.title}</h2>
+    {level !== 'fundament' && <PropertiesTable topic={topic} />}
+
+    <Content components={mdxComponents} />
+
+    {
+      next && (
+        <p class="topic__next">
+          <a class="button" href={url(next.path)}>
+            Следующий уровень: {next.title} →
+          </a>
+        </p>
+      )
+    }
+
+    <TopicTerms terms={terms} />
+    {page.sources && <TopicSources sources={page.sources} />}
+  </article>
+  <ReportDialog />
+</BaseLayout>
+
+<script>
+  // Переход по ссылке на блок внутри свёрнутого доказательства раскрывает его.
+  const reveal = () => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id) return;
+    const target = document.getElementById(id);
+    const details = target?.closest('details') ?? target?.querySelector('details');
+    if (details && !details.open) {
+      details.open = true;
+      target?.scrollIntoView();
+    }
+  };
+  window.addEventListener('hashchange', reveal);
+  reveal();
+</script>
+
+<style>
+  /*
+   * Текст — строкой удобной длины, а визуализации, код и таблицы — во всю
+   * ширину страницы: им нужно место для столбиков и панели кода.
+   */
+  .topic :global(:is(h1, h2, h3, h4, p, ul, ol, dl, blockquote, details, .note, .breadcrumbs, .level-tabs)) {
+    max-width: var(--measure);
+  }
+
+  .topic__meta > div {
+    margin-bottom: var(--space-3);
+  }
+
+  .topic__meta dt {
+    font-weight: 650;
+  }
+
+  .topic__meta dd {
+    margin: 0;
+  }
+
+  .topic__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .topic__level-title {
+    margin-top: 0;
+  }
+
+  .topic__next {
+    margin: var(--space-6) 0;
+  }
+</style>

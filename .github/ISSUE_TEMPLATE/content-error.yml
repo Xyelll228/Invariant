@@ -1,0 +1,44 @@
+# Форма «Нашёл ошибку» (ТЗ, «Справочник»). Кнопка на сайте открывает её
+# с заполненными полями: имена параметров ссылки — id полей ниже
+# (src/lib/report.ts). Метку ставит шаблон.
+name: Ошибка в учебном материале
+description: Неверное утверждение, опечатка, неоднозначный вопрос или засчитанный неверно ответ.
+title: 'Ошибка: '
+labels: ['ошибка в контенте']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо, что нашли ошибку. Каждая подтверждённая ошибка исправляется не дольше чем за 7 дней вместе с автоматической проверкой, которая поймала бы её заранее.
+  - type: input
+    id: where
+    attributes:
+      label: Где ошибка
+      description: Тема и блок или вопрос. Заполняется сам, если форма открыта кнопкой «Нашёл ошибку».
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Версия блока или вопроса
+  - type: input
+    id: seed
+    attributes:
+      label: Номер варианта задания
+      description: Для заданий с генератором — по нему вариант восстанавливается точно.
+  - type: input
+    id: page
+    attributes:
+      label: Страница
+  - type: textarea
+    id: quote
+    attributes:
+      label: Текст с ошибкой
+      description: Выделенный на странице текст или ваш ответ, который не засчитан.
+  - type: textarea
+    id: description
+    attributes:
+      label: Что не так
+      description: Что неверно и как, по-вашему, правильно. Ссылка на источник поможет.
+    validations:
+      required: true

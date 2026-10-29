@@ -66,6 +66,7 @@ export default function ArrayTrace({ algorithm, input: initialInput }: ArrayTrac
   const [inputError, setInputError] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
   const hintId = useId();
+  const speedId = useId();
 
   const frame = frames[Math.min(position, frames.length - 1)] as ArrayFrame;
   const atEnd = position >= frames.length - 1;
@@ -289,14 +290,17 @@ export default function ArrayTrace({ algorithm, input: initialInput }: ArrayTrac
             <button type="button" class="button" onClick={() => setPlaying((value) => !value)} disabled={atEnd}>
               {playing ? 'Пауза' : 'Пуск'}
             </button>
-            <label class="viz__speed">
-              Скорость
-              <select value={String(speed)} onChange={(event) => setSpeed(Number((event.target as HTMLSelectElement).value))}>
+            {/* Кнопки, а не <select>: WebKit оформляет список встроенным стилем, и строгая CSP его блокирует. */}
+            <span class="viz__speed" role="group" aria-labelledby={speedId}>
+              <span id={speedId}>Скорость</span>
+              <span class="viz__modes viz__modes--inline">
                 {SPEEDS.map((item) => (
-                  <option value={String(item.value)}>{item.label}</option>
+                  <button type="button" aria-pressed={speed === item.value} onClick={() => setSpeed(item.value)}>
+                    {item.label}
+                  </button>
                 ))}
-              </select>
-            </label>
+              </span>
+            </span>
           </>
         )}
       </div>

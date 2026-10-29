@@ -14,3 +14,18 @@ export function formatDate(isoDate: string): string {
     new Date(`${isoDate}T00:00:00Z`),
   );
 }
+
+/** С большой буквы: в каталоге темы модуля перечислены через точку посередине и начинаются со строчной. */
+export function capitalize(text: string): string {
+  return text.charAt(0).toLocaleUpperCase('ru-RU') + text.slice(1);
+}
+
+/** 1 минута, 2 минуты, 5 минут. */
+export function pluralRu(count: number, one: string, few: string, many: string): string {
+  const lastTwo = Math.abs(count) % 100;
+  const last = lastTwo % 10;
+  if (lastTwo >= 11 && lastTwo <= 14) return many;
+  if (last === 1) return one;
+  if (last >= 2 && last <= 4) return few;
+  return many;
+}

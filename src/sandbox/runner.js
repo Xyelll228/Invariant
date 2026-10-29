@@ -39,7 +39,11 @@
       worker.onerror = (event) => {
         event.preventDefault();
         const line = typeof event.lineno === 'number' && event.lineno > OFFSET ? event.lineno - OFFSET : null;
-        done({ status: 'load-error', shown: null, error: { name: 'Error', message: String(event.message || 'Код не запустился'), line }, logs: [] });
+        // Ошибки выполнения код ловит сам (worker-suffix.js), поэтому сюда приходят
+        // в основном ошибки разбора кода. Firefox сообщает о них без текста ошибки —
+        // тогда это синтаксическая ошибка без подробностей.
+        const error = event.message ? { name: 'Error', message: String(event.message), line } : { name: 'SyntaxError', message: '', line };
+        done({ status: 'load-error', shown: null, error, logs: [] });
       };
       worker.postMessage({ args: test.args, expected: test.expected, hasExpected: Object.hasOwn(test, 'expected') });
     });

@@ -1,0 +1,66 @@
+---
+/**
+ * Свойства алгоритма в едином формате (ТЗ, «Справочник»): время в лучшем,
+ * среднем и худшем случае, память, устойчивость, работа на месте. Сетка из
+ * пар «свойство — значение»: на телефоне читается без горизонтальной прокрутки.
+ */
+import type { Topic } from '../../content/schema.ts';
+import { formatComplexity } from '../../lib/format.ts';
+
+interface Props {
+  topic: Topic;
+}
+
+const { topic } = Astro.props;
+const yesNo = (value: boolean | undefined): string => (value === undefined ? '—' : value ? 'да' : 'нет');
+const items = topic.complexity
+  ? [
+      { label: 'Время, лучший случай', value: formatComplexity(topic.complexity.time.best) },
+      { label: 'Время, в среднем', value: formatComplexity(topic.complexity.time.average) },
+      { label: 'Время, худший случай', value: formatComplexity(topic.complexity.time.worst) },
+      { label: 'Дополнительная память', value: formatComplexity(topic.complexity.memory) },
+      { label: 'Устойчивая', value: yesNo(topic.properties?.stable) },
+      { label: 'На месте', value: yesNo(topic.properties?.inPlace) },
+    ]
+  : [];
+---
+
+{
+  items.length > 0 && (
+    <section class="properties" aria-label="Свойства алгоритма">
+      <dl class="properties__grid">
+        {items.map((item) => (
+          <div class="properties__item">
+            <dt>{item.label}</dt>
+            <dd>{item.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
+
+<style>
+  .properties__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: var(--space-2);
+    margin: 0 0 var(--space-5);
+  }
+
+  .properties__item {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .properties__item dt {
+    font-size: var(--text-small);
+    color: var(--color-text-muted);
+  }
+
+  .properties__item dd {
+    margin: 0;
+    font-weight: 650;
+  }
+</style>

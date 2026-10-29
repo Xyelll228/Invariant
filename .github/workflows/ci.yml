@@ -41,8 +41,12 @@ jobs:
         run: npm run check:spelling
       - name: 'Код тем: C++, Python, свойства, мутанты, удвоение, генераторы'
         run: npm run check:code
+      # Сборка для автопроверок показывает черновики тем (как превью правки):
+      # ссылки, CSP, сквозные тесты и Lighthouse проверяют и их.
       - name: Сборка
         run: npm run build
+        env:
+          PUBLIC_SHOW_DRAFTS: '1'
       - name: Ссылки, якоря и CSP
         run: npm run check:site
       - uses: actions/upload-artifact@v7
