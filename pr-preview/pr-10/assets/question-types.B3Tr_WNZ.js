@@ -1,0 +1,1 @@
+var e=[`fundament`,`base`,`depth`];function t(e,t){let n=e=>t?e.filter(e=>e.level===t):[...e];return{...e,skills:n(e.skills),steps:t?{[t]:e.steps[t]??[]}:e.steps,questions:n(e.questions).map(({id:e,version:t,level:n,role:r,step:i,skill:a,format:o,type:s})=>({id:e,version:t,level:n,role:r,step:i,skill:a,format:o,type:s}))}}export{t as n,e as t};
