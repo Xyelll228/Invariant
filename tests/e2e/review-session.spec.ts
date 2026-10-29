@@ -128,7 +128,10 @@ test('пауза темы: её навыки не приходят в повто
   await expect(session(page)).toContainText('На сегодня повторений нет.');
 
   await page.goto(LEVEL);
-  await page.getByRole('region', { name: 'Прохождение уровня «Фундамент»' }).getByRole('button', { name: 'Снять тему с паузы' }).click();
+  const unpause = page.getByRole('region', { name: 'Прохождение уровня «Фундамент»' });
+  await unpause.getByRole('button', { name: 'Снять тему с паузы' }).click();
+  // Пауза снята и сохранена — кнопка снова предлагает поставить паузу.
+  await expect(unpause.getByRole('button', { name: 'Поставить тему на паузу' })).toBeVisible();
   await page.goto('ru/review/');
   await expect(session(page).locator('section[data-question]')).toContainText('вопрос 1 из 1');
 });
