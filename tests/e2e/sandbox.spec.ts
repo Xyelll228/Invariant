@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { replaceEditorText } from './editor.ts';
 import { expect, test } from './fixtures.ts';
 
 /**
@@ -25,22 +26,9 @@ async function hydrated(locator: Locator): Promise<Locator> {
   return locator;
 }
 
-/**
- * Заменяет весь код в редакторе CodeMirror (он живёт в теневом DOM): выделить всё
- * и вставить из буфера обмена. Вставку обрабатывает сам CodeMirror; ввод текста
- * напрямую в contenteditable заставил бы браузер создавать элементы со style="…",
- * которые строгая CSP справедливо блокирует.
- */
+/** Заменяет весь код в редакторе задания. */
 async function setCode(page: Page, lab: Locator, code: string): Promise<void> {
-  const content = lab.locator('.cm-content');
-  await content.click();
-  await page.keyboard.press('ControlOrMeta+A');
-  await content.evaluate((element, text) => {
-    const data = new DataTransfer();
-    data.setData('text/plain', text);
-    element.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
-  }, code);
-  await expect(content.locator('.cm-line').first()).toHaveText(code.split('\n')[0] ?? '');
+  await replaceEditorText(page, lab.locator('.cm-content'), code);
 }
 
 function exerciseLab(page: Page): Locator {
@@ -79,18 +67,24 @@ test('неверное решение: видно, какой тест не пр
   await expect(lab.locator('.viz-feedback')).toContainText('Функция insertionSort не найдена');
 });
 
-test('синтаксическая и runtime-ошибки объясняются по-русски с номером строки', async ({ page }, testInfo) => {
-  const lab = await hydrated(exerciseLab(page));
-  await setCode(page, lab, 'function insertionSort(a) {\n  return a.sort((x, y) => x - y;\n}\n');
-  await lab.getByRole('button', { name: 'Запустить' }).click();
-  const feedback = lab.locator('.viz-feedback');
-  await expect(feedback).toContainText('Код не запустился. Синтаксическая ошибка: проверьте скобки, запятые и кавычки.');
-  if (testInfo.project.name.includes('chromium')) await expect(feedback).toContainText('Строка 2.');
+test.describe(() => {
+  // WebKit сообщает об ошибке разбора кода в фоновом потоке песочницы как об ошибке страницы,
+  // хотя песочница её обработала.
+  test.use({ expectedProblems: [/^pageerror: .*(Unexpected token|SyntaxError)/] });
 
-  await setCode(page, lab, 'function insertionSort(a) {\n  const n = a.length;\n  return b;\n}\n');
-  await lab.getByRole('button', { name: 'Запустить' }).click();
-  await expect(feedback).toContainText('Имя «b» не объявлено: проверьте кавычки и опечатки.');
-  await expect(feedback).toContainText('Строка 3.');
+  test('синтаксическая и runtime-ошибки объясняются по-русски с номером строки', async ({ page }, testInfo) => {
+    const lab = await hydrated(exerciseLab(page));
+    await setCode(page, lab, 'function insertionSort(a) {\n  return a.sort((x, y) => x - y;\n}\n');
+    await lab.getByRole('button', { name: 'Запустить' }).click();
+    const feedback = lab.locator('.viz-feedback');
+    await expect(feedback).toContainText('Код не запустился. Синтаксическая ошибка: проверьте скобки, запятые и кавычки.');
+    if (testInfo.project.name.includes('chromium')) await expect(feedback).toContainText('Строка 2.');
+
+    await setCode(page, lab, 'function insertionSort(a) {\n  const n = a.length;\n  return b;\n}\n');
+    await lab.getByRole('button', { name: 'Запустить' }).click();
+    await expect(feedback).toContainText('Имя «b» не объявлено: проверьте кавычки и опечатки.');
+    await expect(feedback).toContainText('Строка 3.');
+  });
 });
 
 test('код не видит хранилище приложения', async ({ page }, testInfo) => {
@@ -118,19 +112,24 @@ test('код не видит хранилище приложения', async ({ 
   await expect(result).not.toContainText('progress');
 });
 
-test('код не может обратиться к сети', async ({ page }) => {
-  let reached = 0;
-  await page.context().route('https://example.org/**', async (route) => {
-    reached++;
-    await route.abort();
+test.describe(() => {
+  // Браузер пишет в консоль, что CSP песочницы заблокировала запрос, — это и проверяем.
+  test.use({ expectedProblems: [/connect-src|example\.org/] });
+
+  test('код не может обратиться к сети', async ({ page }) => {
+    let reached = 0;
+    await page.context().route('https://example.org/**', async (route) => {
+      reached++;
+      await route.abort();
+    });
+    const lab = await hydrated(isolationLab(page));
+    await lab.getByRole('button', { name: 'отправить запрос в сеть' }).click();
+    await lab.getByRole('button', { name: 'Запустить' }).click();
+    const result = lab.locator('.code-lab__tests li').first();
+    await expect(result).toContainText('fetch: fetch недоступен в песочнице: сеть отключена');
+    await expect(result).toContainText('fetch в обход заглушки: заблокирован');
+    expect(reached, 'запрос дошёл до сети').toBe(0);
   });
-  const lab = await hydrated(isolationLab(page));
-  await lab.getByRole('button', { name: 'отправить запрос в сеть' }).click();
-  await lab.getByRole('button', { name: 'Запустить' }).click();
-  const result = lab.locator('.code-lab__tests li').first();
-  await expect(result).toContainText('fetch: fetch недоступен в песочнице: сеть отключена');
-  await expect(result).toContainText('fetch в обход заглушки: заблокирован');
-  expect(reached, 'запрос дошёл до сети').toBe(0);
 });
 
 test('бесконечный цикл останавливается по лимиту, страница работает', async ({ page }) => {
@@ -164,9 +163,10 @@ test('после превышения лимита остальные тесты
 test('страница песочницы выполняет код только во вложенном окне с sandbox', async ({ page }) => {
   await page.goto('ru/');
   const runnerUrl = new URL('../sandbox/runner.html', page.url()).href;
-  const attempt = (sandboxed: boolean) =>
+  // Приложение кладёт страницу песочницы в окно атрибутом srcdoc; проверяем и его, и обычный src.
+  const attempt = (sandboxed: boolean, inline: boolean) =>
     page.evaluate(
-      async ({ src, sandboxed }) => {
+      async ({ src, sandboxed, inline }) => {
         const frame = document.createElement('iframe');
         if (sandboxed) frame.setAttribute('sandbox', 'allow-scripts');
         const messages: unknown[] = [];
@@ -174,7 +174,8 @@ test('страница песочницы выполняет код только
           if (event.source === frame.contentWindow) messages.push(event.data);
         });
         const loaded = new Promise((resolve) => frame.addEventListener('load', resolve, { once: true }));
-        frame.src = src;
+        if (inline) frame.srcdoc = await (await fetch(src)).text();
+        else frame.src = src;
         document.body.append(frame);
         await loaded;
         frame.contentWindow?.postMessage(
@@ -185,13 +186,15 @@ test('страница песочницы выполняет код только
         frame.remove();
         return messages.map((message) => (message as { type?: string }).type);
       },
-      { src: runnerUrl, sandboxed },
+      { src: runnerUrl, sandboxed, inline },
     );
 
-  // С sandbox песочница отвечает: так мы знаем, что проверка ниже не ложная.
-  expect(await attempt(true)).toEqual(['ready', 'result']);
-  // Без sandbox у страницы источник сайта — она молчит и ничего не выполняет.
-  expect(await attempt(false)).toEqual([]);
+  for (const inline of [false, true]) {
+    // С sandbox песочница отвечает: так мы знаем, что проверка ниже не ложная.
+    expect(await attempt(true, inline), inline ? 'srcdoc, sandbox' : 'src, sandbox').toEqual(['ready', 'result']);
+    // Без sandbox у страницы источник сайта — она молчит и ничего не выполняет.
+    expect(await attempt(false, inline), inline ? 'srcdoc без sandbox' : 'src без sandbox').toEqual([]);
+  }
 });
 
 test('на телефоне есть строка символов над редактором', async ({ page, isMobile }) => {

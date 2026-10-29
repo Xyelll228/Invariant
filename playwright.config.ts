@@ -22,8 +22,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  // В CI ошибки тестов ещё и пометками в правке (github): их видно без скачивания отчёта.
-  reporter: process.env.CI ? [['github'], ['list'], ['html', { open: 'never' }]] : 'list',
+  // В CI ошибки тестов ещё и пометками в правке: полный список упавших и подробности
+  // (github) — их видно без скачивания отчёта.
+  reporter: process.env.CI ? [['./tests/reporters/failure-summary.ts'], ['github'], ['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://localhost:${port}${base}`,
     locale: 'ru-RU',

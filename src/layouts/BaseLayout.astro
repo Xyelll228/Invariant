@@ -12,6 +12,7 @@ import { t } from '../i18n/index.ts';
 import { previewPr, url } from '../lib/site.ts';
 import { scriptHash } from '../lib/csp.ts';
 import themeInit from '../scripts/theme-init.js?raw';
+import { runnerScriptHash } from '../sandbox/runner-page.ts';
 
 interface Props {
   /** Заголовок страницы без названия сайта. */
@@ -32,6 +33,11 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
 // проверяет npm run check:site.
 const themeInitCode = themeInit.trim();
 Astro.csp?.insertScriptHash(scriptHash(themeInitCode));
+// Песочница кода живёт во вложенном окне со srcdoc и получает CSP этой
+// страницы вместе со своей: её скрипт должен быть разрешён и здесь. На
+// странице приложения он ничего не делает — выполняет код, только если его
+// источник непрозрачный (src/sandbox/runner.js).
+Astro.csp?.insertScriptHash(runnerScriptHash());
 ---
 
 <!doctype html>
