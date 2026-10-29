@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="content-security-policy" content="script-src 'sha256-L9xX7GJ6AuyAUxjLUtbLP5pq8+Z8Jmi+D/VUOpuaRFE=' blob:; default-src 'none'; worker-src blob:; child-src blob:; connect-src 'none'; img-src 'none'; style-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="content-security-policy" content="script-src 'sha256-/qhdjMjgTfJaJoj7hnpC98jhp79Fqr8X1vi5OLyI4Ew=' blob:; default-src 'none'; worker-src blob:; child-src blob:; connect-src 'none'; img-src 'none'; style-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="robots" content="noindex">
 <title>Песочница</title>
 </head>
@@ -48,7 +48,11 @@
       worker.onerror = (event) => {
         event.preventDefault();
         const line = typeof event.lineno === 'number' && event.lineno > OFFSET ? event.lineno - OFFSET : null;
-        done({ status: 'load-error', shown: null, error: { name: 'Error', message: String(event.message || 'Код не запустился'), line }, logs: [] });
+        // Ошибки выполнения код ловит сам (worker-suffix.js), поэтому сюда приходят
+        // в основном ошибки разбора кода. Firefox сообщает о них без текста ошибки —
+        // тогда это синтаксическая ошибка без подробностей.
+        const error = event.message ? { name: 'Error', message: String(event.message), line } : { name: 'SyntaxError', message: '', line };
+        done({ status: 'load-error', shown: null, error, logs: [] });
       };
       worker.postMessage({ args: test.args, expected: test.expected, hasExpected: Object.hasOwn(test, 'expected') });
     });
