@@ -15,6 +15,10 @@ export const ru = {
   'nav.glossary': 'Глоссарий',
   'nav.prototypes': 'Прототипы',
   'nav.about': 'О проекте',
+  'nav.review': 'Повторение',
+  'nav.errors': 'Журнал ошибок',
+  'nav.settings': 'Настройки',
+  'nav.footer': 'Ещё',
 
   'theme.button': 'Тема: {name}',
   'theme.system': 'как в системе',

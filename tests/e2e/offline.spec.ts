@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures.ts';
+import { LEVEL, question, solve, verdict } from './learn-helpers.ts';
 
 /**
  * Работа без сети (ТЗ, критерий приёмки «Работает без сети после первого
@@ -64,6 +65,33 @@ test('без сети работают поиск, повторение и пе�
   await expect(lab.locator('.cm-content')).toBeVisible();
   await lab.getByRole('button', { name: 'Запустить' }).click();
   await expect(lab.locator('.code-lab__tests li').first()).toContainText('→ результат', { timeout: 10_000 });
+});
+
+test('повторение работает без сети: задания открытой темы берутся из кеша', async ({ page, context }) => {
+  await page.clock.setFixedTime(new Date('2026-11-02T10:00:00'));
+  await firstVisit(page);
+  await page.goto(LEVEL);
+  const item = question(page, 'insert-one');
+  await solve(item);
+  await expect(verdict(item)).toContainText('Верно.');
+  // После ответа задания темы ложатся в кеш Service Worker.
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const cache = await caches.open('invariant-learn');
+        return (await cache.keys()).some((request) => request.url.endsWith('/ru/learn/algo.sorting.insertion.json'));
+      }),
+    )
+    .toBe(true);
+
+  // Следующий учебный день, сети нет: повторение открывается и показывает задание.
+  await page.clock.setFixedTime(new Date('2026-11-03T09:00:00'));
+  await context.setOffline(true);
+  await page.goto('ru/review/');
+  const next = page.getByRole('region', { name: 'Повторение' }).locator('section[data-question]');
+  await expect(next).toContainText('вопрос 1 из 1');
+  await solve(next);
+  await expect(verdict(next)).toContainText('Верно.');
 });
 
 test('страница, которой нет в кеше, без сети объясняет, что случилось', async ({ page, context }) => {

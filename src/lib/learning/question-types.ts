@@ -8,6 +8,7 @@ import type { CodeLabVisibleTest } from '../../components/code/CodeLab.tsx';
 import type { SandboxTest } from '../sandbox/client.ts';
 
 export type Level = 'fundament' | 'base' | 'depth';
+export const LEVELS: readonly Level[] = ['fundament', 'base', 'depth'];
 export type Role = 'pre' | 'practice' | 'check';
 export type CodeLanguage = 'js' | 'cpp' | 'py' | 'text';
 

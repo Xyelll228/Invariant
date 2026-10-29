@@ -15,3 +15,12 @@ export function setProgressFlag(databaseName: string): void {
     // Хранилище недоступно (приватный режим) — не страшно.
   }
 }
+
+/** Прогресс удалён (сброс в настройках): «Продолжить» на главной больше не нужно. */
+export function clearProgressFlag(databaseName: string): void {
+  try {
+    localStorage.removeItem(progressFlagKey(databaseName));
+  } catch {
+    // Хранилище недоступно — не страшно.
+  }
+}

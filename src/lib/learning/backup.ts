@@ -54,6 +54,10 @@ const nullable =
   (check: Check): Check =>
   (value) =>
     value === null || check(value);
+const optional =
+  (check: Check): Check =>
+  (value) =>
+    value === undefined || check(value);
 const oneOf =
   (...values: unknown[]): Check =>
   (value) =>
@@ -111,6 +115,7 @@ const RECORD_FIELDS: Record<keyof LearningData, Record<string, Check>> = {
     seed: nullable(isInteger),
     contentVersion: nullable(isInteger),
     misconception: nullable(isString),
+    questionId: optional(isString),
     mode: oneOf('learn', 'check', 'delayed', 'review', 'exam'),
   },
   attempts: { id: isString, exerciseId: isString, language: oneOf('js', 'cpp', 'py', 'sql'), at: isNumber, code: isString, passed: isInteger, total: isInteger },

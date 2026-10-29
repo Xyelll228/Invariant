@@ -24,6 +24,8 @@ module.exports = {
         `${origin}ru/algorithms/sorting/insertion/base/`,
         `${origin}ru/glossary/`,
         `${origin}ru/search/`,
+        `${origin}ru/review/`,
+        `${origin}ru/settings/`,
         `${origin}ru/prototypes/trace/`,
         `${origin}ru/prototypes/sandbox/`,
         `${origin}ru/prototypes/review/`,

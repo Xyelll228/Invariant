@@ -15,6 +15,7 @@ import { checkChoice, checkFree, checkLine, checkOrder, type OrderAnswer } from 
 import { canBeTooEasy } from '../../lib/learning/grading.ts';
 import type { Level, PreparedMisconception, PreparedQuestion, TopicContext, VariantBody } from '../../lib/learning/question-types.ts';
 import { markTooEasy, randomSeed, recordAnswer, saveErrorNote, type AnswerResult } from '../../lib/learning/store.ts';
+import { warmTopic } from '../../lib/learning/warm.ts';
 import type { Confidence, ReviewMode } from '../../lib/learning/types.ts';
 import { arrange, defaultSeed, makeVariant, type Variant } from '../../lib/learning/variants.ts';
 import { sharedSandbox } from '../../lib/sandbox/client.ts';
@@ -79,7 +80,8 @@ export interface QuestionProps {
   allowRetry?: boolean;
   /** Зерно варианта; по умолчанию у генератора — случайное, у готового задания — от id. */
   initialSeed?: number;
-  onAnswered?: (outcome: { correct: boolean }) => void;
+  /** Ответ сохранён: верно ли и была ли это уверенная ошибка (ответ «знаю» — неверный). */
+  onAnswered?: (outcome: { correct: boolean; confidentError: boolean }) => void;
 }
 
 interface Outcome {
@@ -221,13 +223,14 @@ export default function Question(props: QuestionProps) {
         mode: pre ? 'learn' : (mode as ReviewMode),
         countsForSteps,
       });
+      if (mode === 'learn' || mode === 'pre') warmTopic(base, topic.topicId);
     } catch (error) {
       console.error(error);
     } finally {
       setBusy(false);
     }
     setOutcome({ correct, misconception, result, correctText: correctTextOf(body), details });
-    props.onAnswered?.({ correct });
+    props.onAnswered?.({ correct, confidentError: result?.confidentError ?? false });
   }
 
   async function check() {

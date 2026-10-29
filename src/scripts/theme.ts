@@ -21,7 +21,7 @@ export function readTheme(): ThemeChoice {
   }
 }
 
-function saveTheme(choice: ThemeChoice): void {
+export function saveTheme(choice: ThemeChoice): void {
   try {
     if (choice === 'system') localStorage.removeItem(THEME_STORAGE_KEY);
     else localStorage.setItem(THEME_STORAGE_KEY, choice);
@@ -31,7 +31,8 @@ function saveTheme(choice: ThemeChoice): void {
   }
 }
 
-function render(choice: ThemeChoice): void {
+/** Показывает тему на странице: атрибут data-theme и подпись кнопки в шапке. */
+export function applyTheme(choice: ThemeChoice): void {
   const root = document.documentElement;
   if (choice === 'system') root.removeAttribute('data-theme');
   else root.setAttribute('data-theme', choice);
@@ -46,12 +47,12 @@ function render(choice: ThemeChoice): void {
 }
 
 export function initThemeToggle(): void {
-  render(readTheme());
+  applyTheme(readTheme());
   for (const button of document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')) {
     button.addEventListener('click', () => {
       const choice = nextTheme(readThemeFromDom());
       saveTheme(choice);
-      render(choice);
+      applyTheme(choice);
     });
   }
 }

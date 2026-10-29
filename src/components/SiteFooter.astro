@@ -1,10 +1,29 @@
 ---
 import { t } from '../i18n/index.ts';
-import { repositoryUrl } from '../lib/site.ts';
+import { repositoryUrl, url } from '../lib/site.ts';
+
+const links = [
+  { href: url('ru/errors/'), label: t('nav.errors') },
+  { href: url('ru/about/'), label: t('nav.about') },
+];
+const current = Astro.url.pathname;
 ---
 
 <footer class="site-footer">
   <div class="container">
+    <nav aria-label={t('nav.footer')}>
+      <ul class="site-footer__links">
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href} aria-current={current.startsWith(link.href) ? 'page' : undefined}>
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
     <p>
       {t('footer.license')}
       <a href={repositoryUrl}>{t('footer.source')}</a>
@@ -22,5 +41,24 @@ import { repositoryUrl } from '../lib/site.ts';
 
   .site-footer p {
     margin: 0;
+  }
+
+  .site-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-4);
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-2);
+  }
+
+  .site-footer__links li + li {
+    margin-top: 0;
+  }
+
+  .site-footer__links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
   }
 </style>

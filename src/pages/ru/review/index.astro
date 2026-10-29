@@ -1,0 +1,20 @@
+---
+/**
+ * Повторение (ТЗ, «Разбор ошибок и повторение», экран «Сессия»). Прогресс
+ * хранится только в браузере, поэтому план дня составляет остров на странице.
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ReviewSession from '../../../components/review/ReviewSession.tsx';
+import { url } from '../../../lib/site.ts';
+---
+
+<BaseLayout title="Повторение" description="Навыки, которые пора повторить: каждый день — по расписанию FSRS, от самых забытых.">
+  <div class="prose">
+    <h1>Повторение</h1>
+    <p class="lead">
+      Навыки, которые пора вспомнить, — от самых забытых. Каждый раз задание новое. Похожие темы стоят рядом, чтобы их было
+      легче различать.
+    </p>
+    <ReviewSession client:load base={url()} runnerUrl={url('sandbox/runner.html')} />
+  </div>
+</BaseLayout>

@@ -64,6 +64,8 @@ export interface ReviewRecord {
   seed: number | null;
   contentVersion: number | null;
   misconception: string | null;
+  /** Задание, на которое ответили: в повторении навык получает другое задание. */
+  questionId?: string;
   /**
    * Где дан ответ: learn — по ходу темы, check — итоговая проверка уровня,
    * delayed — отложенная проверка, review — повторение, exam — «Контрольная».
