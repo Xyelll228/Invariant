@@ -9,7 +9,7 @@
  * по результату и уверенности (src/lib/learning/grading.ts).
  */
 import { useEffect, useId, useMemo, useRef, useState } from 'preact/hooks';
-import CodeLab from '../code/CodeLab.tsx';
+import type CodeLabComponent from '../code/CodeLab.tsx';
 import ArraySimulation, { type SimulationStats } from '../viz/ArraySimulation.tsx';
 import { checkChoice, checkFree, checkLine, checkOrder, type OrderAnswer } from '../../lib/learning/answers.ts';
 import { canBeTooEasy } from '../../lib/learning/grading.ts';
@@ -22,6 +22,16 @@ import type { ArrayAlgorithmId } from '../../lib/viz/algorithms.ts';
 import { OrderInput } from './OrderInput.tsx';
 import { CodeBlock, Prompt, RichText } from './Prompt.tsx';
 import './learn.css';
+
+/**
+ * Редактор кода (CodeMirror) — самая тяжёлая часть страницы. Он загружается,
+ * только когда на странице есть задание с кодом (ТЗ, «Скорость»).
+ */
+let codeLabModule: Promise<typeof CodeLabComponent> | null = null;
+function loadCodeLab(): Promise<typeof CodeLabComponent> {
+  codeLabModule ??= import('../code/CodeLab.tsx').then((module) => module.default);
+  return codeLabModule;
+}
 
 export const TYPE_TITLES: Record<string, string> = {
   choice: 'Выбор ответа',
@@ -131,6 +141,23 @@ export default function Question(props: QuestionProps) {
   const [noteSaved, setNoteSaved] = useState(false);
   const feedbackRef = useRef<HTMLDivElement>(null);
   const pre = mode === 'pre';
+  const [CodeLab, setCodeLab] = useState<typeof CodeLabComponent | null>(null);
+  const needsEditor = variant?.body.format === 'code';
+
+  useEffect(() => {
+    if (!needsEditor || CodeLab) return;
+    let alive = true;
+    loadCodeLab()
+      .then((component) => {
+        if (alive) setCodeLab(() => component);
+      })
+      .catch((error: unknown) => {
+        if (alive) setLoadError(error instanceof Error ? error.message : String(error));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [needsEditor, CodeLab]);
 
   // Вариант: у генератора — по зерну, у готового задания — перемешанные варианты ответа.
   useEffect(() => {
@@ -437,17 +464,20 @@ export default function Question(props: QuestionProps) {
             </>
           )}
 
-          {body.format === 'code' && (
-            <CodeLab
-              label={TYPE_TITLES[question.type] ?? 'Задание с кодом'}
-              functionName={body.function}
-              starterCode={body.starter}
-              visibleTests={body.visibleTests}
-              hiddenTests={[]}
-              runnerUrl={runnerUrl}
-              onCodeChange={(code) => setAnswer((state) => ({ ...state, code }))}
-            />
-          )}
+          {body.format === 'code' &&
+            (CodeLab ? (
+              <CodeLab
+                label={TYPE_TITLES[question.type] ?? 'Задание с кодом'}
+                functionName={body.function}
+                starterCode={body.starter}
+                visibleTests={body.visibleTests}
+                hiddenTests={[]}
+                runnerUrl={runnerUrl}
+                onCodeChange={(code) => setAnswer((state) => ({ ...state, code }))}
+              />
+            ) : (
+              <p class="muted">Загружаю редактор кода…</p>
+            ))}
 
           {body.format === 'self' && (
             <>
