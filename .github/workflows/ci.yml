@@ -111,7 +111,9 @@ jobs:
         with:
           name: dist
           path: dist
-      - run: npm run lighthouse
+      - name: Lighthouse
+        # Если пороги не прошли — итог пометкой в правке: журнал CI доступен не всем.
+        run: npm run lighthouse || { node scripts/lighthouse-report.mjs; exit 1; }
       - uses: actions/upload-artifact@v7
         if: always()
         with:
