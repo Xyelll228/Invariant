@@ -1,0 +1,33 @@
+{
+  "id": "/Invariant/pr-preview/pr-12/ru/",
+  "name": "Инвариант — превью № 12",
+  "short_name": "Превью № 12",
+  "description": "Открытое приложение для глубокого изучения алгоритмов и структур данных, баз данных и SQL, C и C++, Python и математики для информатики.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "/Invariant/pr-preview/pr-12/ru/",
+  "scope": "/Invariant/pr-preview/pr-12/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/Invariant/pr-preview/pr-12/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Invariant/pr-preview/pr-12/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Invariant/pr-preview/pr-12/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
