@@ -20,7 +20,7 @@
   return a;
 }
 </pre></div><div class="code-lab__symbols" role="group" aria-label="Символы для набора кода"><button type="button" class="button" aria-label="Вставить {">{</button><button type="button" class="button" aria-label="Вставить }">}</button><button type="button" class="button" aria-label="Вставить [">[</button><button type="button" class="button" aria-label="Вставить ]">]</button><button type="button" class="button" aria-label="Вставить (">(</button><button type="button" class="button" aria-label="Вставить )">)</button><button type="button" class="button" aria-label="Вставить ;">;</button><button type="button" class="button" aria-label="Вставить =">=</button><button type="button" class="button" aria-label="Вставить &lt;">&lt;</button><button type="button" class="button" aria-label="Вставить >">></button></div><p class="code-lab__hint muted">Esc, затем Tab — выйти из редактора. Ctrl+Z — отменить.</p><div class="button-row"><button type="button" class="button button--primary">Запустить</button><button type="button" class="button">Вернуть исходный код</button></div><div aria-live="polite"></div></section><!--astro:end--></astro-island> </div> <div class="topic-code__panel" role="tabpanel" id="code-base-panel-cpp" aria-labelledby="code-base-tab-cpp" hidden data-astro-cid-45c5g2p4> <p class="muted topic-code__note" data-astro-cid-45c5g2p4>
-Проверено автоматически 29 октября 2026 г.: компилируется с предупреждениями как ошибками и санитайзерами и даёт тот же
+Проверено автоматически 31 октября 2026 г.: компилируется с предупреждениями как ошибками и санитайзерами и даёт тот же
       результат, что эталон на JavaScript.
 </p> <pre tabindex="0" data-astro-cid-45c5g2p4><code data-astro-cid-45c5g2p4>#include &lt;cstddef&gt;
 #include &lt;utility&gt;
@@ -33,7 +33,7 @@ void insertion_sort(std::vector&lt;long long&gt;&amp; a) {
             std::swap(a[j - 1], a[j]);
         }
     }
-}</code></pre> </div> <div class="topic-code__panel" role="tabpanel" id="code-base-panel-py" aria-labelledby="code-base-tab-py" hidden data-astro-cid-45c5g2p4> <p class="muted topic-code__note" data-astro-cid-45c5g2p4>Проверено автоматически 29 октября 2026 г.: даёт тот же результат, что эталон на JavaScript.</p> <pre tabindex="0" data-astro-cid-45c5g2p4><code data-astro-cid-45c5g2p4>def insertion_sort(a: list[int]) -&gt; list[int]:
+}</code></pre> </div> <div class="topic-code__panel" role="tabpanel" id="code-base-panel-py" aria-labelledby="code-base-tab-py" hidden data-astro-cid-45c5g2p4> <p class="muted topic-code__note" data-astro-cid-45c5g2p4>Проверено автоматически 31 октября 2026 г.: даёт тот же результат, что эталон на JavaScript.</p> <pre tabindex="0" data-astro-cid-45c5g2p4><code data-astro-cid-45c5g2p4>def insertion_sort(a: list[int]) -&gt; list[int]:
     &quot;&quot;&quot;Сортировка вставками обменами: тот же алгоритм, что и эталон на JavaScript.&quot;&quot;&quot;
     for i in range(1, len(a)):
         j = i
