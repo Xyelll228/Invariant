@@ -15,6 +15,7 @@ const pages = [
   { path: 'ru/review/', heading: 'Повторение' },
   { path: 'ru/errors/', heading: 'Журнал ошибок' },
   { path: 'ru/settings/', heading: 'Настройки' },
+  { path: 'ru/diagnostics/', heading: 'Диагностика после перерыва' },
   { path: 'ru/prototypes/', heading: 'Прототипы' },
   { path: 'ru/prototypes/design/', heading: 'Основа дизайна' },
   { path: 'ru/prototypes/trace/', heading: 'След алгоритма' },

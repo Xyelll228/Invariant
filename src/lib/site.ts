@@ -37,6 +37,16 @@ export function databaseNameFor(pr: number | null): string {
 }
 export const databaseName = databaseNameFor(previewPr);
 
+/**
+ * Имена кешей Service Worker (scripts/build-sw.mjs считает их так же): у
+ * превью — свои, чтобы не смешиваться с основным сайтом. Страницы, открытые
+ * или скачанные заранее, лежат в кеше pages, задания тем для повторения — в learn.
+ */
+export function cacheIdFor(pr: number | null): string {
+  return pr === null ? 'invariant' : `invariant-pr-${pr}`;
+}
+export const cacheNames = { pages: `${cacheIdFor(previewPr)}-pages`, learn: `${cacheIdFor(previewPr)}-learn` } as const;
+
 /** Склеивает base и путь без двойных и потерянных косых черт. */
 export function joinBase(base: string, path: string): string {
   const left = base.endsWith('/') ? base : `${base}/`;

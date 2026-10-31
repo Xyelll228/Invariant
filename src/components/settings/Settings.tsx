@@ -14,6 +14,7 @@ import { PERSISTENCE_TEXT, persistenceStatus, requestPersistence, type Persisten
 import { createScheduler, MAX_RETENTION, MIN_RETENTION } from '../../lib/learning/scheduler.ts';
 import { DEFAULT_SETTINGS, loadSettings, SETTING_KEYS, type LearningSettings } from '../../lib/learning/settings.ts';
 import { getDb } from '../../lib/learning/store.ts';
+import { detectPlatform, IOS_INSTALL_TEXT, isStandalone, type InstallPromptEvent } from '../../lib/offline/install.ts';
 import { databaseName } from '../../lib/site.ts';
 import { applyTheme, readTheme, saveTheme, type ThemeChoice } from '../../scripts/theme.ts';
 import { readTextSize, setTextSize, TEXT_SIZES, type TextSize } from '../../scripts/text-size.ts';
@@ -86,6 +87,15 @@ const FIELDS: FieldSpec[] = [
     show: (value) => value.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
   },
   {
+    key: 'breakDays',
+    label: 'Диагностика после перерыва, дней',
+    hint: `Если столько дней не было занятий, главная предложит короткую проверку пройденных тем: что сохранилось, а что пройти заново. По умолчанию — ${DEFAULT_SETTINGS.breakDays}.`,
+    min: 7,
+    max: 365,
+    parse: integer,
+    show: String,
+  },
+  {
     key: 'masteryThreshold',
     label: 'Порог «освоено», %',
     hint: `Сколько верных ответов нужно в итоговой и отложенной проверках. По умолчанию — ${Math.round(DEFAULT_SETTINGS.masteryThreshold * 100)}%.`,
@@ -125,6 +135,11 @@ export default function Settings() {
   const [persistence, setPersistence] = useState<PersistenceStatus | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [install, setInstall] = useState<{ platform: 'ios' | 'other'; installed: boolean; prompt: InstallPromptEvent | null }>({
+    platform: 'other',
+    installed: false,
+    prompt: null,
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
@@ -133,6 +148,22 @@ export default function Settings() {
     setDrafts(Object.fromEntries(FIELDS.map((field) => [field.key, field.show(next[field.key])])));
     setErrors({});
   };
+
+  // Установка на экран «Домой»: браузер сам сообщает, когда это можно сделать кнопкой.
+  useEffect(() => {
+    setInstall((state) => ({ ...state, platform: detectPlatform(), installed: isStandalone() }));
+    const onPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstall((state) => ({ ...state, prompt: event as InstallPromptEvent }));
+    };
+    const onInstalled = () => setInstall((state) => ({ ...state, installed: true, prompt: null }));
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
 
   useEffect(() => {
     setThemeChoice(readTheme());
@@ -411,6 +442,37 @@ export default function Settings() {
               Удалить весь прогресс…
             </button>
           </div>
+        )}
+      </section>
+
+      <section class="settings-section" aria-labelledby={`${uid}-install`}>
+        <h2 id={`${uid}-install`}>Установка на телефон</h2>
+        {install.installed ? (
+          <p>Приложение установлено на это устройство.</p>
+        ) : install.prompt ? (
+          <div class="question__actions">
+            <button
+              type="button"
+              class="button button--primary"
+              onClick={() => {
+                const prompt = install.prompt;
+                if (!prompt) return;
+                void prompt.prompt().then(async () => {
+                  const choice = await prompt.userChoice;
+                  setInstall((state) => ({ ...state, prompt: null, installed: choice.outcome === 'accepted' }));
+                });
+              }}
+            >
+              Установить приложение
+            </button>
+          </div>
+        ) : install.platform === 'ios' ? (
+          <p>{IOS_INSTALL_TEXT}</p>
+        ) : (
+          <p>
+            Приложение можно поставить на экран «Домой» или рабочий стол: в меню браузера выберите «Установить приложение» или «Добавить на
+            главный экран». Тогда оно открывается отдельным окном и работает без сети.
+          </p>
         )}
       </section>
 

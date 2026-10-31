@@ -1,0 +1,214 @@
+---
+/**
+ * Карта связей модуля или раздела (ТЗ, «Предпосылки и карта связей»).
+ * Граф рисуется при сборке (src/content/graph.ts); состояние тем — освоена,
+ * изучается, можно начинать — дописывает скрипт по прогрессу в браузере.
+ * Та же карта есть списком: для экранного диктора и узкого экрана.
+ */
+import type { GraphEdge, GraphNode } from '../../content/graph.ts';
+import { layoutGraph } from '../../content/graph.ts';
+import { url } from '../../lib/site.ts';
+
+interface Props {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  /** «модуля» или «раздела» — для подписи. */
+  scope: string;
+}
+
+const { nodes, edges, scope } = Astro.props;
+const layout = layoutGraph(nodes, edges);
+const titleOf = new Map(layout.nodes.map((node) => [node.id, node.title]));
+const prerequisitesOf = (id: string) => edges.filter((edge) => edge.kind === 'prerequisite' && edge.to === id).map((edge) => titleOf.get(edge.from) ?? edge.from);
+const relatedOf = (id: string) => edges.filter((edge) => edge.kind === 'related' && (edge.from === id || edge.to === id)).map((edge) => titleOf.get(edge.from === id ? edge.to : edge.from) ?? '');
+const LINE_HEIGHT = 18;
+const PADDING_Y = 10;
+---
+
+{
+  layout.nodes.length > 0 && (
+    <section class="topic-map" aria-labelledby="topic-map-title">
+      <h2 id="topic-map-title">Карта связей</h2>
+      <p class="muted topic-map__legend">
+        Стрелка ведёт от темы, которую нужно знать до, к теме, где она нужна; пунктир — «связано с». Пунктирная рамка — тема из
+        другого модуля или ещё не вышедшая. Под названием — ваше состояние: «освоено», «изучается» или «можно начинать».
+      </p>
+      <div class="topic-map__scroll" tabindex="0" role="region" aria-label={`Карта связей ${scope}: граф`}>
+        <svg
+          class="topic-map__svg"
+          viewBox={`0 0 ${layout.width} ${layout.height}`}
+          width={layout.width}
+          height={layout.height}
+          role="group"
+          aria-label={`Граф тем ${scope}: ${layout.nodes.length}. Та же карта списком — ниже.`}
+        >
+          <defs>
+            <marker id="topic-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path class="topic-map__arrow" d="M 0 0 L 10 5 L 0 10 z" />
+            </marker>
+          </defs>
+          {layout.edges.map((edge) => (
+            <path class={`topic-map__edge topic-map__edge--${edge.kind}`} d={edge.path} marker-end={edge.kind === 'prerequisite' ? 'url(#topic-map-arrow)' : undefined} />
+          ))}
+          {layout.nodes.map((node) => (
+            <a
+              href={url(node.href)}
+              class={['topic-map__node', node.external || !node.written ? 'topic-map__node--outside' : ''].join(' ')}
+              data-map-topic={node.id}
+              data-map-requires={node.prerequisites.map((item) => `${item.topic}:${item.level}`).join(' ')}
+              data-map-levels={node.levels.join(' ')}
+              data-map-title={node.external ? `${node.module} · ${node.title}` : node.title}
+              aria-label={node.external ? `${node.module} · ${node.title}` : node.title}
+            >
+              <rect x={node.x} y={node.y} width={node.width} height={node.height} rx="8" />
+              <text x={node.x + 12} y={node.y + PADDING_Y + 13}>
+                {node.lines.map((line, index) => (
+                  <tspan x={node.x + 12} dy={index === 0 ? 0 : LINE_HEIGHT}>
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+              <text class="topic-map__state" x={node.x + 12} y={node.y + PADDING_Y + 13 + node.lines.length * LINE_HEIGHT} data-map-state />
+            </a>
+          ))}
+        </svg>
+      </div>
+      <details class="topic-map__list">
+        <summary>Карта связей списком</summary>
+        <ol>
+          {layout.layers.map((layer, index) => (
+            <li>
+              {index === 0 ? 'Начать можно с тем:' : `Шаг ${index + 1}:`}
+              <ul>
+                {layer.map((node) => {
+                  const before = prerequisitesOf(node.id);
+                  const related = relatedOf(node.id).filter(Boolean);
+                  return (
+                    <li>
+                      <a href={url(node.href)}>{node.external ? `${node.module} · ${node.title}` : node.title}</a>
+                      {!node.written && <span class="muted"> — ещё не вышла</span>}
+                      {before.length > 0 && <span class="muted"> — нужно знать до: {before.join(', ')}</span>}
+                      {related.length > 0 && <span class="muted"> — связано с: {related.join(', ')}</span>}
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      </details>
+    </section>
+  )
+}
+
+<script>
+  import '../../scripts/progress-marks.ts';
+</script>
+
+<style>
+  .topic-map {
+    margin: var(--space-6) 0;
+  }
+
+  .topic-map__legend {
+    max-width: var(--measure);
+    font-size: var(--text-small);
+  }
+
+  .topic-map__scroll {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-2);
+  }
+
+  .topic-map__svg {
+    display: block;
+    max-width: none;
+    font-family: var(--font-sans);
+    font-size: 14px;
+  }
+
+  .topic-map__edge {
+    fill: none;
+    stroke: var(--color-text-muted);
+    stroke-width: 1.5;
+  }
+
+  .topic-map__edge--related {
+    stroke-dasharray: 5 4;
+  }
+
+  .topic-map__arrow {
+    fill: var(--color-text-muted);
+  }
+
+  .topic-map__node {
+    text-decoration: none;
+  }
+
+  .topic-map__node rect {
+    fill: var(--color-bg);
+    stroke: var(--color-border-strong);
+    stroke-width: 1.5;
+  }
+
+  .topic-map__node text {
+    fill: var(--color-text);
+    font-weight: 600;
+  }
+
+  .topic-map__node--outside rect {
+    stroke-dasharray: 6 4;
+  }
+
+  .topic-map__node--outside text {
+    fill: var(--color-text-muted);
+    font-weight: 500;
+  }
+
+  .topic-map__node:hover rect,
+  .topic-map__node:focus-visible rect {
+    stroke: var(--color-text);
+    stroke-width: 3;
+  }
+
+  .topic-map__node[data-state='in-progress'] rect {
+    stroke: var(--color-text);
+    stroke-width: 3;
+  }
+
+  .topic-map__node[data-state='mastered'] rect {
+    fill: var(--color-inverse-bg);
+    stroke: var(--color-inverse-bg);
+  }
+
+  .topic-map__node[data-state='mastered'] text {
+    fill: var(--color-inverse-text);
+  }
+
+  .topic-map__node[data-state='ready'] rect {
+    stroke: var(--color-text);
+    stroke-width: 2;
+    stroke-dasharray: none;
+  }
+
+  .topic-map__state {
+    font-size: 12.5px;
+  }
+
+  .topic-map__node text.topic-map__state {
+    font-weight: 500;
+  }
+
+  .topic-map__list {
+    margin-top: var(--space-3);
+  }
+
+  .topic-map__list summary {
+    cursor: pointer;
+    min-height: var(--tap);
+    display: flex;
+    align-items: center;
+  }
+</style>

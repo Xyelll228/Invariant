@@ -30,6 +30,7 @@ function normalizeBase(path) {
 
 const base = normalizeBase(process.env.BASE_PATH ?? '/Invariant/');
 const pr = process.env.PUBLIC_PREVIEW_PR?.trim() || null;
+// Так же имена кешей считает src/lib/site.ts (cacheIdFor): скачивание раздела кладёт страницы в эти кеши.
 const cacheId = pr === null ? 'invariant' : `invariant-pr-${pr}`;
 const pagesCache = `${cacheId}-pages`;
 
@@ -46,6 +47,7 @@ const CORE_PAGES = [
   'ru/review/index.html',
   'ru/errors/index.html',
   'ru/settings/index.html',
+  'ru/diagnostics/index.html',
   'ru/prototypes/**/index.html',
 ];
 
@@ -87,7 +89,14 @@ writeFileSync(
 
 const { count, size, warnings } = await generateSW({
   globDirectory: 'dist',
-  globPatterns: ['**/*.{js,css,woff2,svg,png,webmanifest}', 'search/index.json', 'ru/learn/index.json', 'sandbox/runner.html', ...CORE_PAGES],
+  globPatterns: [
+    '**/*.{js,css,woff2,svg,png,webmanifest}',
+    'search/index.json',
+    'ru/learn/index.json',
+    'ru/learn/sections.json',
+    'sandbox/runner.html',
+    ...CORE_PAGES,
+  ],
   globIgnores: ['sw.js', 'sw-extra.js', 'pr-preview/**'],
   swDest: 'dist/sw.js',
   importScripts: ['sw-extra.js'],

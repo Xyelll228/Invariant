@@ -6,6 +6,7 @@
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ContinueCard from '../../components/home/ContinueCard.tsx';
+import InstallHint from '../../components/home/InstallHint.tsx';
 import { catalog, folders } from '../../content/catalog-data.ts';
 import { catalogTotals } from '../../content/catalog.ts';
 import { modulePath, sectionPath } from '../../content/paths.ts';
@@ -75,6 +76,9 @@ const continueTopics = [...site.pages.values()].map((page) => ({
       }
     </ul>
 
+    {/* Внизу страницы: появляется только на iPhone и iPad и ничего выше себя не сдвигает. */}
+    <InstallHint client:idle />
+
     <h2>Что сейчас</h2>
     <p>
       Идёт первая волна: 59 тем, от основ JavaScript до сортировок. Вышло тем: {published} из {totals.topics}. Полный
@@ -99,6 +103,18 @@ const continueTopics = [...site.pages.values()].map((page) => ({
   :global(:root[data-progress]) .review-slot {
     display: block;
     margin: var(--space-5) 0;
+  }
+
+  :global(.continue-card__break) {
+    border-left: 4px solid var(--color-border-strong);
+    padding-left: var(--space-3);
+    margin: 0 0 var(--space-4);
+  }
+
+  :global(.continue-card__actions) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
 
   .home__section-link {

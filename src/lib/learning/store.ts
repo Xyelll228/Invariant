@@ -5,7 +5,8 @@
  */
 import type { Grade } from 'ts-fsrs';
 import { databaseName } from '../site.ts';
-import { LearningDatabase } from './db.ts';
+import { getSetting, LearningDatabase, setSetting } from './db.ts';
+import { daysSince, diagnosticDue, lastActivity } from './diagnostics.ts';
 import { setProgressFlag } from './flag.ts';
 import { requestPersistence } from './persistence.ts';
 import { isConfidentError, ratingFor } from './grading.ts';
@@ -62,13 +63,7 @@ export function randomId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
-/** Случайное зерно варианта задания. */
-export function randomSeed(): number {
-  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-    return crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
-  }
-  return Math.floor(Math.random() * 2 ** 32);
-}
+export { randomSeed } from '../random.ts';
 
 function emptyProgress(topicId: string, level: Level, now: number): ProgressRecord {
   return { topicId, level, status: 'not-started', completedSteps: [], paused: false, updatedAt: now };
@@ -266,4 +261,47 @@ export async function setTopicPaused(topicId: string, levels: readonly Level[], 
 export async function isTopicPaused(topicId: string): Promise<boolean> {
   const records = await getDb().progress.where('topicId').equals(topicId).toArray();
   return records.some((record) => record.paused);
+}
+
+const DIAGNOSTIC_DISMISSED_KEY = 'diagnosticDismissedAt';
+
+/**
+ * Перерыв в занятиях (ТЗ, «Возвращение после перерыва»): пора ли предложить
+ * диагностику и сколько дней прошло с последнего занятия.
+ */
+export async function breakState(now = Date.now()): Promise<{ due: boolean; days: number }> {
+  const db = getDb();
+  const [lastReview, progress, settings, dismissedAt] = await Promise.all([
+    db.reviews.orderBy('at').last(),
+    db.progress.toArray(),
+    loadSettings(db),
+    getSetting<number | null>(db, DIAGNOSTIC_DISMISSED_KEY, null),
+  ]);
+  const last = lastActivity(lastReview ? [lastReview] : [], progress);
+  const hasProgress = progress.some((record) => record.status !== 'not-started' || (record.done?.length ?? 0) > 0);
+  const due = diagnosticDue({ now, last, breakDays: settings.breakDays, dismissedAt, hasProgress });
+  return { due, days: last === null ? 0 : daysSince(last, now) };
+}
+
+/** «Не сейчас»: предложение диагностики не показывается до следующего перерыва. */
+export async function dismissDiagnostic(now = Date.now()): Promise<void> {
+  await setSetting(getDb(), DIAGNOSTIC_DISMISSED_KEY, now);
+}
+
+/**
+ * Пройти уровень заново (после диагностики): пройденные шаги и проверки
+ * уровня обнуляются. История ответов и расписание повторений остаются.
+ */
+export async function restartLevel(topic: TopicContext, level: Level): Promise<void> {
+  const db = getDb();
+  const now = Date.now();
+  const settings = await loadSettings(db);
+  await db.transaction('rw', [db.progress, db.reviews], async () => {
+    const record = (await db.progress.get([topic.topicId, level])) ?? emptyProgress(topic.topicId, level, now);
+    const { check: _check, delayed: _delayed, ...rest } = record;
+    const reviews = await levelReviews(db, topic, level);
+    // Ответы на уровне уже есть, поэтому он «изучается», а не «не начат», и остаётся в «Продолжить».
+    await db.progress.put(refresh(topic, level, { ...rest, done: [], updatedAt: now }, reviews, settings));
+  });
+  emit(topic.topicId, level);
 }

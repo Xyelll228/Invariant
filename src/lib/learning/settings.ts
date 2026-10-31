@@ -1,7 +1,8 @@
 /**
  * Настройки обучения (ТЗ, «Настройки»). Значения по умолчанию меняются только
  * с согласия владельца: порог «освоено» 80%, лимиты 10 новых и 100 повторений
- * за учебный день, учебный день с 4:00, уровень запоминания 0,90.
+ * за учебный день, учебный день с 4:00, уровень запоминания 0,90, диагностика
+ * после перерыва дольше 30 дней.
  */
 import { DEFAULT_DAY_START_HOUR } from './day.ts';
 import { getSetting, type LearningDatabase } from './db.ts';
@@ -18,6 +19,8 @@ export interface LearningSettings {
   reviewsPerDay: number;
   /** Доля верных ответов, с которой проверка пройдена. */
   masteryThreshold: number;
+  /** После скольких дней без занятий предлагать диагностику. */
+  breakDays: number;
 }
 
 export const DEFAULT_SETTINGS: LearningSettings = {
@@ -26,6 +29,7 @@ export const DEFAULT_SETTINGS: LearningSettings = {
   newPerDay: DEFAULT_LIMITS.newPerDay,
   reviewsPerDay: DEFAULT_LIMITS.reviewsPerDay,
   masteryThreshold: DEFAULT_MASTERY_THRESHOLD,
+  breakDays: 30,
 };
 
 /** Ключи настроек в хранилище settings. */
@@ -35,6 +39,7 @@ export const SETTING_KEYS: Record<keyof LearningSettings, string> = {
   newPerDay: 'newPerDay',
   reviewsPerDay: 'reviewsPerDay',
   masteryThreshold: 'masteryThreshold',
+  breakDays: 'breakDays',
 };
 
 export async function loadSettings(db: LearningDatabase): Promise<LearningSettings> {
