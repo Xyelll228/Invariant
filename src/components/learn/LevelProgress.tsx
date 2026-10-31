@@ -13,8 +13,9 @@ import {
   openConfidentErrors,
 } from '../../lib/learning/progress.ts';
 import type { Level, TopicContext } from '../../lib/learning/question-types.ts';
+import { LEVELS } from '../../lib/learning/question-types.ts';
 import { stepTitle } from '../../lib/learning/steps.ts';
-import { loadLevel, onProgress, type LevelState } from '../../lib/learning/store.ts';
+import { loadLevel, onProgress, setTopicPaused, type LevelState } from '../../lib/learning/store.ts';
 import './learn.css';
 
 
@@ -129,6 +130,18 @@ export default function LevelProgress({ topic, level, levelTitle, anchors }: Lev
         </ul>
       )}
       {status === 'mastered' && <p class="level-progress__conditions">Все условия выполнены. Навыки уровня теперь возвращаются в повторении.</p>}
+      {state && status !== 'not-started' && (
+        <div class="level-progress__pause">
+          {record?.paused && <p>Тема на паузе: её навыки не приходят в повторении.</p>}
+          <button
+            type="button"
+            class="button"
+            onClick={() => void setTopicPaused(topic.topicId, LEVELS.filter((item) => item in topic.levelPaths), !record?.paused)}
+          >
+            {record?.paused ? 'Снять тему с паузы' : 'Поставить тему на паузу'}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

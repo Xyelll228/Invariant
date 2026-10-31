@@ -1,0 +1,16 @@
+---
+/**
+ * Настройки (ТЗ, экран «Настройки»). Настройки и прогресс хранятся только в
+ * браузере, поэтому страницу заполняет остров.
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Settings from '../../../components/settings/Settings.tsx';
+---
+
+<BaseLayout title="Настройки" description="Тема и размер текста, лимиты и начало учебного дня, копия прогресса в файл.">
+  <div class="prose">
+    <h1>Настройки</h1>
+    <p class="lead">Настройки и прогресс хранятся только в этом браузере.</p>
+    <Settings client:load />
+  </div>
+</BaseLayout>

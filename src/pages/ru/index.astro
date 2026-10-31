@@ -1,8 +1,8 @@
 ---
 /**
  * Главная (ТЗ, «Экраны»): «Продолжить», «Повторение» и разделы. «Продолжить»
- * и «Повторение» появятся вместе с прохождением тем — до тех пор здесь разделы
- * и подсказка, с чего начать.
+ * и «Повторение» видны, когда в этом браузере уже есть прогресс; до тех пор
+ * здесь разделы и подсказка, с чего начать.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ContinueCard from '../../components/home/ContinueCard.tsx';
@@ -40,6 +40,15 @@ const continueTopics = [...site.pages.values()].map((page) => ({
       <ContinueCard client:load topics={continueTopics} base={url()} />
     </div>
 
+    {/* Без счётчика «к повторению» — по решению владельца: только вход в повторение. */}
+    <section class="card review-slot" aria-labelledby="review-title">
+      <h2 id="review-title" class="card__title">Повторение</h2>
+      <p>Навыки возвращаются по расписанию — в день, когда их пора вспомнить. Каждый раз задание новое.</p>
+      <p>
+        <a class="button" href={url('ru/review/')}>Перейти к повторению</a>
+      </p>
+    </section>
+
     <h2>С чего начать</h2>
     <ul>
       <li>
@@ -76,13 +85,19 @@ const continueTopics = [...site.pages.values()].map((page) => ({
 
 <style>
   /* Место под «Продолжить» есть, только если в браузере уже есть прогресс. */
-  .continue-slot {
+  .continue-slot,
+  .review-slot {
     display: none;
   }
 
   :global(:root[data-progress]) .continue-slot {
     display: block;
     min-height: 11rem;
+    margin: var(--space-5) 0;
+  }
+
+  :global(:root[data-progress]) .review-slot {
+    display: block;
     margin: var(--space-5) 0;
   }
 

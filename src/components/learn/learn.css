@@ -317,3 +317,11 @@
   font-size: var(--text-small);
   margin: 0 0 var(--space-1);
 }
+
+.level-progress__pause {
+  margin: var(--space-3) 0 0;
+}
+
+.level-progress__pause p {
+  margin: 0 0 var(--space-2);
+}

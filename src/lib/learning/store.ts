@@ -7,6 +7,7 @@ import type { Grade } from 'ts-fsrs';
 import { databaseName } from '../site.ts';
 import { LearningDatabase } from './db.ts';
 import { setProgressFlag } from './flag.ts';
+import { requestPersistence } from './persistence.ts';
 import { isConfidentError, ratingFor } from './grading.ts';
 import { checkPassed, completedSteps, levelStatus } from './progress.ts';
 import type { Level, TopicContext } from './question-types.ts';
@@ -32,7 +33,28 @@ export function onProgress(listener: Listener): () => void {
 
 function emit(topicId: string, level: Level): void {
   setProgressFlag(databaseName);
+  askPersistenceOnce();
   for (const listener of listeners) listener({ topicId, level });
+}
+
+const PERSISTENCE_ASKED_KEY = 'invariant:persistence-asked';
+let persistenceAsked = false;
+
+/**
+ * Постоянное хранилище (ТЗ, «Сохранность данных») просим один раз — когда
+ * появился первый прогресс: до этого беречь нечего. Браузер вправе отказать;
+ * что он решил, видно в настройках.
+ */
+function askPersistenceOnce(): void {
+  if (persistenceAsked) return;
+  persistenceAsked = true;
+  try {
+    if (localStorage.getItem(PERSISTENCE_ASKED_KEY)) return;
+    localStorage.setItem(PERSISTENCE_ASKED_KEY, '1');
+  } catch {
+    return;
+  }
+  void requestPersistence();
 }
 
 export function randomId(): string {
@@ -135,6 +157,7 @@ export async function recordAnswer(input: AnswerInput): Promise<AnswerResult> {
         seed: input.seed,
         contentVersion: question.version,
         misconception: input.misconception,
+        questionId: question.id,
         mode: input.mode,
       };
       const applied = applyReview(card, review, createScheduler(settings.retention));
@@ -154,7 +177,9 @@ export async function recordAnswer(input: AnswerInput): Promise<AnswerResult> {
     const done = new Set(record.done ?? []);
     if (input.countsForSteps && (input.correct || question.role === 'pre')) done.add(question.id);
     const reviews = await levelReviews(db, topic, level);
-    const next = refresh(topic, level, { ...record, done: [...done].sort(), lastQuestion: question.id, updatedAt: now }, reviews, settings);
+    // «Продолжить» ведёт к заданию темы, а не к повторению или проверке.
+    const lastQuestion = input.mode === 'learn' ? question.id : record.lastQuestion;
+    const next = refresh(topic, level, { ...record, done: [...done].sort(), ...(lastQuestion ? { lastQuestion } : {}), updatedAt: now }, reviews, settings);
     await db.progress.put(next);
   });
   emit(topic.topicId, level);
@@ -212,4 +237,33 @@ export async function finishCheck(
 /** Состояние уровней тем: для каталога, главной и вкладок уровней. */
 export async function allProgress(): Promise<ProgressRecord[]> {
   return getDb().progress.toArray();
+}
+
+/** Отметка «разобрался» в журнале ошибок. История не удаляется. */
+export async function setErrorResolved(errorId: string, resolved: boolean): Promise<void> {
+  const db = getDb();
+  const error = await db.errors.get(errorId);
+  if (error) await db.errors.put({ ...error, resolved, updatedAt: Date.now() });
+}
+
+/**
+ * Пауза темы (ТЗ, «Защита от перегрузки»): навыки темы не попадают в
+ * повторение, пока пауза не снята. Ставится на все уровни темы сразу.
+ */
+export async function setTopicPaused(topicId: string, levels: readonly Level[], paused: boolean): Promise<void> {
+  const db = getDb();
+  const now = Date.now();
+  await db.transaction('rw', db.progress, async () => {
+    for (const level of levels) {
+      const record = (await db.progress.get([topicId, level])) ?? emptyProgress(topicId, level, now);
+      await db.progress.put({ ...record, paused, updatedAt: now });
+    }
+  });
+  for (const level of levels) emit(topicId, level);
+}
+
+/** Тема на паузе, если на паузе любой её уровень. */
+export async function isTopicPaused(topicId: string): Promise<boolean> {
+  const records = await getDb().progress.where('topicId').equals(topicId).toArray();
+  return records.some((record) => record.paused);
 }

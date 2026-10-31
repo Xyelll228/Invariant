@@ -24,11 +24,14 @@ module.exports = {
         `${origin}ru/algorithms/sorting/insertion/base/`,
         `${origin}ru/glossary/`,
         `${origin}ru/search/`,
+        `${origin}ru/review/`,
+        `${origin}ru/settings/`,
         `${origin}ru/prototypes/trace/`,
         `${origin}ru/prototypes/sandbox/`,
         `${origin}ru/prototypes/review/`,
       ],
-      numberOfRuns: 3,
+      // Пять запусков и медиана: время блокировки (TBT) на машинах CI заметно скачет от запуска к запуску.
+      numberOfRuns: 5,
       settings: {
         chromeFlags: '--no-sandbox --headless=new',
       },

@@ -3,11 +3,13 @@ import ThemeToggle from './ThemeToggle.astro';
 import { t } from '../i18n/index.ts';
 import { url } from '../lib/site.ts';
 
+// Журнал ошибок и «О проекте» — в подвале: в шапке остаётся то, к чему возвращаются каждый день.
 const links = [
   { href: url('ru/catalog/'), label: t('nav.catalog') },
+  { href: url('ru/review/'), label: t('nav.review') },
   { href: url('ru/search/'), label: t('nav.search') },
   { href: url('ru/glossary/'), label: t('nav.glossary') },
-  { href: url('ru/about/'), label: t('nav.about') },
+  { href: url('ru/settings/'), label: t('nav.settings') },
 ];
 
 const current = Astro.url.pathname;

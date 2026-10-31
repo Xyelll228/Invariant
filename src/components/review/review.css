@@ -1,0 +1,128 @@
+/* Повторение, журнал ошибок и настройки. Монохром: смысл несут слова и форма, а не цвет. */
+
+/* Место под остров заранее: пока он читает данные из браузера, страница не прыгает. */
+.review-session,
+.error-log {
+  min-height: 14rem;
+}
+
+.review-session__topic {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-3);
+  margin: 0 0 var(--space-2);
+  font-weight: 650;
+}
+
+.link-button {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.link-button[aria-pressed='true'] {
+  font-weight: 700;
+  text-decoration-thickness: 2px;
+}
+
+.error-log__frequent li + li {
+  margin-top: var(--space-2);
+}
+
+.error-log__filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-5);
+  margin: 0 0 var(--space-2);
+}
+
+.error-log__filter legend {
+  width: 100%;
+}
+
+.error-log__list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-4) 0 0;
+}
+
+.error-log__item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin: 0 0 var(--space-4);
+}
+
+.error-log__item.is-resolved {
+  border-style: dashed;
+}
+
+.error-log__item p {
+  margin: 0 0 var(--space-2);
+}
+
+.error-log__item textarea {
+  width: 100%;
+  margin: var(--space-1) 0 var(--space-3);
+}
+
+.error-log__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.settings-section {
+  margin: var(--space-6) 0;
+}
+
+.settings-section > h2 {
+  margin-top: 0;
+}
+
+.settings-field {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-4);
+  max-width: 28rem;
+}
+
+.settings-field input[type='number'] {
+  max-width: 8rem;
+}
+
+.settings-field .muted {
+  margin: 0;
+  font-size: var(--text-small);
+}
+
+.settings-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-5);
+  margin: 0 0 var(--space-4);
+}
+
+.settings-options legend {
+  width: 100%;
+}
+
+.settings-file-button {
+  margin: 0 0 var(--space-4);
+}
+
+.settings-file:focus-visible + .settings-file-button {
+  outline: 3px solid var(--color-text);
+  outline-offset: 2px;
+}

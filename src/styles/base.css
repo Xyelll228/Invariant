@@ -11,6 +11,15 @@ html {
   text-size-adjust: 100%;
 }
 
+/* Размер текста из настроек: размеры в rem, поэтому растут и текст, и отступы. */
+:root[data-text-size='large'] {
+  font-size: 112.5%;
+}
+
+:root[data-text-size='larger'] {
+  font-size: 125%;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -253,6 +262,13 @@ th {
 .button--primary:hover {
   background: var(--color-text-muted);
   border-color: var(--color-text-muted);
+}
+
+/* Нажатая кнопка-переключатель: как основная, а не цветом. */
+.button[aria-pressed='true'] {
+  background: var(--color-inverse-bg);
+  border-color: var(--color-inverse-bg);
+  color: var(--color-inverse-text);
 }
 
 .button:disabled,

@@ -9,6 +9,8 @@
  * - Страницы тем, разделов и модулей кладутся в кеш, когда их открывают:
  *   сначала сеть, без сети — копия из кеша, а если копии нет — offline/ с
  *   объяснением. Так кеш не растёт вместе с каталогом из сотен страниц.
+ * - Задания темы для повторения (ru/learn/<id>.json) кладутся в свой кеш,
+ *   когда открыта страница темы; этот кеш переживает обновления приложения.
  * - Новая версия ждёт и включается при следующем открытии или по кнопке
  *   «Обновить» (skipWaiting: false — сообщение SKIP_WAITING от страницы).
  *   При включении кеш страниц очищается: старые страницы ссылаются на
@@ -41,6 +43,9 @@ const CORE_PAGES = [
   'ru/glossary/index.html',
   'ru/search/index.html',
   'ru/about/index.html',
+  'ru/review/index.html',
+  'ru/errors/index.html',
+  'ru/settings/index.html',
   'ru/prototypes/**/index.html',
 ];
 
@@ -58,6 +63,17 @@ const isNavigation = new Function(
     : `return request.mode === 'navigate' && !url.pathname.startsWith(${JSON.stringify(excluded)});`,
 );
 
+/**
+ * Задания тем для повторения (ru/learn/<id темы>.json): сначала сеть, без сети —
+ * копия из кеша. Кеш не очищается при обновлении приложения: без сети
+ * повторяются темы, которые уже открывались на этом устройстве.
+ */
+const learnCache = `${cacheId}-learn`;
+const isTopicData = new Function(
+  '{ url }',
+  `return url.pathname.startsWith(${JSON.stringify(`${base}ru/learn/`)}) && url.pathname.endsWith('.json');`,
+);
+
 // Дополнение к Service Worker: очистка кеша страниц при включении новой версии.
 writeFileSync(
   'dist/sw-extra.js',
@@ -71,7 +87,7 @@ writeFileSync(
 
 const { count, size, warnings } = await generateSW({
   globDirectory: 'dist',
-  globPatterns: ['**/*.{js,css,woff2,svg,png,webmanifest}', 'search/index.json', 'sandbox/runner.html', ...CORE_PAGES],
+  globPatterns: ['**/*.{js,css,woff2,svg,png,webmanifest}', 'search/index.json', 'ru/learn/index.json', 'sandbox/runner.html', ...CORE_PAGES],
   globIgnores: ['sw.js', 'sw-extra.js', 'pr-preview/**'],
   swDest: 'dist/sw.js',
   importScripts: ['sw-extra.js'],
@@ -87,6 +103,15 @@ const { count, size, warnings } = await generateSW({
   // Файлы сборки Astro с хешем в имени не нужно перепроверять по содержимому.
   dontCacheBustURLsMatching: /\/assets\/.+\.[\w-]{8}\.\w+$/,
   runtimeCaching: [
+    {
+      urlPattern: isTopicData,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: learnCache,
+        networkTimeoutSeconds: 6,
+        expiration: { maxEntries: 500 },
+      },
+    },
     {
       // Страница не из оболочки: сначала сеть, без сети — копия из кеша или offline/.
       urlPattern: isNavigation,
