@@ -1,0 +1,10 @@
+id: term.best-case
+version: 1
+term: лучший случай
+en: best case
+definition: >-
+  Входные данные размера n, на которых алгоритм делает меньше всего операций, и
+  само это наименьшее число операций.
+example: Для сортировки вставками лучший случай — уже упорядоченный массив, на нём n − 1 сравнений.
+topic: algo.analysis.cases
+confusedWith: [term.worst-case, term.average-case]

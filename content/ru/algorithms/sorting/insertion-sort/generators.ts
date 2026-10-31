@@ -3,17 +3,23 @@
  * Ответ вычисляет эталон (reference.ts), неверные варианты — «неправильные
  * алгоритмы», каждый из которых воспроизводит одно заблуждение из questions.yaml.
  */
+import { countInversions } from '../../../../../src/lib/facts.ts';
 import type { PreparedOption } from '../../../../../src/lib/learning/question-types.ts';
 import { choiceVariant, freeVariant, type ChoiceVariant, type FreeVariant } from '../../../../../src/lib/questions/make.ts';
 import type { Random } from '../../../../../src/lib/random.ts';
-import { recordTrace, replayArray } from '../../../../../src/lib/trace.ts';
+import { countOperations, recordTrace, replayArray } from '../../../../../src/lib/trace.ts';
+import { mutants } from './mutants.ts';
 import { insertionSort } from './reference.ts';
 
 const MISCONCEPTION = {
   short: 'algo.sorting.insertion.m.one-step-short',
   extra: 'algo.sorting.insertion.m.one-step-extra',
   selection: 'algo.sorting.insertion.m.selection',
+  bugEverywhere: 'algo.sorting.insertion.m.bug-everywhere',
 } as const;
+
+/** Соглашение о подсчёте сравнений — одно на все задания темы. */
+const COMPARE_RULE = 'Сравнением считается проверка a[j − 1] > a[j]; проверка j > 0 сравнивает индексы и не считается.';
 
 /**
  * Массив после k шагов сортировки вставками по следу эталона. Шаг — вставка
@@ -95,6 +101,118 @@ export function insertOne(random: Random): FreeVariant {
       answers: [format(answer)],
       normalize: 'list',
       data: { input, i },
+    });
+  }
+}
+
+function operations(input: readonly number[]) {
+  return countOperations(recordTrace((sink) => insertionSort(input, sink)).events);
+}
+
+/** Массив из n чисел от 1 до 9: повторы возможны и делают задание интереснее. */
+function smallArray(random: Random, min: number, max: number): number[] {
+  return Array.from({ length: random.int(min, max) }, () => random.int(1, 9));
+}
+
+/** «Сколько обменов сделает сортировка?» — ответ считает эталон. */
+export function countSwaps(random: Random): FreeVariant {
+  for (;;) {
+    const input = smallArray(random, 5, 7);
+    const { swaps } = operations(input);
+    if (swaps === 0) continue;
+    return freeVariant({
+      prompt:
+        `Сколько обменов сделает сортировка вставками на массиве ${format(input)}? ` +
+        'Обмен — перестановка соседей a[j − 1] и a[j], когда a[j − 1] > a[j].',
+      answers: [String(swaps)],
+      normalize: 'number',
+      data: { input },
+    });
+  }
+}
+
+/** «Сколько сравнений сделает сортировка?» — ответ считает эталон. */
+export function countCompares(random: Random): FreeVariant {
+  const input = smallArray(random, 4, 6);
+  return freeVariant({
+    prompt: `Сколько сравнений сделает код сортировки вставками на массиве ${format(input)}? ${COMPARE_RULE}`,
+    answers: [String(operations(input).compares)],
+    normalize: 'number',
+    data: { input },
+  });
+}
+
+const EXACT_INPUTS = [
+  { kind: 'sorted', describe: (n: number) => `массив из ${n} различных чисел, упорядоченный по возрастанию`, make: (n: number) => Array.from({ length: n }, (_, index) => index + 1) },
+  { kind: 'reversed', describe: (n: number) => `массив из ${n} различных чисел, упорядоченный по убыванию`, make: (n: number) => Array.from({ length: n }, (_, index) => n - index) },
+  { kind: 'equal', describe: (n: number) => `массив из ${n} одинаковых чисел`, make: (n: number) => Array.from({ length: n }, () => 7) },
+] as const;
+
+/** Точный подсчёт на большом n: формулу нужно знать, перебрать руками не получится. */
+export function exactCount(random: Random): FreeVariant {
+  const n = random.int(10, 60);
+  const shape = EXACT_INPUTS[random.int(0, EXACT_INPUTS.length - 1)] as (typeof EXACT_INPUTS)[number];
+  const counted = random.int(0, 1) === 0 ? 'compares' : 'swaps';
+  const value = operations(shape.make(n))[counted];
+  return freeVariant({
+    prompt:
+      `Сортировка вставками упорядочивает ${shape.describe(n)}. ` +
+      (counted === 'compares' ? `Сколько сравнений она сделает? ${COMPARE_RULE}` : 'Сколько обменов она сделает?'),
+    answers: [String(value)],
+    normalize: 'number',
+    data: { n, kind: shape.kind, counted },
+  });
+}
+
+/** «Сколько инверсий в массиве?» — ответ считает перебор пар. */
+export function inversionsCount(random: Random): FreeVariant {
+  for (;;) {
+    const input = smallArray(random, 4, 6);
+    const count = countInversions(input);
+    if (count === 0) continue;
+    return freeVariant({
+      prompt: `Инверсия — пара индексов i < j, для которой a[i] > a[j]. Сколько инверсий в массиве ${format(input)}?`,
+      answers: [String(count)],
+      normalize: 'number',
+      data: { input },
+    });
+  }
+}
+
+const BROKEN = mutants.filter((mutant) => mutant.code);
+
+function isSorted(values: readonly number[]): boolean {
+  return values.every((value, index) => index === 0 || (values[index - 1] as number) <= value);
+}
+
+/**
+ * «На каком массиве испорченная версия ошибётся?» — шаг «Сломать»: подобрать
+ * тест. Ровно один из массивов ломает код; на остальных, тоже неупорядоченных,
+ * он даёт верный ответ.
+ */
+export function breakingInput(random: Random): ChoiceVariant {
+  for (;;) {
+    const mutant = BROKEN[random.int(0, BROKEN.length - 1)] as (typeof BROKEN)[number];
+    const fails = (input: readonly number[]) => !isSorted(mutant.sortBy(input, (value) => value));
+    const candidates: number[][] = [];
+    for (let attempt = 0; attempt < 400 && candidates.length < 60; attempt++) {
+      const input = random.distinctInts(random.int(3, 5), 1, 9);
+      if (!isSorted(input)) candidates.push(input);
+    }
+    const failing = candidates.find(fails);
+    const passing = candidates.filter((input) => !fails(input));
+    const unique = [...new Map(passing.map((input) => [format(input), input])).values()];
+    if (!failing || unique.length < 3) continue;
+    const options: PreparedOption[] = [
+      { text: format(failing), correct: true },
+      ...unique.slice(0, 3).map((input) => ({ text: format(input), correct: false, misconception: MISCONCEPTION.bugEverywhere })),
+    ];
+    if (new Set(options.map((option) => option.text)).size !== options.length) continue;
+    return choiceVariant({
+      prompt: 'В этой версии сортировки вставками одна ошибка. На каком из массивов она вернёт неупорядоченный результат?',
+      code: (mutant.code as readonly string[]).join('\n'),
+      options: random.shuffle(options),
+      data: { mutant: mutant.id, failing },
     });
   }
 }

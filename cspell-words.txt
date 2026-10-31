@@ -44,3 +44,12 @@ utf
 Парсонса
 distractors
 CLS
+неубыванию
+досортировывают
+досортировывает
+libstdc
+introsort
+Introsort
+OpenDSA
+xyz
+nums

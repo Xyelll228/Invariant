@@ -1,0 +1,12 @@
+id: term.average-case
+version: 1
+term: средний случай
+en: average case
+definition: >-
+  Среднее число операций по всем входным данным размера n. Обычно считают, что
+  все перестановки входа равновероятны; другое распределение называют явно.
+example: >-
+  На случайной перестановке n различных чисел сортировка вставками делает в
+  среднем n(n − 1)/4 обменов.
+topic: algo.analysis.cases
+confusedWith: [term.worst-case, term.best-case]

@@ -88,6 +88,14 @@ describe('разбор MDX', () => {
     expect(parsed.blocks).toEqual([{ id: 'x.y.z.b.one', kind: 'explanation', version: 2, title: 'Раз', line: 6 }]);
     expect(parsed.components).toEqual(['Block']);
     expect(parsed.prose.map((fragment) => fragment.text)).toEqual(['Текст с X внутри.']);
+    // Блок кода в тексте темы запрещён: проверка контента сообщит строку.
+    expect(parsed.codeBlocks).toEqual([10]);
+  });
+
+  it('формула в строке — одно слово предложения', () => {
+    const parsed = parseMdx('Всего <Formula tex="\\frac{n(n-1)}{2}" /> сравнений.\n');
+    expect(parsed.prose.map((fragment) => fragment.text)).toEqual(['Всего X сравнений.']);
+    expect(parsed.usages[0]).toMatchObject({ name: 'Formula', attributes: { tex: '\\frac{n(n-1)}{2}' } });
   });
 
   it('сообщает о незакрытом теге с номером строки', () => {

@@ -1,0 +1,12 @@
+id: term.worst-case
+version: 1
+term: худший случай
+en: worst case
+definition: >-
+  Входные данные размера n, на которых алгоритм делает больше всего операций, и
+  само это наибольшее число операций.
+example: >-
+  Для сортировки вставками худший случай — массив различных чисел, упорядоченный
+  по убыванию: на нём n(n − 1)/2 сравнений.
+topic: algo.analysis.cases
+confusedWith: [term.best-case, term.average-case]

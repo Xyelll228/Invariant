@@ -1,6 +1,6 @@
-# Тема-образец этапа 0: на ней проверяются шаблон, схема и автопроверки.
-# Статус draft — черновик: на сайте как тема не публикуется. Перед выходом
-# в волне 1 тема пройдёт весь конвейер качества (ТЗ, раздел «Качество»).
+# Первая тема контрольной точки волны 1 (ТЗ, «Контрольная точка внутри волны 1»).
+# Статус draft — черновик: на сайте как тема не публикуется, пока не пройдёт
+# весь конвейер качества (ТЗ, раздел «Качество»).
 id: algo.sorting.insertion
 version: 1
 title: Сортировка вставками
@@ -11,10 +11,27 @@ summary: >-
   Сортировка вставками берёт элементы массива по одному и вставляет каждый
   на своё место в уже упорядоченную левую часть.
 prerequisites:
+  - { topic: algo.sorting.basics, level: fundament }
   - { topic: algo.linear.array, level: base }
   - { topic: algo.analysis.asymptotics, level: base }
+  - { topic: math.sums.progressions, level: fundament }
+related: [algo.sorting.shell, algo.sorting.hybrid, algo.search.binary]
 confusableWith: [algo.sorting.selection]
-terms: [term.stable-sort, term.in-place-sort, term.inversion]
+terms:
+  - term.array
+  - term.index
+  - term.stable-sort
+  - term.in-place-sort
+  - term.loop-invariant
+  - term.best-case
+  - term.worst-case
+  - term.average-case
+  - term.big-o
+  - term.big-theta
+  - term.adaptive-sort
+  - term.inversion
+  - term.online-algorithm
+  - term.binary-search
 complexity:
   time: { best: 'n', average: 'n^2', worst: 'n^2' }
   memory: '1'
@@ -24,5 +41,16 @@ code:
   js: insertionSort
   cpp: insertion_sort
   py: insertion_sort
+  title: Вставка обменами
   cases: { best: sorted, average: random, worst: reversed }
-review: { status: draft, date: '2026-10-24' }
+  variants:
+    - { id: shift, title: Вставка сдвигами, js: insertionSortShift, cpp: insertion_sort_shift, py: insertion_sort_shift, stable: true }
+    - id: binary
+      title: Бинарные вставки
+      js: binaryInsertionSort
+      cpp: binary_insertion_sort
+      py: binary_insertion_sort
+      stable: true
+      # На упорядоченном массиве бинарный поиск всё равно делает около log₂ i сравнений на элемент.
+      complexity: { best: 'n log n', average: 'n^2', worst: 'n^2' }
+review: { status: draft, date: '2026-10-31' }

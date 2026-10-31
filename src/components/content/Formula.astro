@@ -1,0 +1,33 @@
+---
+/**
+ * Формула в тексте темы: <Formula tex="\frac{n(n-1)}{2}" /> — в строке,
+ * <Formula block tex="…" /> — отдельной строкой. MathML собирается при сборке
+ * (src/lib/formula.ts), проверка контента не пропустит формулу с ошибкой.
+ */
+import { renderFormula } from '../../lib/formula.ts';
+
+interface Props {
+  tex: string;
+  block?: boolean;
+}
+
+const { tex, block = false } = Astro.props;
+const html = renderFormula(tex, block);
+---
+
+{block ? <div class="formula" tabindex="0" set:html={html} /> : <span class="formula formula--inline" set:html={html} />}
+
+<style>
+  .formula {
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin: var(--space-3) 0;
+    font-size: 1.1em;
+  }
+
+  .formula--inline {
+    display: inline;
+    margin: 0;
+    font-size: 1.05em;
+  }
+</style>

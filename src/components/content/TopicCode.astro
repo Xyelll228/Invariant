@@ -5,7 +5,9 @@
  * изменить и запустить в песочнице. Версии на C++ и Python при каждой сборке
  * прогоняются на тех же тестовых данных, что и эталон (npm run check:code).
  *
- * Тему компонент берёт из страницы: <TopicCode /> в тексте уровня.
+ * Тему компонент берёт из страницы: <TopicCode /> в тексте уровня. Вариант
+ * алгоритма из code.variants темы — <TopicCode variant="shift" />: код на JS
+ * из variantCode в reference.ts, версии impl.shift.cpp и impl.shift.py.
  */
 import CodeLab from '../code/CodeLab.tsx';
 import { getEntry } from 'astro:content';
@@ -15,6 +17,8 @@ import { buildDate, url } from '../../lib/site.ts';
 interface Props {
   /** Входные массивы примеров для кнопки «Запустить». */
   inputs?: number[][];
+  /** id варианта из code.variants темы; без него — основной код. */
+  variant?: string;
 }
 
 const topic = Astro.locals.topic;
@@ -22,26 +26,31 @@ if (!topic) throw new Error('<TopicCode /> работает только в те
 const entry = await getEntry('topics', topic.id);
 const spec = entry?.data.code;
 if (!spec) throw new Error(`У темы ${topic.id} нет поля code в topic.yaml`);
+const { inputs = [[7, 3, 5, 1, 4], [], [2, 1, 2]], variant } = Astro.props;
+const chosen = variant ? spec.variants.find((item) => item.id === variant) : undefined;
+if (variant && !chosen) throw new Error(`У темы ${topic.id} нет варианта ${variant} в code.variants`);
 
 const references = import.meta.glob<Record<string, unknown>>('/content/ru/**/reference.ts', { eager: true });
-const cppFiles = import.meta.glob<string>('/content/ru/**/impl.cpp', { query: '?raw', import: 'default', eager: true });
-const pyFiles = import.meta.glob<string>('/content/ru/**/impl.py', { query: '?raw', import: 'default', eager: true });
+const cppFiles = import.meta.glob<string>('/content/ru/**/impl*.cpp', { query: '?raw', import: 'default', eager: true });
+const pyFiles = import.meta.glob<string>('/content/ru/**/impl*.py', { query: '?raw', import: 'default', eager: true });
 const reference = references[`/content/ru/${topic.dir}/reference.ts`];
-const jsLines = reference?.code as readonly string[] | undefined;
-const run = reference?.[spec.js] as ((input: readonly number[]) => unknown) | undefined;
-const cpp = cppFiles[`/content/ru/${topic.dir}/impl.cpp`]?.trim();
-const py = pyFiles[`/content/ru/${topic.dir}/impl.py`]?.trim();
-if (!jsLines || !run || !cpp || !py) throw new Error(`У темы ${topic.id} нет кода на одном из языков`);
+const suffix = chosen ? `.${chosen.id}` : '';
+const functionName = chosen?.js ?? spec.js;
+const jsLines = (chosen ? (reference?.variantCode as Record<string, readonly string[]> | undefined)?.[chosen.id] : reference?.code) as readonly string[] | undefined;
+const run = reference?.[functionName] as ((input: readonly number[]) => unknown) | undefined;
+const cpp = cppFiles[`/content/ru/${topic.dir}/impl${suffix}.cpp`]?.trim();
+const py = pyFiles[`/content/ru/${topic.dir}/impl${suffix}.py`]?.trim();
+if (!jsLines || !run || !cpp || !py) throw new Error(`У темы ${topic.id} нет кода${chosen ? ` варианта ${chosen.id}` : ''} на одном из языков`);
 
-const { inputs = [[7, 3, 5, 1, 4], [], [2, 1, 2]] } = Astro.props;
 const format = (value: unknown) => JSON.stringify(value).replace(/,/g, ', ');
 // Ожидаемый результат примеров вычисляет эталон темы.
 const visibleTests = inputs.map((input) => {
   const expected = run(input);
-  return { args: [input], expected, call: `${spec.js}(${format(input)})`, expectedText: format(expected) };
+  return { args: [input], expected, call: `${functionName}(${format(input)})`, expectedText: format(expected) };
 });
 const checked = formatDate(buildDate);
-const prefix = `code-${topic.level}`;
+const prefix = `code-${topic.level}${chosen ? `-${chosen.id}` : ''}`;
+const title = chosen ? `${topic.title}, ${chosen.title.toLocaleLowerCase('ru-RU')}` : topic.title;
 const tabs = [
   { id: 'js', label: 'JavaScript' },
   { id: 'cpp', label: 'C++' },
@@ -50,7 +59,7 @@ const tabs = [
 ---
 
 <div class="topic-code" data-tabs>
-  <div class="topic-code__tabs" role="tablist" aria-label="Язык кода">
+  <div class="topic-code__tabs" role="tablist" aria-label={chosen ? `Язык кода: ${chosen.title.toLocaleLowerCase('ru-RU')}` : 'Язык кода'}>
     {
       tabs.map((tab, index) => (
         <button
@@ -72,8 +81,8 @@ const tabs = [
     <p class="muted topic-code__note">Код можно изменить и запустить: он выполняется в песочнице прямо в браузере.</p>
     <CodeLab
       client:visible
-      label={`Код на JavaScript: ${topic.title}`}
-      functionName={spec.js}
+      label={`Код на JavaScript: ${title}`}
+      functionName={functionName}
       starterCode={`${jsLines.join('\n')}\n`}
       visibleTests={visibleTests}
       hiddenTests={[]}

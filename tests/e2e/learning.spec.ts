@@ -52,6 +52,8 @@ test('полный цикл уровня: предвопросы, шаги, ит
   await expect(verdict(stop)).toContainText('Верно.');
   await solve(question(page, 'idea-next'));
   await expect(question(page, 'idea-next').getByRole('button', { name: 'Слишком легко' })).toBeVisible();
+  await solve(question(page, 'confusion-next'));
+  await expect(verdict(question(page, 'confusion-next'))).toContainText('Верно.');
 
   // Шаг 2: задания генератора и ручная симуляция.
   for (const id of ['after-k-steps', 'insert-one', 'simulate']) {

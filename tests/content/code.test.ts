@@ -1,8 +1,12 @@
 /**
  * Автопроверки кода тем (ТЗ, раздел «Качество», таблица «Автопроверки»):
  * запуск всего кода (эталон на JS, версии на C++ и Python на общих данных),
- * свойства на случайных данных, мутанты, эксперимент удвоения и
- * однозначность заданий генераторов на 1000 вариантов.
+ * свойства на случайных данных, мутанты, эксперимент удвоения,
+ * утверждения текста, которые проверяет код (facts.ts), и однозначность
+ * заданий генераторов на 1000 вариантов.
+ *
+ * Всё это — и для основного кода темы, и для её вариантов (code.variants
+ * в topic.yaml): например, вставка сдвигами и бинарные вставки.
  *
  * Запуск: npm run check:code. Нужны g++ и python3.
  */
@@ -14,15 +18,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import fc from 'fast-check';
 import { afterAll, describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
-import {
-  type ComplexityClass,
-  type InputKind,
-  questionsFileSchema,
-  topicSchema,
-} from '../../src/content/schema.ts';
+import { questionsFileSchema, topicSchema, type ComplexityClass } from '../../src/content/schema.ts';
+import { expectedRatio, measureDoubling } from '../../src/lib/doubling.ts';
+import type { TopicFact } from '../../src/lib/facts.ts';
 import { createRandom, type Random } from '../../src/lib/random.ts';
 import { runFunction } from '../../src/lib/run/node-run.ts';
-import { countOperations, recordTrace, replayArray, type TraceSink } from '../../src/lib/trace.ts';
+import { recordTrace, replayArray, type TraceSink } from '../../src/lib/trace.ts';
 import type { GeneratedVariant } from '../../src/lib/learning/question-types.ts';
 
 const repo = fileURLToPath(new URL('../../', import.meta.url));
@@ -38,6 +39,21 @@ interface Mutant {
   sortBy: SortBy;
   code?: readonly string[];
   bugLine?: number;
+}
+
+/** Основной код темы или его вариант: всё, что проверяется одинаково. */
+interface Implementation {
+  /** Пусто у основного кода, id варианта — у варианта. */
+  variant: string | null;
+  title: string;
+  js: string;
+  cpp: string;
+  py: string;
+  cppFile: string;
+  pyFile: string;
+  shown: readonly string[] | undefined;
+  stable: boolean;
+  complexity: { best: ComplexityClass; average: ComplexityClass; worst: ComplexityClass } | undefined;
 }
 
 function topicDirs(dir: string): string[] {
@@ -59,38 +75,12 @@ function isNonDecreasing(values: readonly number[]): boolean {
   return values.every((value, index) => index === 0 || (values[index - 1] as number) <= value);
 }
 
-/** Входные данные размера n для эксперимента удвоения. */
-function inputOf(kind: InputKind, n: number, random: Random): number[] {
-  switch (kind) {
-    case 'sorted':
-      return Array.from({ length: n }, (_, index) => index);
-    case 'reversed':
-      return Array.from({ length: n }, (_, index) => n - index);
-    case 'equal':
-      return Array.from({ length: n }, () => 7);
-    case 'random':
-      return random.shuffle(Array.from({ length: n }, (_, index) => index));
-  }
-}
-
-/** Рост числа операций при переходе от n к 2n для класса сложности. */
-function growth(complexity: ComplexityClass, n: number): number {
-  switch (complexity) {
-    case '1':
-      return 1;
-    case 'log n':
-      return Math.log2(n);
-    case 'n':
-      return n;
-    case 'n log n':
-      return n * Math.log2(n);
-    case 'n^2':
-      return n * n;
-    case 'n^3':
-      return n ** 3;
-    case '2^n':
-      return 2 ** Math.min(n, 1000);
-  }
+/** Сохраняет ли сортировка порядок записей с равными ключами. */
+function keepsOrder(result: readonly { key: number; index: number }[]): boolean {
+  return result.every((record, position) => {
+    const previous = result[position - 1];
+    return !previous || previous.key < record.key || (previous.key === record.key && previous.index < record.index);
+  });
 }
 
 function run(command: string, args: string[], input: string): string {
@@ -102,9 +92,7 @@ function run(command: string, args: string[], input: string): string {
   return result.stdout;
 }
 
-const DOUBLING_SIZES = [128, 256, 512, 1024];
 const DOUBLING_TOLERANCE = 0.15;
-const RANDOM_REPEATS = 5;
 const GENERATOR_VARIANTS = 1000;
 
 for (const dir of topicDirs(content)) {
@@ -113,29 +101,143 @@ for (const dir of topicDirs(content)) {
   if (!code) continue;
 
   const reference = (await import(pathToFileURL(join(dir, 'reference.ts')).href)) as Record<string, unknown>;
-  const sort = reference[code.js] as SortNumbers;
-  const sortBy = reference[`${code.js}By`] as SortBy;
   const { mutants } = (await import(pathToFileURL(join(dir, 'mutants.ts')).href)) as { mutants: Mutant[] };
   const vectors = (JSON.parse(readFileSync(join(dir, 'vectors.json'), 'utf8')) as { inputs: number[][] }).inputs;
+  const variantCode = (reference.variantCode ?? {}) as Record<string, readonly string[]>;
+  const implementations: Implementation[] = [
+    {
+      variant: null,
+      title: 'основной код',
+      js: code.js,
+      cpp: code.cpp,
+      py: code.py,
+      cppFile: join(dir, 'impl.cpp'),
+      pyFile: join(dir, 'impl.py'),
+      shown: reference.code as readonly string[] | undefined,
+      stable: topic.properties?.stable === true,
+      complexity: topic.complexity?.time,
+    },
+    ...code.variants.map((variant) => ({
+      variant: variant.id,
+      title: `вариант «${variant.title}»`,
+      js: variant.js,
+      cpp: variant.cpp,
+      py: variant.py,
+      cppFile: join(dir, `impl.${variant.id}.cpp`),
+      pyFile: join(dir, `impl.${variant.id}.py`),
+      shown: variantCode[variant.id],
+      stable: variant.stable === true,
+      complexity: variant.complexity ?? topic.complexity?.time,
+    })),
+  ];
 
   describe(`${topic.title} (${topic.id})`, () => {
-    it('эталон экспортирует функции и сортирует общие тестовые данные', () => {
-      expect(typeof sort).toBe('function');
-      expect(typeof sortBy).toBe('function');
-      for (const input of vectors) {
-        const copy = [...input];
-        expect(sort(input), JSON.stringify(input)).toEqual(sorted(input));
-        expect(input, 'эталон не меняет исходный массив').toEqual(copy);
-      }
-    });
+    for (const impl of implementations) {
+      const sort = reference[impl.js] as SortNumbers;
+      const sortBy = reference[`${impl.js}By`] as SortBy;
 
-    it('код, который видит ученик, запускается и даёт тот же результат, что эталон', () => {
-      const shown = (reference.code as readonly string[] | undefined)?.join('\n');
-      expect(shown, 'экспорт code в reference.ts').toBeTruthy();
-      for (const input of vectors) {
-        expect(runFunction(shown as string, code.js, [input]), JSON.stringify(input)).toEqual(sorted(input));
-      }
-    });
+      describe(impl.title, () => {
+        it('эталон экспортирует функции и сортирует общие тестовые данные', () => {
+          expect(typeof sort, `функция ${impl.js} в reference.ts`).toBe('function');
+          expect(typeof sortBy, `функция ${impl.js}By в reference.ts`).toBe('function');
+          for (const input of vectors) {
+            const copy = [...input];
+            expect(sort(input), JSON.stringify(input)).toEqual(sorted(input));
+            expect(input, 'эталон не меняет исходный массив').toEqual(copy);
+          }
+        });
+
+        it('код, который видит ученик, запускается и даёт тот же результат, что эталон', () => {
+          const shown = impl.shown?.join('\n');
+          expect(shown, impl.variant ? `variantCode.${impl.variant} в reference.ts` : 'экспорт code в reference.ts').toBeTruthy();
+          for (const input of vectors) {
+            expect(runFunction(shown as string, impl.js, [input]), JSON.stringify(input)).toEqual(sorted(input));
+          }
+        });
+
+        it('след эталона воспроизводит результат: обмены и записи дают тот же массив', () => {
+          for (const input of vectors) {
+            const { result, events } = recordTrace((sink) => sort(input, sink));
+            expect(replayArray(input, events), JSON.stringify(input)).toEqual(result);
+          }
+        });
+
+        it('свойства на случайных данных: результат упорядочен и является перестановкой входа', () => {
+          fc.assert(
+            fc.property(fc.array(fc.integer({ min: -1000, max: 1000 }), { maxLength: 60 }), (input) => {
+              const result = sort(input);
+              return isNonDecreasing(result) && JSON.stringify(sorted(result)) === JSON.stringify(sorted(input));
+            }),
+            { numRuns: 300, seed: 20261024 },
+          );
+        });
+
+        if (impl.stable) {
+          it('устойчивость: элементы с равными ключами сохраняют порядок', () => {
+            fc.assert(
+              fc.property(fc.array(fc.integer({ min: 0, max: 4 }), { maxLength: 40 }), (keys) =>
+                keepsOrder(sortBy(keys.map((key, index) => ({ key, index })), (record) => record.key)),
+              ),
+              { numRuns: 300, seed: 20261024 },
+            );
+          });
+        }
+
+        it('версия на C++ даёт тот же результат (предупреждения как ошибки, санитайзеры)', () => {
+          const binary = join(work, `${topic.id}.${impl.variant ?? 'main'}.cpp.out`);
+          run(
+            'g++',
+            [
+              '-std=c++20',
+              '-O1',
+              '-g',
+              '-Wall',
+              '-Wextra',
+              '-Wpedantic',
+              '-Werror',
+              '-fsanitize=address,undefined',
+              '-fno-sanitize-recover=all',
+              `-DINVARIANT_FUNCTION=${impl.cpp}`,
+              impl.cppFile,
+              join(repo, 'scripts', 'harness', 'sort_numbers.cpp'),
+              '-o',
+              binary,
+            ],
+            '',
+          );
+          const input = vectors.map((vector) => [vector.length, ...vector].join(' ')).join('\n');
+          const lines = run(binary, [], `${input}\n`).split('\n').slice(0, vectors.length);
+          expect(lines).toEqual(vectors.map((vector) => sorted(vector).join(' ')));
+        });
+
+        it('версия на Python даёт тот же результат', () => {
+          const input = vectors.map((vector) => JSON.stringify(vector)).join('\n');
+          const output = run('python3', ['-B', join(repo, 'scripts', 'harness', 'sort_numbers.py'), impl.pyFile, impl.py], `${input}\n`);
+          const results = output.trim() === '' ? [] : output.trim().split('\n').map((line) => JSON.parse(line) as number[]);
+          expect(results).toEqual(vectors.map(sorted));
+        });
+
+        if (impl.complexity && code.cases) {
+          const complexity = impl.complexity;
+          const cases = code.cases;
+          for (const name of ['best', 'average', 'worst'] as const) {
+            it(`эксперимент удвоения: ${name} — ${complexity[name]} (данные: ${cases[name]})`, () => {
+              // Те же замеры, что в таблице «Измерение» на странице темы (src/lib/doubling.ts).
+              const rows = measureDoubling(sort, cases[name]);
+              const report: string[] = [];
+              for (let index = 1; index < rows.length; index++) {
+                const n = rows[index - 1]?.n as number;
+                const measured = rows[index]?.ratio ?? Number.POSITIVE_INFINITY;
+                const expected = expectedRatio(complexity[name], n);
+                const deviation = Math.abs(measured / expected - 1);
+                report.push(`n=${n}→${2 * n}: отношение ${measured.toFixed(3)}, ожидается ${expected.toFixed(3)}`);
+                expect(deviation, report.join('; ')).toBeLessThanOrEqual(DOUBLING_TOLERANCE);
+              }
+            });
+          }
+        }
+      });
+    }
 
     it('код испорченных версий для «Найти ошибку»: ведёт себя как мутант, падает на тестах, отличается в строке с ошибкой', () => {
       const shownReference = reference.code as readonly string[];
@@ -153,73 +255,6 @@ for (const dir of topicDirs(content)) {
       }
     });
 
-    it('след эталона воспроизводит результат: обмены и записи дают тот же массив', () => {
-      for (const input of vectors) {
-        const { result, events } = recordTrace((sink) => sort(input, sink));
-        expect(replayArray(input, events), JSON.stringify(input)).toEqual(result);
-      }
-    });
-
-    it('свойства на случайных данных: результат упорядочен и является перестановкой входа', () => {
-      fc.assert(
-        fc.property(fc.array(fc.integer({ min: -1000, max: 1000 }), { maxLength: 60 }), (input) => {
-          const result = sort(input);
-          return isNonDecreasing(result) && JSON.stringify(sorted(result)) === JSON.stringify(sorted(input));
-        }),
-        { numRuns: 300, seed: 20261024 },
-      );
-    });
-
-    if (topic.properties?.stable) {
-      it('устойчивость: элементы с равными ключами сохраняют порядок', () => {
-        fc.assert(
-          fc.property(fc.array(fc.integer({ min: 0, max: 4 }), { maxLength: 40 }), (keys) => {
-            const records = keys.map((key, index) => ({ key, index }));
-            const result = sortBy(records, (record) => record.key);
-            return result.every((record, position) => {
-              const previous = result[position - 1];
-              return !previous || previous.key < record.key || (previous.key === record.key && previous.index < record.index);
-            });
-          }),
-          { numRuns: 300, seed: 20261024 },
-        );
-      });
-    }
-
-    it('версия на C++ даёт тот же результат (предупреждения как ошибки, санитайзеры)', () => {
-      const binary = join(work, `${topic.id}.cpp.out`);
-      run(
-        'g++',
-        [
-          '-std=c++20',
-          '-O1',
-          '-g',
-          '-Wall',
-          '-Wextra',
-          '-Wpedantic',
-          '-Werror',
-          '-fsanitize=address,undefined',
-          '-fno-sanitize-recover=all',
-          `-DINVARIANT_FUNCTION=${code.cpp}`,
-          join(dir, 'impl.cpp'),
-          join(repo, 'scripts', 'harness', 'sort_numbers.cpp'),
-          '-o',
-          binary,
-        ],
-        '',
-      );
-      const input = vectors.map((vector) => [vector.length, ...vector].join(' ')).join('\n');
-      const lines = run(binary, [], `${input}\n`).split('\n').slice(0, vectors.length);
-      expect(lines).toEqual(vectors.map((vector) => sorted(vector).join(' ')));
-    });
-
-    it('версия на Python даёт тот же результат', () => {
-      const input = vectors.map((vector) => JSON.stringify(vector)).join('\n');
-      const output = run('python3', ['-B', join(repo, 'scripts', 'harness', 'sort_numbers.py'), join(dir, 'impl.py'), code.py], `${input}\n`);
-      const results = output.trim() === '' ? [] : output.trim().split('\n').map((line) => JSON.parse(line) as number[]);
-      expect(results).toEqual(vectors.map(sorted));
-    });
-
     it(`каждый мутант падает хотя бы на одном тесте (мутантов: ${mutants.length})`, () => {
       const survivors: string[] = [];
       for (const mutant of mutants) {
@@ -233,49 +268,43 @@ for (const dir of topicDirs(content)) {
           ).failed ||
           (topic.properties?.stable === true &&
             fc.check(
-              fc.property(fc.array(fc.integer({ min: 0, max: 3 }), { maxLength: 30 }), (keys) => {
-                const records = keys.map((key, index) => ({ key, index }));
-                const result = mutant.sortBy(records, (record) => record.key);
-                return result.every((record, position) => {
-                  const previous = result[position - 1];
-                  return !previous || previous.key < record.key || (previous.key === record.key && previous.index < record.index);
-                });
-              }),
+              fc.property(fc.array(fc.integer({ min: 0, max: 3 }), { maxLength: 30 }), (keys) =>
+                keepsOrder(mutant.sortBy(keys.map((key, index) => ({ key, index })), (record) => record.key)),
+              ),
               { numRuns: 300, seed: 1 },
             ).failed);
         if (!failsOnVectors && !failsOnProperties) survivors.push(`${mutant.id}: ${mutant.description}`);
       }
       expect(survivors, 'мутанты, которых не ловит ни один тест — тесты слабые').toEqual([]);
     });
+  });
+}
 
-    if (topic.complexity && code.cases) {
-      const complexity = topic.complexity.time;
-      const cases = code.cases;
-      for (const name of ['best', 'average', 'worst'] as const) {
-        it(`эксперимент удвоения: ${name} — ${complexity[name]} (данные: ${cases[name]})`, () => {
-          const measure = (n: number): number => {
-            const repeats = cases[name] === 'random' ? RANDOM_REPEATS : 1;
-            let total = 0;
-            for (let seed = 1; seed <= repeats; seed++) {
-              const input = inputOf(cases[name], n, createRandom(seed * 7919 + n));
-              total += countOperations(recordTrace((sink) => sort(input, sink)).events).total;
-            }
-            return total / repeats;
-          };
-          const operations = DOUBLING_SIZES.map(measure);
-          const report: string[] = [];
-          for (let index = 1; index < DOUBLING_SIZES.length; index++) {
-            const n = DOUBLING_SIZES[index - 1] as number;
-            const previous = operations[index - 1] as number;
-            const current = operations[index] as number;
-            const measured = previous === 0 ? Number.POSITIVE_INFINITY : current / previous;
-            const expected = growth(complexity[name], 2 * n) / growth(complexity[name], n);
-            const deviation = Math.abs(measured / expected - 1);
-            report.push(`n=${n}→${2 * n}: отношение ${measured.toFixed(3)}, ожидается ${expected.toFixed(3)}`);
-            expect(deviation, report.join('; ')).toBeLessThanOrEqual(DOUBLING_TOLERANCE);
-          }
-        });
-      }
+// Утверждения из текстов тем, которые можно проверить кодом (facts.ts): например,
+// «число обменов равно числу инверсий». Проверяются на общих тестовых данных,
+// на случайных массивах с повторами и перебором, если он задан.
+for (const dir of topicDirs(content)) {
+  const factsFile = join(dir, 'facts.ts');
+  if (!existsSync(factsFile)) continue;
+  const topicId = (parseYaml(readFileSync(join(dir, 'topic.yaml'), 'utf8')) as { id: string }).id;
+  const { facts } = (await import(pathToFileURL(factsFile).href)) as { facts: TopicFact[] };
+  const vectorsFile = join(dir, 'vectors.json');
+  const vectors = existsSync(vectorsFile) ? (JSON.parse(readFileSync(vectorsFile, 'utf8')) as { inputs: number[][] }).inputs : [];
+
+  describe(`утверждения текста: ${topicId}`, () => {
+    for (const fact of facts) {
+      it(fact.claim, () => {
+        expect(fact.holds || fact.check, 'у утверждения нет проверки holds или check').toBeTruthy();
+        if (fact.holds) {
+          const holds = fact.holds;
+          for (const input of vectors) expect(holds(input), JSON.stringify(input)).toBe(true);
+          fc.assert(
+            fc.property(fc.array(fc.integer({ min: -20, max: 20 }), { maxLength: 40 }), (input) => holds(input)),
+            { numRuns: 500, seed: 20261031 },
+          );
+        }
+        if (fact.check) expect(fact.check()).toBe(true);
+      });
     }
   });
 }
@@ -290,8 +319,10 @@ for (const dir of topicDirs(content)) {
   const misconceptions = new Set(data.misconceptions.map((item) => item.id));
 
   describe(`генераторы заданий: ${data.topic}`, () => {
+    const checked = new Set<string>();
     for (const question of generatedQuestions) {
-      if (question.format !== 'generated') continue;
+      if (question.format !== 'generated' || checked.has(question.generator)) continue;
+      checked.add(question.generator);
       it(`${question.generator}: ${GENERATOR_VARIANTS} вариантов однозначны и воспроизводимы`, () => {
         const generate = generators[question.generator];
         expect(typeof generate, `функция ${question.generator}`).toBe('function');

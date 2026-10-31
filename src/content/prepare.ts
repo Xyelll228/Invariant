@@ -92,6 +92,32 @@ function expectedFor(question: WithSolution, input: PrepareInput, args: readonly
   }
 }
 
+/**
+ * Подстановки в условии «Найти ошибку»: {{mutant [2, 1]}} — что вернёт
+ * испорченная версия на этом массиве, {{reference [2, 1]}} — что вернёт эталон.
+ * Так в условии не бывает результата, посчитанного руками.
+ */
+export function fillRuns(questionId: string, prompt: string, mutantCode: readonly string[], input: PrepareInput): string {
+  return prompt.replace(/\{\{(mutant|reference) (\[[^\]]*\])\}\}/g, (_, kind: string, json: string) => {
+    let args: unknown;
+    try {
+      args = JSON.parse(json);
+    } catch {
+      throw new PrepareError(questionId, `в подстановке {{${kind} ${json}}} не массив JSON`);
+    }
+    const name = input.topic.code?.js;
+    if (!name) throw new PrepareError(questionId, 'подстановка {{…}} — только у темы с эталоном (code в topic.yaml)');
+    if (kind === 'mutant') {
+      try {
+        return showValue(runFunction(mutantCode.join('\n'), name, [args]));
+      } catch (error) {
+        throw new PrepareError(questionId, `испорченная версия не запускается на ${json}: ${(error as Error).message}`);
+      }
+    }
+    return showValue(expectedFor({ id: questionId, solution: 'reference', function: name }, input, [args]));
+  });
+}
+
 function prepareOne(question: Question, input: PrepareInput): PreparedQuestion {
   const base = {
     id: question.id,
@@ -218,7 +244,7 @@ function prepareOne(question: Question, input: PrepareInput): PreparedQuestion {
       return {
         ...base,
         format: 'line',
-        prompt: question.prompt,
+        prompt: fillRuns(question.id, question.prompt, mutant.code, input),
         lines: [...mutant.code],
         bugLine: mutant.bugLine,
         reasons: question.reasons.map((option) => ({

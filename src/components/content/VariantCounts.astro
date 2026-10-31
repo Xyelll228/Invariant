@@ -1,0 +1,73 @@
+---
+/**
+ * Сравнение основного кода темы и его вариантов (code.variants) на одних и
+ * тех же данных: сколько сравнений и записей в массив делает каждый. Обмен
+ * соседей записывает две ячейки, сдвиг — одну. Считает эталон при сборке.
+ *
+ * <VariantCounts n={1024} input="random" /> в тексте уровня.
+ */
+import { getEntry } from 'astro:content';
+import type { InputKind } from '../../content/schema.ts';
+import { INPUT_TITLES, measureDoubling } from '../../lib/doubling.ts';
+import type { TraceSink } from '../../lib/trace.ts';
+
+interface Props {
+  n?: number;
+  input?: InputKind;
+}
+
+const topic = Astro.locals.topic;
+if (!topic) throw new Error('<VariantCounts /> работает только в тексте темы');
+const entry = await getEntry('topics', topic.id);
+const spec = entry?.data.code;
+if (!spec || spec.variants.length === 0) throw new Error(`У темы ${topic.id} нет вариантов code.variants`);
+const { n = 1024, input = 'random' } = Astro.props;
+
+const references = import.meta.glob<Record<string, unknown>>('/content/ru/**/reference.ts', { eager: true });
+const reference = references[`/content/ru/${topic.dir}/reference.ts`];
+const versions = [{ title: spec.title ?? 'Основной код', js: spec.js }, ...spec.variants.map((variant) => ({ title: variant.title, js: variant.js }))];
+const rows = versions.map((version) => {
+  const sort = reference?.[version.js] as ((values: readonly number[], trace?: TraceSink) => unknown) | undefined;
+  if (!sort) throw new Error(`У темы ${topic.id} нет эталона ${version.js}`);
+  const [row] = measureDoubling(sort, input, [n]);
+  if (!row) throw new Error(`Нет замера ${version.js}`);
+  return { title: version.title, compares: row.compares, writes: 2 * row.swaps + row.sets };
+});
+const number = (value: number) => (Number.isInteger(value) ? value.toLocaleString('ru-RU') : value.toLocaleString('ru-RU', { maximumFractionDigits: 1 }));
+---
+
+<div class="table-wrap" tabindex="0" role="region" aria-label={`Варианты на одних данных, n = ${n}`}>
+  <table class="variant-counts">
+    <caption>n = {number(n)}, {INPUT_TITLES[input]}. Обмен соседей записывает в массив две ячейки, сдвиг — одну.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Версия</th>
+        <th scope="col">Сравнений</th>
+        <th scope="col">Записей в массив</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((row) => (
+          <tr>
+            <th scope="row">{row.title}</th>
+            <td>{number(row.compares)}</td>
+            <td>{number(row.writes)}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .variant-counts caption {
+    text-align: left;
+    padding: 0 0 var(--space-2);
+    font-size: var(--text-small);
+  }
+
+  .variant-counts td {
+    font-variant-numeric: tabular-nums;
+  }
+</style>

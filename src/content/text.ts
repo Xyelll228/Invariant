@@ -35,6 +35,11 @@ export interface ParsedMdx {
   components: string[];
   /** Где и с какими атрибутами использован каждый компонент. */
   usages: ComponentUsage[];
+  /**
+   * Строки, где начинаются блоки кода в обратных кавычках ```. В тексте темы
+   * их быть не должно: код показывают компоненты, которые запускают его при сборке.
+   */
+  codeBlocks: number[];
 }
 
 interface Node {
@@ -62,6 +67,8 @@ function attribute(node: Node, name: string): string | null {
 
 function inlineText(node: Node): string {
   if (SKIPPED.has(node.type)) return node.type === 'inlineCode' || node.type === 'inlineMath' ? 'X' : '';
+  // Формула в строке — одно «слово» предложения, как код в обратных кавычках.
+  if (node.type === 'mdxJsxTextElement' && node.name === 'Formula') return 'X';
   if (node.type === 'text') return String(node.value ?? '');
   if (node.type === 'break') return ' ';
   return (node.children ?? []).map(inlineText).join('');
@@ -70,7 +77,7 @@ function inlineText(node: Node): string {
 /** Разбирает MDX; бросает ошибку с номером строки, если MDX не собрать. */
 export function parseMdx(source: string): ParsedMdx {
   const tree = mdxToMdast(source) as Node;
-  const result: ParsedMdx = { frontmatter: null, blocks: [], prose: [], components: [], usages: [] };
+  const result: ParsedMdx = { frontmatter: null, blocks: [], prose: [], components: [], usages: [], codeBlocks: [] };
 
   const record = (node: Node): void => {
     if (!node.name) return;
@@ -94,6 +101,7 @@ export function parseMdx(source: string): ParsedMdx {
       result.frontmatter = String(node.value ?? '');
       return;
     }
+    if (node.type === 'code') result.codeBlocks.push(node.position?.start?.line ?? 0);
     if (SKIPPED.has(node.type)) return;
     if (node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') {
       record(node);

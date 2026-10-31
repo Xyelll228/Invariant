@@ -86,6 +86,8 @@ export async function solve(item: Locator, label: 'знаю' | 'сомневаю
     await item.getByRole('textbox', { name: 'Ваш ответ' }).fill(variant.answers[0] ?? '');
   } else if (id === 'idea-next') {
     await item.getByRole('radio', { name: /Первый элемент правой части/ }).check();
+  } else if (id === 'confusion-next') {
+    await item.getByRole('radio', { name: /На очередном шаге берётся первый элемент правой части/ }).check();
   } else if (id === 'idea-stop') {
     await item.getByRole('radio', { name: /Когда сосед слева не больше него/ }).check();
   } else if (id === 'check-idea') {

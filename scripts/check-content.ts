@@ -59,6 +59,7 @@ import {
   topicSchema,
 } from '../src/content/schema.ts';
 import { checkProse, parseMdx, type ProseFragment } from '../src/content/text.ts';
+import { renderFormula } from '../src/lib/formula.ts';
 import { arrayAlgorithms } from '../src/lib/viz/algorithms.ts';
 
 type Severity = 'error' | 'warning';
@@ -275,8 +276,24 @@ for (const loaded of topics.values()) {
         else if (!terms.has(id)) report('error', levelFile, `<Term id="${id}">: такого термина нет в глоссарии`, at);
         else if (!topic.terms.includes(id)) report('error', levelFile, `<Term id="${id}">: добавьте термин в terms темы`, at);
         if (!usage.text) report('error', levelFile, '<Term> без текста внутри', at);
-      } else if (usage.name === 'TopicCode') {
-        if (topic.kind !== 'algorithm' || !topic.code) report('error', levelFile, '<TopicCode /> — только у алгоритма с полем code в topic.yaml', at);
+      } else if (usage.name === 'TopicCode' || usage.name === 'Doubling' || usage.name === 'VariantCounts') {
+        if (topic.kind !== 'algorithm' || !topic.code) report('error', levelFile, `<${usage.name} /> — только у алгоритма с полем code в topic.yaml`, at);
+        else if (usage.name === 'Doubling' && (!topic.complexity || !topic.code.cases)) report('error', levelFile, '<Doubling />: у темы нет complexity и code.cases', at);
+        else if (usage.name === 'VariantCounts' && topic.code.variants.length === 0) report('error', levelFile, '<VariantCounts />: у темы нет вариантов code.variants', at);
+        const variant = usage.attributes.variant;
+        if (variant && !topic.code?.variants.some((item) => item.id === variant)) {
+          report('error', levelFile, `<${usage.name} variant="${variant}">: такого варианта нет в code.variants темы`, at);
+        }
+      } else if (usage.name === 'Formula') {
+        const tex = usage.attributes.tex;
+        if (!tex) report('error', levelFile, '<Formula> без атрибута tex="…" — формула в TeX строкой', at);
+        else {
+          try {
+            renderFormula(tex);
+          } catch (error) {
+            report('error', levelFile, `<Formula tex="${tex}">: KaTeX не разобрал формулу: ${(error as Error).message}`, at);
+          }
+        }
       } else if (['TraceSteps', 'ArrayTrace', 'ArraySimulation'].includes(usage.name)) {
         const algorithm = usage.attributes.algorithm;
         if (!algorithm || !(algorithm in arrayAlgorithms)) {
@@ -294,6 +311,10 @@ for (const loaded of topics.values()) {
           report('error', levelFile, `<ArraySimulation>: для ручной работы 5–8 элементов, сейчас ${input.length}`, at);
         }
       }
+    }
+
+    for (const line of parsed.codeBlocks) {
+      report('error', levelFile, 'блок кода ``` в тексте: в тексте только код, запущенный при сборке, — его показывают компоненты (<TopicCode />), а псевдокод пишется нумерованным списком', line);
     }
 
     const present = new Set<string>();
@@ -334,6 +355,21 @@ for (const loaded of topics.values()) {
       if (!existsSync(join(dir, name))) report(incomplete, file, `у алгоритма нет файла ${name}`);
     }
     if (!topic.code) report(incomplete, file, 'code: не указано, как запускать версии кода при проверке');
+    for (const variant of topic.code?.variants ?? []) {
+      for (const name of [`impl.${variant.id}.cpp`, `impl.${variant.id}.py`]) {
+        if (!existsSync(join(dir, name))) report('error', file, `code.variants: у варианта ${variant.id} нет файла ${name}`);
+      }
+    }
+    if (topic.code && topic.code.variants.length > 0 && existsSync(join(dir, 'reference.ts'))) {
+      const reference = (await import(pathToFileURL(join(dir, 'reference.ts')).href)) as { variantCode?: Record<string, unknown> } & Record<string, unknown>;
+      for (const variant of topic.code.variants) {
+        if (!Array.isArray(reference.variantCode?.[variant.id])) report('error', join(dir, 'reference.ts'), `нет кода варианта для ученика: variantCode.${variant.id}`);
+        if (typeof reference[variant.js] !== 'function') report('error', join(dir, 'reference.ts'), `нет функции варианта ${variant.js}`);
+      }
+    }
+    if (new Set((topic.code?.variants ?? []).map((variant) => variant.id)).size !== (topic.code?.variants ?? []).length) {
+      report('error', file, 'code.variants: id вариантов повторяются');
+    }
     if (!topic.complexity) report(incomplete, file, 'complexity: не указана сложность — её проверяет эксперимент удвоения');
     if (existsSync(join(dir, 'mutants.ts'))) {
       const { mutants } = (await import(pathToFileURL(join(dir, 'mutants.ts')).href)) as { mutants?: unknown[] };

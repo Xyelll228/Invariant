@@ -1,0 +1,120 @@
+---
+/**
+ * Измерение на растущих данных (ТЗ, блок «Измерение» и шаг «Измерить»): число
+ * операций эталона на n, 2n, 4n, 8n для лучшего, среднего и худшего входа и
+ * во сколько раз оно выросло при удвоении n. Всё считает эталон при сборке —
+ * те же замеры сверяет с заявленной сложностью npm run check:code.
+ *
+ * Тему компонент берёт из страницы: <Doubling /> в тексте уровня;
+ * <Doubling variant="binary" /> — вариант из code.variants темы.
+ */
+import { getEntry } from 'astro:content';
+import { expectedRatio, INPUT_TITLES, measureDoubling } from '../../lib/doubling.ts';
+import { formatComplexity } from '../../lib/format.ts';
+import type { TraceSink } from '../../lib/trace.ts';
+
+type CaseName = 'best' | 'average' | 'worst';
+
+interface Props {
+  /** Какие случаи показать; по умолчанию все три. */
+  cases?: CaseName[];
+  /** id варианта из code.variants темы; без него — основной код. */
+  variant?: string;
+}
+
+const topic = Astro.locals.topic;
+if (!topic) throw new Error('<Doubling /> работает только в тексте темы');
+const entry = await getEntry('topics', topic.id);
+const spec = entry?.data.code;
+const { cases = ['best', 'average', 'worst'], variant } = Astro.props;
+const chosen = variant ? spec?.variants.find((item) => item.id === variant) : undefined;
+if (variant && !chosen) throw new Error(`У темы ${topic.id} нет варианта ${variant} в code.variants`);
+const complexity = chosen?.complexity ?? entry?.data.complexity?.time;
+const inputKinds = spec?.cases;
+if (!spec || !inputKinds || !complexity) throw new Error(`У темы ${topic.id} нет code.cases или complexity в topic.yaml`);
+
+const references = import.meta.glob<Record<string, unknown>>('/content/ru/**/reference.ts', { eager: true });
+const functionName = chosen?.js ?? spec.js;
+const sort = references[`/content/ru/${topic.dir}/reference.ts`]?.[functionName] as ((input: readonly number[], trace?: TraceSink) => unknown) | undefined;
+if (!sort) throw new Error(`У темы ${topic.id} нет эталона ${functionName}`);
+
+const CASE_TITLES: Record<CaseName, string> = { best: 'Лучший случай', average: 'Средний случай', worst: 'Худший случай' };
+const number = (value: number) => (Number.isInteger(value) ? value.toLocaleString('ru-RU') : value.toLocaleString('ru-RU', { maximumFractionDigits: 1 }));
+const ratio = (value: number) => number(Math.round(value * 100) / 100);
+const tables = cases.map((name) => {
+  const rows = measureDoubling(sort, inputKinds[name]);
+  const declared = complexity[name];
+  return {
+    name,
+    title: CASE_TITLES[name],
+    input: INPUT_TITLES[inputKinds[name]],
+    declared,
+    expected: expectedRatio(declared, rows[rows.length - 2]?.n ?? 512),
+    rows,
+  };
+});
+// Столбец показывается, только если такие операции есть: у вставки обменами нет записей, у вставки сдвигами — обменов.
+const showSwaps = tables.some((table) => table.rows.some((row) => row.swaps > 0));
+const showSets = tables.some((table) => table.rows.some((row) => row.sets > 0));
+const what = chosen ? `${chosen.title}. ` : '';
+---
+
+<div class="doubling">
+  {
+    tables.map((table) => (
+      <section class="doubling__case" aria-label={`Измерение${chosen ? `, ${chosen.title.toLocaleLowerCase('ru-RU')}` : ''}: ${table.title.toLocaleLowerCase('ru-RU')}`}>
+        <p class="doubling__about">
+          <strong>{`${what}${table.title}`}</strong>: {table.input}. Заявлено {formatComplexity(table.declared)}: при удвоении n операций должно стать примерно в {ratio(table.expected)} раза больше.
+        </p>
+        <div class="table-wrap" tabindex="0" role="region" aria-label={`Таблица: ${table.title.toLocaleLowerCase('ru-RU')}`}>
+          <table>
+            <caption class="visually-hidden">{`${what}${table.title}: ${table.input}`}</caption>
+            <thead>
+              <tr>
+                <th scope="col">n</th>
+                <th scope="col">Сравнений</th>
+                {showSwaps && <th scope="col">Обменов</th>}
+                {showSets && <th scope="col">Записей</th>}
+                <th scope="col">Всего</th>
+                <th scope="col">
+                  <abbr title="Во сколько раз больше, чем в предыдущей строке">Рост</abbr>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {table.rows.map((row) => (
+                <tr>
+                  <td>{number(row.n)}</td>
+                  <td>{number(row.compares)}</td>
+                  {showSwaps && <td>{number(row.swaps)}</td>}
+                  {showSets && <td>{number(row.sets)}</td>}
+                  <td>{number(row.operations)}</td>
+                  <td>{row.ratio === null ? '—' : `×${ratio(row.ratio)}`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    ))
+  }
+  <p class="muted doubling__note">«Всего» — сравнения, обмены и записи вместе. «Рост» — во сколько раз «Всего» больше, чем в строке выше.</p>
+</div>
+
+<style>
+  .doubling__case + .doubling__case {
+    margin-top: var(--space-5);
+  }
+
+  .doubling__about {
+    margin-bottom: var(--space-2);
+  }
+
+  .doubling__note {
+    font-size: var(--text-small);
+  }
+
+  .doubling td {
+    font-variant-numeric: tabular-nums;
+  }
+</style>

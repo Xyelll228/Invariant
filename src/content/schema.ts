@@ -120,6 +120,8 @@ export const topicSchema = z
         js: z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/),
         cpp: z.string().regex(/^[a-z_][a-z0-9_]*$/),
         py: z.string().regex(/^[a-z_][a-z0-9_]*$/),
+        /** Как назвать основной код рядом с вариантами: «Вставка обменами». */
+        title: textSchema.optional(),
         /** Какие входные данные дают лучший, средний и худший случай — для эксперимента удвоения. */
         cases: z
           .object({
@@ -128,6 +130,35 @@ export const topicSchema = z
             worst: z.enum(INPUT_KINDS),
           })
           .strict(),
+        /**
+         * Варианты алгоритма для уровня «Глубина»: функция в reference.ts, код
+         * для ученика в экспорте variantCode[id], версии impl.<id>.cpp и
+         * impl.<id>.py. Проверяются так же, как основной код.
+         */
+        variants: z
+          .array(
+            z
+              .object({
+                id: z.string().regex(/^[a-z][a-z0-9-]*$/),
+                title: textSchema,
+                js: z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/),
+                cpp: z.string().regex(/^[a-z_][a-z0-9_]*$/),
+                py: z.string().regex(/^[a-z_][a-z0-9_]*$/),
+                /** Устойчив ли вариант: проверяется на случайных данных. */
+                stable: z.boolean().optional(),
+                /** Сложность варианта, если она отличается от сложности темы: её проверяет эксперимент удвоения. */
+                complexity: z
+                  .object({
+                    best: z.enum(COMPLEXITY_CLASSES),
+                    average: z.enum(COMPLEXITY_CLASSES),
+                    worst: z.enum(COMPLEXITY_CLASSES),
+                  })
+                  .strict()
+                  .optional(),
+              })
+              .strict(),
+          )
+          .default([]),
       })
       .strict()
       .optional(),
