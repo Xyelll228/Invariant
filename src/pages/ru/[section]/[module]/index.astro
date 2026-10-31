@@ -6,6 +6,8 @@
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../../../components/topic/Breadcrumbs.astro';
 import ModuleTopics from '../../../../components/catalog/ModuleTopics.astro';
+import TopicMap from '../../../../components/catalog/TopicMap.astro';
+import { mapGraph } from '../../../../content/map-data.ts';
 import { catalogModules, folders } from '../../../../content/catalog-data.ts';
 import type { ModuleWithSection } from '../../../../content/catalog.ts';
 import { sectionPath } from '../../../../content/paths.ts';
@@ -32,6 +34,7 @@ const algorithms = module.topics
   .map((topic) => site.pages.get(topic.id))
   .filter((page): page is TopicPage & { topic: { complexity: Complexity } } => page?.topic.complexity !== undefined);
 const yesNo = (value: boolean | undefined): string => (value === undefined ? '—' : value ? 'да' : 'нет');
+const graph = mapGraph(site, (page) => page.catalog.module.id === module.id);
 ---
 
 <BaseLayout title={`${module.number} ${module.title}`} description={`Модуль «${module.title}»: темы и сводная таблица.`}>
@@ -46,6 +49,7 @@ const yesNo = (value: boolean | undefined): string => (value === undefined ? '�
     <p class="muted">Тем: {module.topics.length}. Волна выхода: {module.waves.join('–')}.</p>
     <h2>Темы</h2>
     <ModuleTopics module={module} pages={site.pages} summaries />
+    <TopicMap nodes={graph.nodes} edges={graph.edges} scope="модуля" />
   </div>
   {
     algorithms.length > 0 && (

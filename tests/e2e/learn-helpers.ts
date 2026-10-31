@@ -115,3 +115,20 @@ export async function solve(item: Locator, label: 'знаю' | 'сомневаю
   await confident(item, label);
   await submit(item);
 }
+
+/** Отвечает на задание генератора уровня «Фундамент» заведомо неверно — по id и зерну варианта. */
+export async function answerWrong(item: Locator, label: 'знаю' | 'сомневаюсь' = 'сомневаюсь'): Promise<void> {
+  await ready(item);
+  const id = ((await item.getAttribute('data-question')) ?? '').replace(Q, '');
+  if (id.endsWith('after-k-steps') || id === 'check-after-k') {
+    const variant = afterKSteps(createRandom(await seedOf(item)));
+    const wrong = variant.options.find((option) => !option.correct);
+    await item.getByRole('radio', { name: wrong?.text ?? '', exact: true }).check();
+  } else if (id === 'insert-one' || id === 'check-insert') {
+    await item.getByRole('textbox', { name: 'Ваш ответ' }).fill('[0]');
+  } else {
+    throw new Error(`не знаю, как ошибиться в ${id}`);
+  }
+  await confident(item, label);
+  await submit(item);
+}

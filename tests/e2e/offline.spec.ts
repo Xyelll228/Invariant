@@ -94,6 +94,23 @@ test('повторение работает без сети: задания от
   await expect(verdict(next)).toContainText('Верно.');
 });
 
+test('раздел, скачанный заранее, открывается без сети целиком — и темы, которые ещё не открывали', async ({ page, context }) => {
+  await firstVisit(page, 'ru/algorithms/');
+  const download = page.locator('.section-download');
+  // Сама страница раздела уже в кеше: её открыли.
+  await expect(download).toContainText(/На устройстве сохранено 1 из \d+ файлов раздела\./);
+  await download.getByRole('button', { name: 'Скачать раздел для работы без сети' }).click();
+  await expect(download.getByRole('status')).toContainText(/Раздел сохранён: \d+ файл/);
+
+  // Без сети открывается уровень темы, который в этом браузере никогда не открывали.
+  await context.setOffline(true);
+  await page.goto('ru/algorithms/sorting/insertion/depth/');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Сортировка вставками');
+  await expect(page.getByRole('heading', { level: 2, name: 'Глубина' })).toBeVisible();
+  await page.goto('ru/algorithms/sorting/');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('1.5 Сортировки');
+});
+
 test('страница, которой нет в кеше, без сети объясняет, что случилось', async ({ page, context }) => {
   await firstVisit(page);
   await context.setOffline(true);

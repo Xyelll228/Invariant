@@ -3,12 +3,8 @@
  * что лежит в кеше, есть ли сеть, как поставить приложение на экран «Домой».
  */
 import { useEffect, useState } from 'preact/hooks';
+import { detectPlatform, IOS_INSTALL_TEXT, isStandalone, type InstallPromptEvent } from '../../lib/offline/install.ts';
 import './offline.css';
-
-interface InstallPromptEvent extends Event {
-  prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
 
 type WorkerState = 'checking' | 'unsupported' | 'installing' | 'ready' | 'not-controlling' | 'error';
 
@@ -20,17 +16,6 @@ const WORKER_TEXT: Record<WorkerState, string> = {
   'not-controlling': 'сайт сохранён; без интернета он откроется после перезагрузки этой страницы.',
   error: 'Service Worker не запустился: без сети сайт не откроется.',
 };
-
-function detectPlatform(): 'ios' | 'other' {
-  const ua = navigator.userAgent;
-  // iPad с iPadOS 13+ представляется Mac с сенсорным экраном.
-  const ios = /iPhone|iPad|iPod/.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1);
-  return ios ? 'ios' : 'other';
-}
-
-function isStandalone(): boolean {
-  return window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
-}
 
 export default function OfflineStatus({ base }: { base: string }) {
   const [worker, setWorker] = useState<WorkerState>('checking');
@@ -150,10 +135,7 @@ export default function OfflineStatus({ base }: { base: string }) {
       {!installed && platform === 'ios' && (
         <div class="note">
           <strong class="note__title">Как поставить на iPhone и iPad</strong>
-          <p>
-            В Safari нажмите «Поделиться», затем «На экран „Домой“». Это важно: Safari удаляет данные сайта, если семь дней
-            пользоваться Safari и не заходить на сайт, а у приложения на экране «Домой» свой счётчик — прогресс сохранится.
-          </p>
+          <p>{IOS_INSTALL_TEXT}</p>
         </div>
       )}
       {!installed && platform === 'other' && !installEvent && (

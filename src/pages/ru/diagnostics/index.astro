@@ -1,0 +1,26 @@
+---
+/**
+ * Диагностика после перерыва (ТЗ, «Возвращение после перерыва»). Прогресс
+ * хранится только в браузере, поэтому задания собирает остров.
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BreakDiagnostics from '../../../components/review/BreakDiagnostics.tsx';
+import { url } from '../../../lib/site.ts';
+---
+
+<BaseLayout title="Диагностика после перерыва" description="Короткая проверка пройденных тем: что сохранилось, а что пройти заново и с какого уровня.">
+  <div class="prose">
+    <h1>Диагностика после перерыва</h1>
+    <p class="lead">Короткая проверка пройденных тем: что сохранилось, а что стоит пройти заново и с какого уровня.</p>
+    <div class="diagnostics-slot">
+      <BreakDiagnostics client:load base={url()} runnerUrl={url('sandbox/runner.html')} />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Место под остров заранее: пока он читает прогресс, страница не прыгает. */
+  .diagnostics-slot {
+    min-height: 12rem;
+  }
+</style>

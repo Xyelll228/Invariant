@@ -49,3 +49,11 @@ export function createRandom(seed: number): Random {
     },
   };
 }
+
+/** Случайное зерно варианта задания. */
+export function randomSeed(): number {
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    return crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
+  }
+  return Math.floor(Math.random() * 2 ** 32);
+}

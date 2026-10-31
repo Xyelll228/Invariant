@@ -2,11 +2,12 @@
 /**
  * Глоссарий (ТЗ, «Справочник»): единственный источник терминов. У термина —
  * русское и английское название, определение, пример, тема и «часто путают с».
- * Тренажёр терминов появится вместе с прохождением тем.
+ * В конце страницы — тренажёр терминов (ТЗ, экран «Глоссарий»).
  */
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import ReportButton from '../../../components/report/ReportButton.astro';
 import ReportDialog from '../../../components/report/ReportDialog.astro';
+import TermsTrainer from '../../../components/glossary/TermsTrainer.tsx';
 import { catalogTopics } from '../../../content/catalog-data.ts';
 import { catalogTopicPath } from '../../../content/paths.ts';
 import { loadSite } from '../../../content/site-data.ts';
@@ -17,6 +18,7 @@ const site = await loadSite();
 const collator = new Intl.Collator('ru-RU', { sensitivity: 'base' });
 const terms = [...site.glossary.values()].sort((a, b) => collator.compare(a.term, b.term));
 const letters = [...new Set(terms.map((term) => term.term.charAt(0).toLocaleUpperCase('ru-RU')))];
+const trainerTerms = terms.map(({ id, term, en, definition, synonyms, confusedWith }) => ({ id, term, en, definition, synonyms, confusedWith }));
 
 function topicLink(id: string): { href: string; title: string } {
   const page = site.pages.get(id);
@@ -32,6 +34,7 @@ function topicLink(id: string): { href: string; title: string } {
       Термины, которыми пользуются темы. Здесь же закреплены спорные соглашения: например, что массивы нумеруются с нуля.
       Терминов: {terms.length}.
     </p>
+    <p><a href="#terms-trainer-title">Тренажёр терминов</a> — в конце страницы.</p>
     <nav aria-label="Буквы">
       <ul class="glossary__letters">
         {
@@ -79,6 +82,10 @@ function topicLink(id: string): { href: string; title: string } {
         </section>
       ))
     }
+    <section aria-labelledby="terms-trainer-title">
+      <h2 id="terms-trainer-title">Тренажёр терминов</h2>
+      <TermsTrainer client:visible terms={trainerTerms} />
+    </section>
   </div>
   <ReportDialog />
 </BaseLayout>

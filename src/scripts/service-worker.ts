@@ -47,11 +47,31 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   return registration;
 }
 
+/** Скачанные заранее разделы — снова на устройство, если новая версия очистила кеш страниц. */
+function refreshDownloadedSections(): void {
+  try {
+    if (!localStorage.getItem('invariant:downloaded-sections')) return;
+  } catch {
+    return;
+  }
+  const run = () => {
+    import('../lib/offline/download.ts')
+      .then(({ refreshDownloaded }) => refreshDownloaded(base))
+      .catch(() => {
+        // Не вышло — раздел можно скачать снова вручную на его странице.
+      });
+  };
+  if ('requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 10_000 });
+  else setTimeout(run, 3000);
+}
+
 // В режиме разработки Service Worker мешал бы видеть правки сразу.
 if (import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    registerServiceWorker().catch(() => {
-      // Без Service Worker сайт работает как обычно, только без офлайна.
-    });
+    registerServiceWorker()
+      .then(() => refreshDownloadedSections())
+      .catch(() => {
+        // Без Service Worker сайт работает как обычно, только без офлайна.
+      });
   });
 }

@@ -130,3 +130,11 @@
 .user-card__text {
   white-space: pre-wrap;
 }
+
+.diagnostic-result__list {
+  padding-left: 1.25rem;
+}
+
+.diagnostic-result__list p {
+  margin: 0 0 var(--space-2);
+}

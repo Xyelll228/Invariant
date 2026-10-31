@@ -3,6 +3,9 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../../components/topic/Breadcrumbs.astro';
 import ModuleTopics from '../../../components/catalog/ModuleTopics.astro';
+import TopicMap from '../../../components/catalog/TopicMap.astro';
+import SectionDownload from '../../../components/offline/SectionDownload.tsx';
+import { mapGraph } from '../../../content/map-data.ts';
 import { catalog, catalogModules, folders } from '../../../content/catalog-data.ts';
 import type { CatalogSection } from '../../../content/catalog.ts';
 import { modulePath } from '../../../content/paths.ts';
@@ -20,6 +23,7 @@ interface Props {
 const { section } = Astro.props;
 const site = await loadSite();
 const topics = section.modules.reduce((sum, module) => sum + module.topics.length, 0);
+const graph = mapGraph(site, (page) => page.catalog.module.section.id === section.id);
 ---
 
 <BaseLayout title={`${section.number}. ${section.title}`} description={section.intro}>
@@ -28,6 +32,11 @@ const topics = section.modules.reduce((sum, module) => sum + module.topics.lengt
     <h1>{section.number}. {section.title}</h1>
     <p class="lead">{section.intro}</p>
     <p class="muted">Модулей: {section.modules.length}, тем: {topics}.</p>
+    <section class="section-offline" aria-labelledby="section-offline-title">
+      <h2 id="section-offline-title" class="visually-hidden">Работа без сети</h2>
+      <SectionDownload client:visible base={url()} sectionId={section.id} />
+    </section>
+    <TopicMap nodes={graph.nodes} edges={graph.edges} scope="раздела" />
     {
       section.modules.map((module) => {
         const full = catalogModules.get(module.id);
@@ -47,3 +56,10 @@ const topics = section.modules.reduce((sum, module) => sum + module.topics.lengt
     }
   </div>
 </BaseLayout>
+
+<style>
+  /* Место под кнопку скачивания заранее: остров дописывает её после проверки кеша. */
+  .section-offline {
+    min-height: 6.5rem;
+  }
+</style>
