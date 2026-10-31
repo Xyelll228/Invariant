@@ -15,8 +15,9 @@ import { confusableGroups, lastQuestionOf, nextDue, pickQuestion, sessionOrder }
 import { loadSettings, type LearningSettings } from '../../lib/learning/settings.ts';
 import { getDb, randomSeed } from '../../lib/learning/store.ts';
 import { loadTopic, loadTopicsIndex, type TopicSummary } from '../../lib/learning/topics.ts';
-import type { CardRecord, ReviewRecord } from '../../lib/learning/types.ts';
+import type { CardRecord, ReviewRecord, UserCardRecord } from '../../lib/learning/types.ts';
 import Question from '../learn/Question.tsx';
+import UserCardQuestion from './UserCardQuestion.tsx';
 import '../learn/learn.css';
 import './review.css';
 
@@ -36,15 +37,12 @@ interface Session {
   settings: LearningSettings;
   topics: Map<string, TopicSummary>;
   reviews: ReviewRecord[];
+  userCards: Map<string, UserCardRecord>;
 }
 
-interface Current {
-  context: TopicContext;
-  level: Level;
-  question: PreparedQuestion;
-  seed: number;
-  topicTitle: string;
-}
+type Current =
+  | { kind: 'skill'; context: TopicContext; level: Level; question: PreparedQuestion; seed: number; topicTitle: string }
+  | { kind: 'user'; card: UserCardRecord; topicTitle: string };
 
 type Phase =
   | { kind: 'loading' }
@@ -83,7 +81,14 @@ export default function ReviewSession({ base, runnerUrl }: ReviewSessionProps) {
     let alive = true;
     (async () => {
       const db = getDb();
-      const [settings, cards, reviews, paused] = await Promise.all([loadSettings(db), db.cards.toArray(), db.reviews.toArray(), pausedTopics()]);
+      const [settings, cards, reviews, paused, ownCards] = await Promise.all([
+        loadSettings(db),
+        db.cards.toArray(),
+        db.reviews.toArray(),
+        pausedTopics(),
+        db.userCards.toArray(),
+      ]);
+      const userCards = new Map(ownCards.map((card) => [card.id, card]));
       if (cards.length === 0) {
         if (alive) setPhase({ kind: 'nothing', started: false, next: null, postponed: 0, settings });
         return;
@@ -91,8 +96,8 @@ export default function ReviewSession({ base, runnerUrl }: ReviewSessionProps) {
       const index = await loadTopicsIndex(base);
       const topics = new Map(index.topics.map((topic) => [topic.id, topic]));
       const skills = new Set(index.topics.flatMap((topic) => topic.skills.map((skill) => skill.id)));
-      // Навыки, которых больше нет в контенте этой сборки, не повторяются.
-      const known = cards.filter((card) => card.source === 'content' && skills.has(card.cardId));
+      // Навыки, которых больше нет в контенте этой сборки, не повторяются. Свои карточки — на тех же правах.
+      const known = cards.filter((card) => (card.source === 'content' ? skills.has(card.cardId) : userCards.has(card.cardId)));
       const now = Date.now();
       const plan = planDay({
         cards: known,
@@ -111,7 +116,7 @@ export default function ReviewSession({ base, runnerUrl }: ReviewSessionProps) {
       }
       items.current = order.map((card) => ({ card, again: false }));
       setTotal(items.current.length);
-      setSession({ postponed: plan.postponed, settings, topics, reviews });
+      setSession({ postponed: plan.postponed, settings, topics, reviews, userCards });
       setPhase({ kind: 'running' });
     })().catch(() => {
       if (alive) setPhase({ kind: 'failed', message: 'Список тем не загрузился. Проверьте сеть и обновите страницу.' });
@@ -129,15 +134,19 @@ export default function ReviewSession({ base, runnerUrl }: ReviewSessionProps) {
     let alive = true;
     setCurrent(null);
     setAnswered(false);
-    (async () => {
+    (async (): Promise<Current | null> => {
       const summary = session.topics.get(item.card.topicId);
+      if (item.card.source === 'user') {
+        const card = session.userCards.get(item.card.cardId);
+        return card ? { kind: 'user', card, topicTitle: summary?.title ?? 'Своя карточка' } : null;
+      }
       const skill = summary?.skills.find((entry) => entry.id === item.card.cardId);
       if (!summary || !skill) return null;
       const prepared = await loadTopic(base, item.card.topicId);
       const random = createRandom(randomSeed());
       const question = pickQuestion(prepared.questions, skill.id, lastQuestionOf(skill.id, session.reviews), random);
       if (!question) return null;
-      return { context: topicContext(prepared, skill.level), level: skill.level, question, seed: randomSeed(), topicTitle: summary.title };
+      return { kind: 'skill', context: topicContext(prepared, skill.level), level: skill.level, question, seed: randomSeed(), topicTitle: summary.title };
     })()
       .catch(() => null)
       .then((next) => {
@@ -259,19 +268,23 @@ export default function ReviewSession({ base, runnerUrl }: ReviewSessionProps) {
             <span>{current.topicTitle}</span>
             {item.again && <span class="badge">ещё раз после уверенной ошибки</span>}
           </p>
-          <Question
-            key={`${index}-${current.question.id}`}
-            topic={current.context}
-            level={current.level}
-            question={current.question}
-            mode="review"
-            base={base}
-            runnerUrl={runnerUrl}
-            countsForSteps={false}
-            initialSeed={current.seed}
-            position={{ index: index + 1, total }}
-            onAnswered={onAnswered}
-          />
+          {current.kind === 'skill' ? (
+            <Question
+              key={`${index}-${current.question.id}`}
+              topic={current.context}
+              level={current.level}
+              question={current.question}
+              mode="review"
+              base={base}
+              runnerUrl={runnerUrl}
+              countsForSteps={false}
+              initialSeed={current.seed}
+              position={{ index: index + 1, total }}
+              onAnswered={onAnswered}
+            />
+          ) : (
+            <UserCardQuestion key={`${index}-${current.card.id}`} card={current.card} base={base} position={{ index: index + 1, total }} onAnswered={onAnswered} />
+          )}
           {answered && (
             <div class="question__actions">
               <button type="button" class="button button--primary" onClick={advance}>

@@ -8,7 +8,8 @@ import MiniSearch, { type Options, type SearchResult } from 'minisearch';
 import { expandQuery, type CompiledSynonyms } from './synonyms.ts';
 import { isStopWord, searchTerms, stemToken, tokenize } from './text.ts';
 
-export type SearchKind = 'topic' | 'term' | 'block';
+/** note — заметки и свои карточки человека: их индекс строится в браузере, а не при сборке. */
+export type SearchKind = 'topic' | 'term' | 'block' | 'note';
 
 export interface SearchDoc {
   id: string;
@@ -92,9 +93,9 @@ export function searchDocs(index: MiniSearch<SearchDoc>, query: string, synonyms
   }));
 }
 
-export const KIND_TITLES: Record<SearchKind, string> = { topic: 'Темы', term: 'Термины', block: 'Блоки тем' };
+export const KIND_TITLES: Record<SearchKind, string> = { topic: 'Темы', term: 'Термины', block: 'Блоки тем', note: 'Мои заметки и карточки' };
 
-export const KIND_ORDER: readonly SearchKind[] = ['topic', 'term', 'block'];
+export const KIND_ORDER: readonly SearchKind[] = ['topic', 'term', 'block', 'note'];
 
 /** Результаты по группам в порядке «темы, термины, блоки»; внутри группы — по релевантности. */
 export function groupHits(hits: readonly Hit[]): { kind: SearchKind; hits: Hit[] }[] {

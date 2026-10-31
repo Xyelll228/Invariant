@@ -6,7 +6,7 @@
  */
 import type { MisconceptionSummary, TopicLink, TopicsIndex } from './topics.ts';
 import { topicOfSkill } from './topics.ts';
-import type { ErrorRecord } from './types.ts';
+import type { ErrorRecord, UserCardRecord } from './types.ts';
 
 export interface ErrorView {
   id: string;
@@ -22,12 +22,14 @@ export interface ErrorView {
   misconception: MisconceptionSummary | null;
 }
 
-/** Ошибки с названиями тем, навыков и заблуждений — новые сверху. */
-export function describeErrors(errors: readonly ErrorRecord[], index: TopicsIndex): ErrorView[] {
+/** Ошибки с названиями тем, навыков и заблуждений — новые сверху. Ошибка в своей карточке подписана её вопросом. */
+export function describeErrors(errors: readonly ErrorRecord[], index: TopicsIndex, userCards: readonly UserCardRecord[] = []): ErrorView[] {
   const topics = new Map(index.topics.map((topic) => [topic.id, topic]));
+  const own = new Map(userCards.map((card) => [card.id, card]));
   return errors
     .map((error) => {
-      const topicId = topicOfSkill(error.cardId);
+      const userCard = own.get(error.cardId);
+      const topicId = userCard?.topicId ?? topicOfSkill(error.cardId);
       const topic = topics.get(topicId);
       return {
         id: error.id,
@@ -37,7 +39,7 @@ export function describeErrors(errors: readonly ErrorRecord[], index: TopicsInde
         topicId,
         topicTitle: topic?.title ?? topicId,
         topicPath: topic?.path ?? null,
-        skillTitle: topic?.skills.find((skill) => skill.id === error.cardId)?.title ?? null,
+        skillTitle: userCard ? `Своя карточка: ${userCard.question}` : (topic?.skills.find((skill) => skill.id === error.cardId)?.title ?? null),
         misconceptionId: error.misconception,
         misconception: error.misconception ? (topic?.misconceptions[error.misconception] ?? null) : null,
       };

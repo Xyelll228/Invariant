@@ -74,8 +74,9 @@ export default function ErrorLog({ base }: ErrorLogProps) {
   const topicFilterName = useId();
 
   const reload = async () => {
-    const [errors, index] = await Promise.all([getDb().errors.toArray(), loadTopicsIndex(base)]);
-    setViews(describeErrors(errors, index));
+    const db = getDb();
+    const [errors, index, userCards] = await Promise.all([db.errors.toArray(), loadTopicsIndex(base), db.userCards.toArray()]);
+    setViews(describeErrors(errors, index, userCards));
   };
 
   useEffect(() => {

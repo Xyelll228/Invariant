@@ -1,0 +1,71 @@
+---
+/**
+ * Заметки и свои карточки (ТЗ, «Справочник»): окна «Заметка» и «Сделать
+ * карточку» — одни на страницу. Их открывают кнопки у темы и у каждого блока.
+ * Всё хранится только в браузере (src/lib/learning/personal.ts).
+ */
+interface Props {
+  topicId: string;
+}
+
+const { topicId } = Astro.props;
+---
+
+<dialog class="report-dialog" data-note-dialog data-topic-id={topicId} aria-labelledby="note-dialog-title">
+  <form method="dialog" class="report-dialog__form">
+    <h2 id="note-dialog-title" class="report-dialog__title">Заметка</h2>
+    <p class="muted" data-note-where></p>
+    <label for="note-dialog-text">Текст заметки</label>
+    <textarea id="note-dialog-text" rows="6" data-note-input></textarea>
+    <p class="muted report-dialog__hint">Заметка хранится только в этом браузере, входит в копию в файл и ищется поиском.</p>
+    <div class="button-row">
+      <button type="button" class="button button--primary" data-note-save>Сохранить</button>
+      <button type="button" class="button" data-note-delete hidden>Удалить заметку</button>
+      <button type="submit" class="button">Закрыть</button>
+    </div>
+    <p class="muted" role="status" data-note-status></p>
+  </form>
+</dialog>
+
+<dialog class="report-dialog" data-card-dialog data-topic-id={topicId} aria-labelledby="card-dialog-title">
+  <form method="dialog" class="report-dialog__form">
+    <h2 id="card-dialog-title" class="report-dialog__title">Сделать карточку</h2>
+    <p class="muted" data-card-where></p>
+    <label for="card-dialog-question">Вопрос</label>
+    <textarea id="card-dialog-question" rows="3" data-card-question></textarea>
+    <label for="card-dialog-answer">Ответ</label>
+    <textarea id="card-dialog-answer" rows="4" data-card-answer></textarea>
+    <p class="muted report-dialog__hint">
+      Вопрос и ответ пишете вы сами; выделенный в блоке текст уже в поле «Ответ». Карточка придёт в повторение со ссылкой на этот
+      блок.
+    </p>
+    <div class="button-row">
+      <button type="button" class="button button--primary" data-card-save>Сохранить карточку</button>
+      <button type="submit" class="button">Закрыть</button>
+    </div>
+    <p role="status" data-card-status></p>
+    <div data-card-list-wrap hidden>
+      <h3 class="block-tools__subtitle">Ваши карточки из этого блока</h3>
+      <ul class="block-tools__cards" data-card-list></ul>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  import '../../scripts/block-tools.ts';
+</script>
+
+<style>
+  .block-tools__subtitle {
+    margin: var(--space-4) 0 var(--space-2);
+    font-size: 1.0625rem;
+  }
+
+  .block-tools__cards {
+    padding-left: 1.25rem;
+  }
+
+  .block-tools__cards :global(li + li) {
+    margin-top: var(--space-2);
+  }
+</style>
