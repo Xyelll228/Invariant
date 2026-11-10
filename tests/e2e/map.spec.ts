@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures.ts';
-import { LEVEL, question, verdict } from './learn-helpers.ts';
+import { LEVEL, question, ready, verdict } from './learn-helpers.ts';
 
 /**
  * Карта связей (ТЗ, «Предпосылки и карта связей»): граф тем модуля и раздела,
@@ -25,8 +25,7 @@ test('карта модуля: стрелки от предпосылок, сп�
 
   // Начатая тема — «изучается».
   await page.goto(LEVEL);
-  const item = question(page, 'pre-start');
-  await item.scrollIntoViewIfNeeded();
+  const item = await ready(question(page, 'pre-start'));
   await item.getByRole('textbox', { name: 'Ваш ответ' }).fill('1');
   await item.getByRole('button', { name: 'Проверить' }).click();
   await expect(verdict(item)).toContainText('Верно.');
