@@ -1,0 +1,12 @@
+id: term.big-theta
+version: 1
+term: Θ-большое
+en: big Theta
+definition: >-
+  Запись f(n) = Θ(g(n)) значит: есть постоянные c₁, c₂ > 0, что
+  c₁ · g(n) ≤ f(n) ≤ c₂ · g(n) при всех достаточно больших n. Это точная оценка
+  роста — и сверху, и снизу.
+example: 3n² + 5n = Θ(n²), но не Θ(n³).
+topic: algo.analysis.asymptotics
+confusedWith: [term.big-o]
+synonyms: [тета-большое, Θ-нотация, big Theta]

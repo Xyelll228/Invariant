@@ -83,7 +83,13 @@ describe('проверка контента', () => {
         '',
         '<Block id="algo.sorting.bubble.b.one" kind="weird" title="Два">',
         '',
-        'Текст.',
+        'Текст и формула <Formula tex="\\frac{1}{" />.',
+        '',
+        '```js',
+        'run();',
+        '```',
+        '',
+        '<Doubling />',
         '',
         '</Block>',
       ].join('\n'),
@@ -129,6 +135,9 @@ describe('проверка контента', () => {
       'лицензия CC-BY-NC-SA-4.0 с ограничением NC или ND',
       '«очевидно» запрещено',
       'нет questions.yaml',
+      'KaTeX не разобрал формулу',
+      'блок кода ``` в тексте',
+      '<Doubling /> — только у алгоритма с полем code',
     ]) {
       expect(output).toContain(expected);
     }

@@ -1,5 +1,8 @@
 topic: algo.sorting.insertion
-basedOn: 'Основано на: «Сортировка вставками», Википедия (CC BY-SA 4.0), с изменениями.'
+basedOn: >-
+  Основано на: «Сортировка вставками», Википедия (CC BY-SA 4.0); Insertion sort,
+  Wikipedia (CC BY-SA 4.0); Shaffer и др., OpenDSA, «Insertion Sort» и «The Cost of
+  Exchange Sorting» (MIT); с изменениями.
 sources:
   - id: wikipedia-ru-insertion-sort
     title: Сортировка вставками
@@ -7,16 +10,63 @@ sources:
     url: https://ru.wikipedia.org/wiki/Сортировка_вставками
     license: CC-BY-SA-4.0
     use: adapted
+    note: Идея, устойчивость, память O(1), сортировка по мере поступления данных, ускорение бинарным поиском.
   - id: wikipedia-en-insertion-sort
     title: Insertion sort
     authors: [Wikipedia contributors]
     url: https://en.wikipedia.org/wiki/Insertion_sort
     license: CC-BY-SA-4.0
+    use: adapted
+    note: >-
+      Лучший, средний и худший случай; O(kn) для почти упорядоченных данных; вариант
+      со сдвигами; бинарные вставки; сравнение с сортировкой выбором; порог в быстрой сортировке.
+  - id: opendsa-insertion-sort
+    title: Insertion Sort
+    authors: [Cliff Shaffer, OpenDSA Project Contributors]
+    url: https://github.com/OpenDSA/OpenDSA/blob/master/RST/en/Sorting/InsertionSort.rst
+    license: MIT
+    use: adapted
+    chapters: модуль Insertion Sort и слайды анализа (AV/Sorting/InsertionSort*CaseCON.json)
+    note: >-
+      Число сравнений в лучшем и худшем случае, в среднем i/2 сдвигов на элемент,
+      зависимость от числа инверсий, сортировка маленьких массивов.
+  - id: opendsa-exchange-sort
+    title: The Cost of Exchange Sorting
+    authors: [Cliff Shaffer, OpenDSA Project Contributors]
+    url: https://github.com/OpenDSA/OpenDSA/blob/master/RST/en/Sorting/ExchangeSort.rst
+    license: MIT
     use: reference
+    note: Инверсии и сравнение сортировок вставками, пузырьком и выбором по числу сравнений и обменов.
+  - id: wikipedia-en-inversion
+    title: Inversion (discrete mathematics)
+    authors: [Wikipedia contributors]
+    url: https://en.wikipedia.org/wiki/Inversion_(discrete_mathematics)
+    license: CC-BY-SA-4.0
+    use: reference
+  - id: wikipedia-en-selection-sort
+    title: Selection sort
+    authors: [Wikipedia contributors]
+    url: https://en.wikipedia.org/wiki/Selection_sort
+    license: CC-BY-SA-4.0
+    use: reference
+  - id: wikipedia-en-introsort
+    title: Introsort
+    authors: [Wikipedia contributors]
+    url: https://en.wikipedia.org/wiki/Introsort
+    license: CC-BY-SA-4.0
+    use: reference
+    note: Вставки на коротких отрезках в libstdc++ и Go.
+  - id: cpython-listsort
+    title: listsort.txt — описание сортировки списков в CPython
+    authors: [Tim Peters, Python Software Foundation]
+    url: https://github.com/python/cpython/blob/main/Objects/listsort.txt
+    license: PSF-2.0
+    use: reference
+    note: Бинарные вставки для коротких кусков и массивов короче 64 элементов. Проверено 31 октября 2026 года.
   - id: clrs
     title: Introduction to Algorithms, 4th edition
     authors: [Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein]
     url: https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/
     license: proprietary
     use: read-more
-    chapters: гл. 2.1
+    chapters: гл. 2.1–2.2

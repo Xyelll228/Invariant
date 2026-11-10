@@ -92,4 +92,18 @@ export const mutants: Mutant[] = [
       return a;
     },
   },
+  {
+    // Цикл не становится бесконечным: после обмена a[j − 1] < a[j], и условие ложно.
+    id: 'no-decrement',
+    description: 'Нет строки j--: после одного обмена условие цикла ложно, элемент сдвигается не больше чем на одну позицию.',
+    code: withLine(6, ''),
+    bugLine: 6,
+    sortBy(input, key) {
+      const a = [...input];
+      for (let i = 1; i < a.length; i++) {
+        if (key(a[i - 1]!) > key(a[i]!)) swap(a, i - 1, i);
+      }
+      return a;
+    },
+  },
 ];

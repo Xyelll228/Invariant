@@ -53,7 +53,7 @@ test('блок с постоянной ссылкой; доказательст�
   await expect(proof).not.toHaveAttribute('open', '');
   await page.goto(`${TOPIC}base/#algo.sorting.insertion.b.proof-idea`);
   await expect(proof).toHaveAttribute('open', '');
-  await expect(proof).toContainText('левая часть a[0..i − 1] упорядочена');
+  await expect(proof).toContainText('часть a[0..i − 1] упорядочена');
 });
 
 test('термин в тексте ведёт в глоссарий, к своей карточке', async ({ page }) => {

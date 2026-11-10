@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createContext, runInContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
-import { assembleOrder, normalizeOutput, prepareTopic, PrepareError, type PrepareInput } from '../../src/content/prepare.ts';
+import { assembleOrder, fillRuns, normalizeOutput, prepareTopic, PrepareError, type PrepareInput } from '../../src/content/prepare.ts';
 import { questionsFileSchema, topicSchema } from '../../src/content/schema.ts';
 import { formatValue } from '../../src/lib/run/format-value.ts';
 import { runFunction, runOutput } from '../../src/lib/run/node-run.ts';
@@ -154,5 +154,41 @@ describe('подготовка заданий: вычислимое вычисл
     expect(() => prepareTopic(input([ok]))).not.toThrow();
     const broken = { ...ok, items: items.map((item) => (item.text === 'return s;' ? { ...item, text: 'return s + 1;' } : item)) };
     expect(() => prepareTopic(input([broken]))).toThrow(/собранный из строк код на \[\[1,2,3\]\] даёт 7, а эталон — 6/);
+  });
+});
+
+describe('подстановки в условии «Найти ошибку»', () => {
+  const algorithm = topicSchema.parse({
+    id: 'algo.sorting.bubble',
+    version: 1,
+    title: 'Т',
+    module: 'algo.sorting',
+    kind: 'algorithm',
+    levels: ['fundament', 'base', 'depth'],
+    summary: 'К.',
+    code: { harness: 'sort-numbers', js: 'sortIt', cpp: 'sort_it', py: 'sort_it', cases: { best: 'sorted', average: 'random', worst: 'reversed' } },
+    review: { status: 'draft', date: '2026-10-31' },
+  });
+  const prepareInput: PrepareInput = {
+    topic: algorithm,
+    dir: 'algorithms/sorting/x',
+    questions: null,
+    levelPaths: {},
+    blockPaths: new Map(),
+    reference: { sortIt: (a: readonly number[]) => [...a].sort((x, y) => x - y) },
+  };
+  const broken = ['function sortIt(a) {', '  return a.slice(1).concat(a[0]);', '}'];
+
+  it('{{mutant …}} — что вернёт испорченная версия, {{reference …}} — что вернёт эталон', () => {
+    expect(fillRuns('q', 'На `[2, 1]` она возвращает `{{mutant [2, 1]}}`, а нужно `{{reference [2, 1]}}`.', broken, prepareInput)).toBe(
+      'На `[2, 1]` она возвращает `[1, 2]`, а нужно `[1, 2]`.',
+    );
+    expect(fillRuns('q', '`{{mutant [3, 1, 2]}}`', broken, prepareInput)).toBe('`[1, 2, 3]`');
+  });
+
+  it('ошибка в подстановке ломает сборку, а не попадает к ученику', () => {
+    expect(() => fillRuns('q', '{{mutant [1, }}', broken, prepareInput)).not.toThrow();
+    expect(() => fillRuns('q', '{{mutant [1, 2}]}}', broken, prepareInput)).toThrow(PrepareError);
+    expect(() => fillRuns('q', '{{mutant [1]}}', ['function sortIt(a) { throw new Error("x"); }'], prepareInput)).toThrow(/не запускается/);
   });
 });

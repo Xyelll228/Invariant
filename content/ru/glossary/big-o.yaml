@@ -1,0 +1,11 @@
+id: term.big-o
+version: 1
+term: O-большое
+en: big O
+definition: >-
+  Запись f(n) = O(g(n)) значит: есть постоянная c > 0, что f(n) ≤ c · g(n) при всех
+  достаточно больших n. Это оценка сверху с точностью до постоянного множителя.
+example: 3n² + 5n = O(n²) и одновременно O(n³) — оценка сверху не обязана быть точной.
+topic: algo.analysis.asymptotics
+confusedWith: [term.big-theta]
+synonyms: [О-большое, O-нотация, big O]

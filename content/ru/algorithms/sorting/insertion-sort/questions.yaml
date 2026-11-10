@@ -1,6 +1,7 @@
 topic: algo.sorting.insertion
 
 skills:
+  # Фундамент
   - id: algo.sorting.insertion.s.idea
     title: Идея сортировки вставками — что берётся на шаге и куда вставляется
     level: fundament
@@ -16,20 +17,47 @@ skills:
   - id: algo.sorting.insertion.s.assemble
     title: Собрать сортировку вставками из строк кода
     level: fundament
-  - id: algo.sorting.insertion.s.write
-    title: Написать сортировку вставками самостоятельно
-    level: base
-  - id: algo.sorting.insertion.s.find-bug
-    title: Найти ошибку в коде сортировки вставками
+  # База
+  - id: algo.sorting.insertion.s.properties
+    title: Свойства сортировки вставками — устойчивость и работа на месте
     level: base
   - id: algo.sorting.insertion.s.complexity
-    title: Сложность сортировки вставками в лучшем и худшем случае
+    title: Сложность сортировки вставками в разных случаях и рост при удвоении n
     level: base
   - id: algo.sorting.insertion.s.trace-code
     title: Проследить работу кода сортировки вставками
     level: base
+  - id: algo.sorting.insertion.s.proof-idea
+    title: Инвариант сортировки вставками — идея доказательства
+    level: base
+  - id: algo.sorting.insertion.s.write
+    title: Написать сортировку вставками самостоятельно
+    level: base
+  - id: algo.sorting.insertion.s.find-bug
+    title: Найти ошибку в коде сортировки вставками и данные, на которых она проявится
+    level: base
+  # Глубина
+  - id: algo.sorting.insertion.s.inversions
+    title: Обмены сортировки вставками и инверсии
+    level: depth
+  - id: algo.sorting.insertion.s.exact-count
+    title: Точное число сравнений и обменов сортировки вставками
+    level: depth
+  - id: algo.sorting.insertion.s.proof
+    title: Доказательство корректности сортировки вставками
+    level: depth
+  - id: algo.sorting.insertion.s.write-variant
+    title: Написать вариант сортировки вставками — сдвигами или бинарными вставками
+    level: depth
+  - id: algo.sorting.insertion.s.variants
+    title: Варианты сортировки вставками — сдвиги и бинарные вставки
+    level: depth
+  - id: algo.sorting.insertion.s.subtle-bugs
+    title: Тонкие ошибки в сортировке вставками — границы циклов и устойчивость
+    level: depth
 
 misconceptions:
+  # Фундамент
   - id: algo.sorting.insertion.m.one-step-short
     text: Делает на один шаг меньше, чем спрошено.
     explanation: >-
@@ -50,7 +78,14 @@ misconceptions:
       местами с первым элементом этой части. Сортировка вставками минимум не ищет:
       она берёт первый элемент правой части и вставляет его в левую, а остальная
       правая часть не меняется.
-    block: algo.sorting.insertion.b.idea
+    block: algo.sorting.insertion.b.confusion
+  - id: algo.sorting.insertion.m.common-property
+    text: Принимает общее свойство двух сортировок за их отличие.
+    explanation: >-
+      И у вставок, и у выбора левая часть растёт на один элемент за шаг.
+      Отличаются они тем, какой элемент добавляется: вставки берут первый элемент
+      правой части, а выбор — наименьший.
+    block: algo.sorting.insertion.b.confusion
   - id: algo.sorting.insertion.m.sort-at-end
     text: Откладывает упорядочивание на конец.
     explanation: >-
@@ -63,6 +98,13 @@ misconceptions:
       Элемент сдвигается влево, только пока сосед слева больше него. Как только
       слева оказывается элемент не больше него, сдвиг останавливается.
     block: algo.sorting.insertion.b.idea
+  - id: algo.sorting.insertion.m.single-swap
+    text: Делает один обмен вместо сдвига до своего места.
+    explanation: >-
+      Один обмен сдвигает элемент на одну позицию. Если и следующий сосед слева
+      больше, нужен ещё обмен — и так, пока элемент не встанет на своё место.
+    block: algo.sorting.insertion.b.idea
+  # База
   - id: algo.sorting.insertion.m.off-by-one-start
     text: Считает, что внешний цикл можно начать с любого индекса.
     explanation: >-
@@ -75,12 +117,167 @@ misconceptions:
       Элемент может дойти до самого начала массива, до индекса 0. Поэтому сдвиг
       продолжается, пока j > 0, а не j > 1.
     block: algo.sorting.insertion.b.definition
-  - id: algo.sorting.insertion.m.single-swap
-    text: Делает один обмен вместо сдвига до своего места.
+  - id: algo.sorting.insertion.m.wrong-bound
+    text: Путает, какая граница цикла испорчена.
     explanation: >-
-      Один обмен сдвигает элемент на одну позицию. Если и следующий сосед слева
-      больше, нужен ещё обмен — и так, пока элемент не встанет на своё место.
-    block: algo.sorting.insertion.b.idea
+      Сверьте каждую границу с эталоном. Внешний цикл идёт от i = 1, пока i < n;
+      внутренний — пока j > 0 и сосед слева больше.
+    block: algo.sorting.insertion.b.base-misconceptions
+  - id: algo.sorting.insertion.m.stability-lost
+    text: Считает, что сортировка вставками может переставить равные элементы.
+    explanation: >-
+      Обмен делается, только если сосед слева строго больше. Равный сосед
+      останавливает вставку, поэтому порядок равных элементов сохраняется.
+    block: algo.sorting.insertion.b.definition
+  - id: algo.sorting.insertion.m.ge-infinite
+    text: Считает, что с >= внутренний цикл станет бесконечным.
+    explanation: >-
+      Каждый обмен уменьшает j, а цикл останавливается не позже j = 0. С >=
+      обменов может стать больше, но цикл всё равно закончится.
+    block: algo.sorting.insertion.b.base-misconceptions
+  - id: algo.sorting.insertion.m.ge-unsorted
+    text: Считает, что с >= массив перестанет упорядочиваться.
+    explanation: >-
+      С >= местами меняются и равные элементы, но больший элемент по-прежнему не
+      остаётся левее меньшего. Массив упорядочится, изменится только порядок равных.
+    block: algo.sorting.insertion.b.base-misconceptions
+  - id: algo.sorting.insertion.m.case-confusion
+    text: Путает лучший и худший случай сортировки вставками.
+    explanation: >-
+      Упорядоченный массив — лучший случай: каждую вставку заканчивает первое же
+      сравнение. Больше всего работы на массиве различных чисел, упорядоченном по
+      убыванию: каждый элемент доходит до начала.
+    block: algo.sorting.insertion.b.complexity
+  - id: algo.sorting.insertion.m.precheck
+    text: Думает, что сортировка заранее проверяет, упорядочен ли массив.
+    explanation: >-
+      Отдельной проверки нет. На упорядоченном массиве каждая вставка
+      заканчивается после первого же сравнения — так и получается n − 1 сравнений.
+    block: algo.sorting.insertion.b.complexity
+  - id: algo.sorting.insertion.m.compare-all
+    text: Думает, что каждый элемент сравнивается со всеми элементами слева.
+    explanation: >-
+      Вставка останавливается на первом соседе, который не больше вставляемого
+      элемента. Левее него элементы ещё меньше или равны, и сравнивать их не нужно.
+    block: algo.sorting.insertion.b.complexity
+  - id: algo.sorting.insertion.m.always-quadratic
+    text: Считает, что сортировка вставками всегда делает около n²/2 сравнений.
+    explanation: >-
+      Так бывает только в худшем случае. Число операций зависит от порядка
+      элементов: на упорядоченном массиве сравнений n − 1.
+    block: algo.sorting.insertion.b.complexity
+  - id: algo.sorting.insertion.m.right-sorted
+    text: Считает, что правая часть массива тоже упорядочена.
+    explanation: >-
+      Правую часть сортировка ещё не трогала: там элементы в исходном порядке.
+      Упорядочена только левая часть a[0..i − 1].
+    block: algo.sorting.insertion.b.proof-idea
+  - id: algo.sorting.insertion.m.growth-linear
+    text: Считает, что при удвоении n квадратичное число операций растёт вдвое.
+    explanation: >-
+      Если операций около c · n², то при длине 2n их около c · (2n)² = 4 · c · n².
+      Вдвое при удвоении n растёт линейная функция.
+    block: algo.sorting.insertion.b.measurement
+    prerequisite: algo.analysis.asymptotics
+  - id: algo.sorting.insertion.m.growth-cubic
+    text: Путает показатель степени и считает, что n² при удвоении n растёт в 8 раз.
+    explanation: >-
+      (2n)² = 4n², поэтому квадратичная функция растёт в 4 раза. В 8 раз растёт
+      n³: (2n)³ = 8n³.
+    block: algo.sorting.insertion.b.measurement
+    prerequisite: algo.analysis.asymptotics
+  - id: algo.sorting.insertion.m.infinite-loop
+    text: Считает, что без j-- цикл обменов станет бесконечным.
+    explanation: >-
+      После обмена a[j − 1] < a[j], и условие a[j − 1] > a[j] ложно. Цикл
+      заканчивается после одного обмена, поэтому элемент сдвигается не больше
+      чем на одну позицию.
+    block: algo.sorting.insertion.b.base-misconceptions
+  - id: algo.sorting.insertion.m.no-effect
+    text: Считает, что строка j-- ни на что не влияет.
+    explanation: >-
+      Без j-- вставка всё время сравнивает одну и ту же пару ячеек. Элемент
+      сдвигается не больше чем на одну позицию, и массив может остаться
+      неупорядоченным.
+    block: algo.sorting.insertion.b.base-misconceptions
+  - id: algo.sorting.insertion.m.bug-everywhere
+    text: Думает, что код с ошибкой ошибается на любых данных.
+    explanation: >-
+      Ошибка видна, только если данные доходят до испорченного места. На многих
+      массивах неверный код даёт верный ответ, поэтому тест нужно подбирать.
+    block: algo.sorting.insertion.b.base-misconceptions
+  # Глубина
+  - id: algo.sorting.insertion.m.swap-other-pairs
+    text: Думает, что обмен соседей меняет и другие пары элементов.
+    explanation: >-
+      Обмен меняет порядок только внутри пары соседей. Любой другой элемент стоит
+      левее обоих или правее обоих — и до обмена, и после, поэтому его пары с
+      ними не меняются. Число инверсий уменьшается ровно на один.
+    block: algo.sorting.insertion.b.inversions
+  - id: algo.sorting.insertion.m.compares-equal-swaps
+    text: Считает, что сравнений столько же, сколько обменов.
+    explanation: >-
+      Вставка, которая не дошла до начала массива, заканчивается неудачным
+      сравнением без обмена. Поэтому сравнений от I до I + n − 1, где I — число
+      инверсий.
+    block: algo.sorting.insertion.b.exact-count
+  - id: algo.sorting.insertion.m.sorted-during-insertion
+    text: Считает, что во время вставки часть a[0..i] уже упорядочена.
+    explanation: >-
+      Пока вставка не закончилась, левее x может стоять больший элемент. Часть
+      a[0..i] упорядочена только после выхода из внутреннего цикла.
+    block: algo.sorting.insertion.b.invariant
+  - id: algo.sorting.insertion.m.exit-condition
+    text: Принимает условие выхода из цикла за инвариант.
+    explanation: >-
+      То, что левее x стоят элементы не больше него, известно только при выходе из
+      цикла. Пока цикл идёт, сосед слева может быть больше — поэтому и нужен
+      следующий обмен.
+    block: algo.sorting.insertion.b.invariant
+  - id: algo.sorting.insertion.m.final-position
+    text: Думает, что после вставки элемент стоит на своём окончательном месте.
+    explanation: >-
+      После вставки элемент на своём месте только среди a[0..i]. Элементы правее
+      ещё не вставлены, и меньшие из них потом сдвинут его вправо.
+    block: algo.sorting.insertion.b.invariant
+  - id: algo.sorting.insertion.m.binary-fast
+    text: Считает, что бинарный поиск места делает сортировку вставками O(n log n).
+    explanation: >-
+      Бинарный поиск сокращает сравнения, но элементы по-прежнему сдвигаются по
+      одному. Сдвигов столько же, сколько инверсий: в среднем и худшем случае Θ(n²).
+    block: algo.sorting.insertion.b.variants
+  - id: algo.sorting.insertion.m.binary-adaptive
+    text: Считает, что бинарные вставки на упорядоченном массиве делают n − 1 сравнений.
+    explanation: >-
+      Бинарный поиск не знает, что элемент уже на месте, и делит отрезок до конца.
+      На упорядоченном массиве это около log₂ i сравнений на элемент, всего
+      Θ(n log n).
+    block: algo.sorting.insertion.b.variants
+  - id: algo.sorting.insertion.m.binary-compares-quadratic
+    text: Путает сравнения и сдвиги бинарных вставок.
+    explanation: >-
+      Квадратичны у бинарных вставок сдвиги, а не сравнения. При вставке элемента
+      с индексом i сравнений не больше ⌈log₂(i + 1)⌉, всего O(n log n).
+    block: algo.sorting.insertion.b.variants
+  - id: algo.sorting.insertion.m.binary-loop
+    text: Считает, что с >= бинарный поиск зациклится.
+    explanation: >-
+      На каждом шаге отрезок от lo до hi сокращается: hi = mid или lo = mid + 1.
+      Поиск всегда заканчивается, меняется только найденное место.
+    block: algo.sorting.insertion.b.variants
+  - id: algo.sorting.insertion.m.shift-fewer-compares
+    text: Считает, что сдвиги вместо обменов уменьшают число сравнений.
+    explanation: >-
+      Вставка сдвигами сравнивает те же пары, что и вставка обменами. Меньше
+      становится записей в массив, а не сравнений.
+    block: algo.sorting.insertion.b.variants
+  - id: algo.sorting.insertion.m.same-compares
+    text: Считает, что все версии сортировки вставками делают одинаково сравнений.
+    explanation: >-
+      Бинарный поиск находит место не больше чем за ⌈log₂(i + 1)⌉ сравнений вместо
+      i. Поэтому на случайных данных бинарные вставки делают намного меньше
+      сравнений.
+    block: algo.sorting.insertion.b.variants
 
 questions:
   # ---------- Фундамент ----------
@@ -151,6 +348,27 @@ questions:
         misconception: algo.sorting.insertion.m.to-front
       - text: Сразу после одного обмена с соседом
         misconception: algo.sorting.insertion.m.single-swap
+
+  - id: algo.sorting.insertion.q.confusion-next
+    version: 1
+    level: fundament
+    role: practice
+    step: 1
+    block: algo.sorting.insertion.b.confusion
+    skill: algo.sorting.insertion.s.idea
+    type: confusion
+    format: choice
+    prompt: Какое утверждение верно для сортировки вставками, но неверно для сортировки выбором?
+    options:
+      - text: На очередном шаге берётся первый элемент правой части, какой бы он ни был
+        correct: true
+      - text: На очередном шаге в правой части ищется наименьший элемент
+        misconception: algo.sorting.insertion.m.selection
+      - text: Левая часть растёт на один элемент за шаг
+        misconception: algo.sorting.insertion.m.common-property
+    explanation: >-
+      Наименьший элемент ищет сортировка выбором. Рост левой части на один элемент
+      за шаг — общее свойство обеих сортировок.
 
   - id: algo.sorting.insertion.q.after-k-steps
     version: 1
@@ -306,7 +524,202 @@ questions:
       - Сказано, что каждый шаг добавляет в упорядоченную часть один элемент и порядок в ней сохраняется.
       - Сделан вывод — после k шагов упорядочены k + 1 элементов.
 
-  # ---------- База: черновые задания для проверки движка; тема дописывается отдельной правкой ----------
+  # ---------- База ----------
+  - id: algo.sorting.insertion.q.base-pre-worst
+    version: 1
+    level: base
+    role: pre
+    type: choice
+    format: choice
+    prompt: На каком массиве из 1000 различных чисел сортировка вставками, по-вашему, сделает больше всего сравнений?
+    options:
+      - text: На упорядоченном по убыванию
+        correct: true
+      - text: На упорядоченном по возрастанию
+        misconception: algo.sorting.insertion.m.case-confusion
+      - text: На любом одинаково — длина ведь одна и та же
+        misconception: algo.sorting.insertion.m.always-quadratic
+    explanation: >-
+      На массиве, упорядоченном по убыванию, каждый элемент доходит до начала. Как
+      число операций зависит от данных, разберём в блоке «Сложность и свойства».
+
+  - id: algo.sorting.insertion.q.base-pre-stable
+    version: 1
+    level: base
+    role: pre
+    type: choice
+    format: choice
+    prompt: Заказы упорядочены по времени. Их сортируют вставками по сумме. В каком порядке окажутся заказы с одинаковой суммой?
+    options:
+      - text: В прежнем порядке — по времени
+        correct: true
+      - text: В порядке, который зависит от остальных заказов
+        misconception: algo.sorting.insertion.m.stability-lost
+      - text: В обратном порядке
+        misconception: algo.sorting.insertion.m.stability-lost
+    explanation: >-
+      Сортировка вставками не меняет местами равные элементы. Почему — в блоке
+      «Определение и псевдокод».
+
+  - id: algo.sorting.insertion.q.base-strict
+    version: 1
+    level: base
+    role: practice
+    step: 1
+    block: algo.sorting.insertion.b.definition
+    skill: algo.sorting.insertion.s.properties
+    type: choice
+    format: choice
+    prompt: Почему во внутреннем цикле стоит сравнение `a[j - 1] > a[j]`, а не `a[j - 1] >= a[j]`?
+    options:
+      - text: С >= равные элементы менялись бы местами, и сортировка перестала бы быть устойчивой
+        correct: true
+      - text: С >= внутренний цикл стал бы бесконечным
+        misconception: algo.sorting.insertion.m.ge-infinite
+      - text: С >= массив перестал бы упорядочиваться
+        misconception: algo.sorting.insertion.m.ge-unsorted
+    explanation: >-
+      Равный сосед слева должен останавливать вставку. Тогда элементы с равными
+      ключами сохраняют порядок.
+
+  - id: algo.sorting.insertion.q.base-best-why
+    version: 1
+    level: base
+    role: practice
+    step: 1
+    block: algo.sorting.insertion.b.complexity
+    skill: algo.sorting.insertion.s.complexity
+    type: choice
+    format: choice
+    prompt: Почему на упорядоченном массиве из n элементов сортировка вставками делает только n − 1 сравнений?
+    options:
+      - text: Каждую вставку останавливает первое же сравнение — сосед слева не больше
+        correct: true
+      - text: Перед началом сортировка проверяет, упорядочен ли массив
+        misconception: algo.sorting.insertion.m.precheck
+      - text: Каждый элемент сравнивается со всеми элементами слева, но обменов нет
+        misconception: algo.sorting.insertion.m.compare-all
+
+  - id: algo.sorting.insertion.q.base-predict
+    version: 1
+    level: base
+    role: practice
+    step: 5
+    block: algo.sorting.insertion.b.complexity
+    skill: algo.sorting.insertion.s.complexity
+    type: complexity
+    format: choice
+    prompt: >-
+      В среднем число операций сортировки вставками растёт как n². Во сколько раз
+      примерно вырастет число операций, если длину случайного массива увеличить вдвое?
+    options:
+      - text: Примерно в 4 раза
+        correct: true
+      - text: Примерно в 2 раза
+        misconception: algo.sorting.insertion.m.growth-linear
+      - text: Примерно в 8 раз
+        misconception: algo.sorting.insertion.m.growth-cubic
+    explanation: >-
+      (2n)² = 4n². Проверить прогноз можно в блоке «Измерение»: там эталон
+      сортирует массивы длины 128, 256, 512 и 1024.
+
+  - id: algo.sorting.insertion.q.base-output
+    version: 1
+    level: base
+    role: practice
+    step: 2
+    block: algo.sorting.insertion.b.code
+    skill: algo.sorting.insertion.s.trace-code
+    type: output
+    format: free
+    prompt: Что выведет этот код?
+    code: |
+      const a = [3, 1, 2];
+      let swaps = 0;
+      for (let i = 1; i < a.length; i++) {
+        for (let j = i; j > 0 && a[j - 1] > a[j]; j--) {
+          [a[j - 1], a[j]] = [a[j], a[j - 1]];
+          swaps++;
+        }
+      }
+      console.log(swaps, a);
+
+  - id: algo.sorting.insertion.q.base-count-compares
+    version: 1
+    level: base
+    role: practice
+    step: 2
+    block: algo.sorting.insertion.b.base-visualization
+    skill: algo.sorting.insertion.s.trace-code
+    type: trace
+    format: generated
+    generator: countCompares
+    hints:
+      - Вставка элемента заканчивается неудачным сравнением или на индексе 0 — тогда последнего сравнения нет.
+
+  - id: algo.sorting.insertion.q.base-invariant
+    version: 1
+    level: base
+    role: practice
+    step: 3
+    block: algo.sorting.insertion.b.proof-idea
+    skill: algo.sorting.insertion.s.proof-idea
+    type: proof
+    format: choice
+    prompt: Какое утверждение верно перед каждой итерацией внешнего цикла — перед вставкой элемента с индексом i?
+    options:
+      - text: Часть a[0..i − 1] упорядочена
+        correct: true
+      - text: В a[0..i − 1] лежат i наименьших элементов массива
+        misconception: algo.sorting.insertion.m.selection
+      - text: Часть a[i..n − 1] тоже упорядочена
+        misconception: algo.sorting.insertion.m.right-sorted
+
+  - id: algo.sorting.insertion.q.base-proof-order
+    version: 1
+    level: base
+    role: practice
+    step: 3
+    skill: algo.sorting.insertion.s.proof-idea
+    type: proof
+    format: order
+    language: text
+    prompt: Расставьте шаги рассуждения о том, почему сортировка вставками упорядочивает массив.
+    items:
+      - { text: 'Перед первой итерацией, при i = 1, часть a[0..0] из одного элемента упорядочена.' }
+      - { text: 'Пусть перед итерацией с индексом i часть a[0..i − 1] упорядочена.' }
+      - { text: 'Итерация сдвигает a[i] влево, пока сосед слева больше него.' }
+      - { text: 'Когда сдвиг остановился, слева от элемента — не больший элемент или начало массива, справа — большие элементы. Часть a[0..i] упорядочена.' }
+      - { text: 'После итерации с i = n − 1 упорядочен весь массив a[0..n − 1].' }
+
+  - id: algo.sorting.insertion.q.base-fill
+    version: 1
+    level: base
+    role: practice
+    step: 4
+    skill: algo.sorting.insertion.s.write
+    type: fill
+    format: code
+    prompt: Замените пропуски ___ так, чтобы функция упорядочивала массив вставками по возрастанию и сортировка была устойчивой.
+    function: insertionSort
+    starter: |
+      function insertionSort(a) {
+        for (let i = ___; i < a.length; i++) {
+          let j = i;
+          while (j > ___ && a[j - 1] ___ a[j]) {
+            [a[j - 1], a[j]] = [a[j], a[j - 1]];
+            j--;
+          }
+        }
+        return a;
+      }
+    solution: reference
+    tests: [[[7, 3, 5, 1, 4]], [[2, 1, 2]]]
+    hidden: vectors
+    hints:
+      - Первым вставляется элемент с индексом 1.
+      - Элемент может дойти до индекса 0, и сдвигать его нужно, только пока сосед слева строго больше.
+
   - id: algo.sorting.insertion.q.base-write
     version: 1
     level: base
@@ -330,24 +743,6 @@ questions:
       - Внутри — сдвиг элемента влево, пока сосед слева больше него.
       - "Сдвиг можно сделать обменом соседей: `[a[j - 1], a[j]] = [a[j], a[j - 1]]`."
 
-  - id: algo.sorting.insertion.q.base-find-bug
-    version: 1
-    level: base
-    role: practice
-    step: 6
-    skill: algo.sorting.insertion.s.find-bug
-    type: find-bug
-    format: line
-    prompt: В этой версии сортировки вставками одна ошибка. На массиве `[2, 1]` она возвращает `[2, 1]`. Найдите строку и причину.
-    mutant: stop-before-zero
-    reasons:
-      - text: Элемент не может дойти до начала массива — до индекса 0
-        correct: true
-      - text: Первым вставляется элемент с индексом 0, а не 1
-        misconception: algo.sorting.insertion.m.off-by-one-start
-      - text: Ошибки в условии нет — нужен ещё один проход по массиву
-        misconception: algo.sorting.insertion.m.loop-bound
-
   - id: algo.sorting.insertion.q.base-complexity
     version: 1
     level: base
@@ -357,26 +752,484 @@ questions:
     type: complexity
     format: free
     normalize: complexity
-    prompt: Сколько операций делает сортировка вставками в худшем случае — на массиве, упорядоченном по убыванию? Ответьте оценкой Θ.
+    prompt: Сколько операций делает сортировка вставками в худшем случае — на массиве различных чисел, упорядоченном по убыванию? Ответьте оценкой Θ.
     answers: ['Θ(n^2)']
 
-  - id: algo.sorting.insertion.q.base-output
+  - id: algo.sorting.insertion.q.base-measure-best
     version: 1
     level: base
     role: practice
-    step: 2
-    skill: algo.sorting.insertion.s.trace-code
-    type: output
-    format: free
-    prompt: Что выведет этот код?
-    code: |
-      const a = [3, 1, 2];
-      let swaps = 0;
-      for (let i = 1; i < a.length; i++) {
-        for (let j = i; j > 0 && a[j - 1] > a[j]; j--) {
-          [a[j - 1], a[j]] = [a[j], a[j - 1]];
-          swaps++;
-        }
-      }
-      console.log(swaps, a);
+    step: 5
+    block: algo.sorting.insertion.b.measurement
+    skill: algo.sorting.insertion.s.complexity
+    type: complexity
+    format: choice
+    prompt: В таблице замеров для упорядоченного массива число операций при удвоении n растёт примерно в 2 раза. Что это значит?
+    options:
+      - text: На упорядоченном массиве число операций растёт линейно — Θ(n)
+        correct: true
+      - text: Рост всё равно квадратичный, просто константа здесь маленькая
+        misconception: algo.sorting.insertion.m.always-quadratic
+      - text: Сортировка заранее заметила, что массив упорядочен, и почти ничего не делала
+        misconception: algo.sorting.insertion.m.precheck
 
+  - id: algo.sorting.insertion.q.base-find-bug
+    version: 1
+    level: base
+    role: practice
+    step: 6
+    skill: algo.sorting.insertion.s.find-bug
+    type: find-bug
+    format: line
+    prompt: В этой версии сортировки вставками одна ошибка. На массиве `[2, 1]` она возвращает `{{mutant [2, 1]}}`. Найдите строку и причину.
+    mutant: stop-before-zero
+    reasons:
+      - text: Элемент не может дойти до начала массива — до индекса 0
+        correct: true
+      - text: Первым вставляется элемент с индексом 0, а не 1
+        misconception: algo.sorting.insertion.m.off-by-one-start
+      - text: Ошибки в условии нет — нужен ещё один проход по массиву
+        misconception: algo.sorting.insertion.m.loop-bound
+
+  - id: algo.sorting.insertion.q.base-no-decrement
+    version: 1
+    level: base
+    role: practice
+    step: 6
+    skill: algo.sorting.insertion.s.find-bug
+    type: choice
+    format: choice
+    prompt: Что произойдёт, если из кода сортировки вставками удалить строку `j--;`?
+    options:
+      - text: Каждый элемент сдвинется влево не больше чем на одну позицию, и массив может остаться неупорядоченным
+        correct: true
+      - text: Внутренний цикл станет бесконечным
+        misconception: algo.sorting.insertion.m.infinite-loop
+      - text: Ничего не изменится
+        misconception: algo.sorting.insertion.m.no-effect
+    explanation: >-
+      После обмена a[j − 1] < a[j], поэтому условие цикла сразу становится ложным.
+      Такая версия ведёт себя как код с if вместо while.
+
+  - id: algo.sorting.insertion.q.base-breaking
+    version: 1
+    level: base
+    role: practice
+    step: 6
+    skill: algo.sorting.insertion.s.find-bug
+    type: output
+    format: generated
+    generator: breakingInput
+    hints:
+      - Сравните код с эталоном и найдите отличие. Какие данные доходят до этого места?
+
+  - id: algo.sorting.insertion.q.base-check-write
+    version: 1
+    level: base
+    role: check
+    skill: algo.sorting.insertion.s.write
+    type: write
+    format: code
+    prompt: >-
+      Напишите функцию `sortByLength(words)`: она упорядочивает массив строк по длине
+      сортировкой вставками и возвращает его. Строки одной длины должны остаться в
+      исходном порядке.
+    function: sortByLength
+    starter: |
+      function sortByLength(words) {
+        // Ваш код
+        return words;
+      }
+    solution: 'function sortByLength(words) { return [...words].sort((x, y) => x.length - y.length); }'
+    tests: [[['ccc', 'a', 'bb', 'b']], [[]]]
+    hidden:
+      - [['one']]
+      - [['bb', 'aa', 'c', 'dd', 'e']]
+      - [['xyz', 'ab', 'cd', 'q', 'pq', 'r']]
+      - [['aaa', 'bb', 'c']]
+      - [['c', 'bb', 'aaa']]
+      - [['да', 'нет', 'ок', 'и', 'всё', 'а']]
+
+  - id: algo.sorting.insertion.q.base-check-best
+    version: 1
+    level: base
+    role: check
+    skill: algo.sorting.insertion.s.complexity
+    type: complexity
+    format: free
+    normalize: complexity
+    prompt: Сколько операций делает сортировка вставками в лучшем случае — на уже упорядоченном массиве? Ответьте оценкой Θ.
+    answers: ['Θ(n)']
+
+  - id: algo.sorting.insertion.q.base-check-swaps
+    version: 1
+    level: base
+    role: check
+    skill: algo.sorting.insertion.s.trace-code
+    type: trace
+    format: generated
+    generator: countSwaps
+
+  - id: algo.sorting.insertion.q.base-check-properties
+    version: 1
+    level: base
+    role: check
+    skill: algo.sorting.insertion.s.properties
+    type: choice
+    format: choice
+    multiple: true
+    prompt: Какие утверждения о сортировке вставками верны? Выберите все верные.
+    options:
+      - text: Она устойчива — равные элементы сохраняют порядок
+        correct: true
+      - text: Она работает на месте — кроме массива нужна память O(1)
+        correct: true
+      - text: На упорядоченном массиве она делает n − 1 сравнений
+        correct: true
+      - text: На любом массиве она делает n(n − 1)/2 сравнений
+        misconception: algo.sorting.insertion.m.always-quadratic
+      - text: Перед каждой вставкой она ищет наименьший элемент правой части
+        misconception: algo.sorting.insertion.m.selection
+
+  - id: algo.sorting.insertion.q.base-check-find-bug
+    version: 1
+    level: base
+    role: check
+    skill: algo.sorting.insertion.s.find-bug
+    type: find-bug
+    format: line
+    prompt: В этой версии одна ошибка. На массиве `[3, 4, 1]` она возвращает `{{mutant [3, 4, 1]}}`. Найдите строку и причину.
+    mutant: skip-last
+    reasons:
+      - text: Последний элемент массива не вставляется
+        correct: true
+      - text: Первым вставляется элемент с индексом 0, а не 1
+        misconception: algo.sorting.insertion.m.off-by-one-start
+      - text: Элемент не может дойти до индекса 0
+        misconception: algo.sorting.insertion.m.wrong-bound
+
+  # ---------- Глубина ----------
+  - id: algo.sorting.insertion.q.depth-pre-binary
+    version: 1
+    level: depth
+    role: pre
+    type: choice
+    format: choice
+    prompt: Место для вставки ищут бинарным поиском, а элементы по-прежнему сдвигают по одному. Какой станет сложность сортировки в худшем случае?
+    options:
+      - text: Θ(n²) — сдвигов остаётся столько же
+        correct: true
+      - text: Θ(n log n)
+        misconception: algo.sorting.insertion.m.binary-fast
+      - text: Θ(n)
+        misconception: algo.sorting.insertion.m.binary-fast
+    explanation: 'Почему так — в блоке «Варианты: сдвиги и бинарные вставки».'
+
+  - id: algo.sorting.insertion.q.depth-pre-inversions
+    version: 1
+    level: depth
+    role: pre
+    type: trace
+    format: generated
+    generator: inversionsCount
+
+  - id: algo.sorting.insertion.q.depth-swap-removes
+    version: 1
+    level: depth
+    role: practice
+    step: 1
+    block: algo.sorting.insertion.b.inversions
+    skill: algo.sorting.insertion.s.inversions
+    type: choice
+    format: choice
+    prompt: Сортировка вставками меняет местами соседей, если a[j − 1] > a[j]. Как меняется число инверсий после такого обмена?
+    options:
+      - text: Уменьшается ровно на один
+        correct: true
+      - text: Уменьшается на число элементов левее j
+        misconception: algo.sorting.insertion.m.swap-other-pairs
+      - text: Может и вырасти, если обмен испортит другие пары
+        misconception: algo.sorting.insertion.m.swap-other-pairs
+
+  - id: algo.sorting.insertion.q.depth-count-swaps
+    version: 1
+    level: depth
+    role: practice
+    step: 1
+    block: algo.sorting.insertion.b.inversions
+    skill: algo.sorting.insertion.s.inversions
+    type: trace
+    format: generated
+    generator: countSwaps
+    hints:
+      - Обменов столько же, сколько инверсий. Посчитайте пары, которые стоят в неправильном порядке.
+
+  - id: algo.sorting.insertion.q.depth-compares-bounds
+    version: 1
+    level: depth
+    role: practice
+    step: 1
+    block: algo.sorting.insertion.b.exact-count
+    skill: algo.sorting.insertion.s.exact-count
+    type: choice
+    format: choice
+    prompt: В массиве из n ≥ 1 элементов I инверсий. Сколько сравнений a[j − 1] > a[j] сделает сортировка вставками?
+    options:
+      - text: Не меньше I и не больше I + n − 1
+        correct: true
+      - text: Ровно I — по сравнению на каждый обмен
+        misconception: algo.sorting.insertion.m.compares-equal-swaps
+      - text: Ровно n(n − 1)/2 при любом I
+        misconception: algo.sorting.insertion.m.always-quadratic
+
+  - id: algo.sorting.insertion.q.depth-inner-invariant
+    version: 1
+    level: depth
+    role: practice
+    step: 3
+    block: algo.sorting.insertion.b.invariant
+    skill: algo.sorting.insertion.s.proof
+    type: proof
+    format: choice
+    prompt: Идёт вставка элемента x. Какое утверждение верно перед каждой проверкой условия внутреннего цикла?
+    options:
+      - text: Каждый элемент правее x в части a[0..i] строго больше x
+        correct: true
+      - text: Часть a[0..i] уже упорядочена
+        misconception: algo.sorting.insertion.m.sorted-during-insertion
+      - text: Каждый элемент левее x не больше x
+        misconception: algo.sorting.insertion.m.exit-condition
+
+  - id: algo.sorting.insertion.q.depth-proof-gap
+    version: 1
+    level: depth
+    role: practice
+    step: 3
+    block: algo.sorting.insertion.b.invariant
+    skill: algo.sorting.insertion.s.proof
+    type: proof
+    format: choice
+    prompt: >-
+      Рассуждение: «После итерации с индексом i элемент a[i] стоит на своём
+      окончательном месте, поэтому после всех итераций массив упорядочен». Где в нём ошибка?
+    options:
+      - text: После вставки элемент на своём месте только среди a[0..i] — меньшие элементы правее потом сдвинут его
+        correct: true
+      - text: Ошибки нет — так и доказывают корректность сортировки вставками
+        misconception: algo.sorting.insertion.m.final-position
+      - text: Элемент с индексом 0 тоже нужно вставлять
+        misconception: algo.sorting.insertion.m.off-by-one-start
+
+  - id: algo.sorting.insertion.q.depth-explain
+    version: 1
+    level: depth
+    role: practice
+    step: 3
+    skill: algo.sorting.insertion.s.proof
+    type: explain
+    format: self
+    prompt: Объясните своими словами, почему сортировка вставками делает ровно столько обменов, сколько инверсий в исходном массиве.
+    reference: >-
+      Сортировка меняет местами только соседей, которые стоят в неправильном
+      порядке. Такой обмен исправляет порядок этой пары и не меняет остальные пары:
+      любой другой элемент остаётся левее обоих или правее обоих. Значит, каждый
+      обмен уменьшает число инверсий ровно на один. В конце массив упорядочен, и
+      инверсий нет. Поэтому обменов столько же, сколько было инверсий.
+    criteria:
+      - Сказано, что местами меняются только соседи в неправильном порядке.
+      - Объяснено, почему обмен не меняет остальные пары.
+      - Сказано, что в конце инверсий нет, и сделан вывод о числе обменов.
+
+  - id: algo.sorting.insertion.q.depth-write-shift
+    version: 1
+    level: depth
+    role: practice
+    step: 4
+    skill: algo.sorting.insertion.s.write-variant
+    type: write
+    format: code
+    prompt: >-
+      Напишите функцию `insertionSortShift(a)` — сортировку вставками сдвигами.
+      Сохраните вставляемый элемент в переменной, сдвигайте большие элементы вправо
+      по одному и запишите его в освободившуюся ячейку. Обмены не используйте.
+      Функция возвращает массив.
+    function: insertionSortShift
+    starter: |
+      function insertionSortShift(a) {
+        // Ваш код
+        return a;
+      }
+    solution: reference
+    tests: [[[7, 3, 5, 1, 4]], [[]], [[2, 1, 2]]]
+    hidden: vectors
+    hints:
+      - В начале итерации запомните key = a[i] и начните с j = i.
+      - Пока j > 0 и a[j − 1] > key, переносите a[j − 1] в a[j] и уменьшайте j.
+      - После цикла запишите key в a[j].
+
+  - id: algo.sorting.insertion.q.depth-write-inversions
+    version: 1
+    level: depth
+    role: practice
+    step: 4
+    skill: algo.sorting.insertion.s.inversions
+    type: write
+    format: code
+    prompt: >-
+      Напишите функцию `countInversions(a)`: она возвращает число инверсий — пар
+      индексов i < j, для которых a[i] > a[j]. Подойдёт и перебор пар, и подсчёт
+      обменов сортировки вставками.
+    function: countInversions
+    starter: |
+      function countInversions(a) {
+        // Ваш код
+        return 0;
+      }
+    solution: |
+      function countInversions(a) {
+        let count = 0;
+        for (let i = 0; i < a.length; i++) {
+          for (let j = i + 1; j < a.length; j++) if (a[i] > a[j]) count++;
+        }
+        return count;
+      }
+    tests: [[[3, 1, 2]], [[1, 2, 3]], [[2, 2, 1]]]
+    hidden: vectors
+
+  - id: algo.sorting.insertion.q.depth-exact
+    version: 1
+    level: depth
+    role: practice
+    step: 5
+    block: algo.sorting.insertion.b.exact-count
+    skill: algo.sorting.insertion.s.exact-count
+    type: complexity
+    format: generated
+    generator: exactCount
+    hints:
+      - Посчитайте инверсии I и элементы z, которые дойдут до начала массива.
+
+  - id: algo.sorting.insertion.q.depth-binary-best
+    version: 1
+    level: depth
+    role: practice
+    step: 5
+    block: algo.sorting.insertion.b.depth-measurement
+    skill: algo.sorting.insertion.s.variants
+    type: complexity
+    format: choice
+    prompt: Сколько сравнений делают бинарные вставки на упорядоченном массиве из n элементов?
+    options:
+      - text: Θ(n log n) — бинарный поиск на каждом шаге делит отрезок до конца
+        correct: true
+      - text: n − 1, как обычная сортировка вставками
+        misconception: algo.sorting.insertion.m.binary-adaptive
+      - text: Θ(n²)
+        misconception: algo.sorting.insertion.m.binary-compares-quadratic
+
+  - id: algo.sorting.insertion.q.depth-binary-ge
+    version: 1
+    level: depth
+    role: practice
+    step: 6
+    block: algo.sorting.insertion.b.variants
+    skill: algo.sorting.insertion.s.subtle-bugs
+    type: choice
+    format: choice
+    prompt: В бинарных вставках условие `a[mid] > key` заменили на `a[mid] >= key`. Что изменится?
+    options:
+      - text: Массив по-прежнему упорядочится, но равные элементы поменяют порядок — сортировка станет неустойчивой
+        correct: true
+      - text: Массив перестанет упорядочиваться
+        misconception: algo.sorting.insertion.m.ge-unsorted
+      - text: Бинарный поиск зациклится
+        misconception: algo.sorting.insertion.m.binary-loop
+    explanation: >-
+      С >= поиск находит первое место, где элемент не меньше key, — левее всех
+      равных ему. Поэтому key встаёт перед равными элементами, которые стояли раньше.
+
+  - id: algo.sorting.insertion.q.depth-find-bug
+    version: 1
+    level: depth
+    role: practice
+    step: 6
+    skill: algo.sorting.insertion.s.subtle-bugs
+    type: find-bug
+    format: line
+    prompt: >-
+      На массиве `[1, 3, 2]` эта версия возвращает `{{mutant [1, 3, 2]}}`, а на
+      `[2, 1, 3]` — `{{mutant [2, 1, 3]}}`. Найдите строку с ошибкой и причину.
+    mutant: start-from-two
+    reasons:
+      - text: Внешний цикл начинается с i = 2, и пара a[0], a[1] сравнивается, только если до неё дойдёт следующий элемент
+        correct: true
+      - text: Элемент не может дойти до индекса 0
+        misconception: algo.sorting.insertion.m.wrong-bound
+      - text: Последний элемент не вставляется
+        misconception: algo.sorting.insertion.m.wrong-bound
+    explanation: >-
+      В [1, 3, 2] элемент 2 доходит до индекса 1 и сравнивается с a[0]. В [2, 1, 3]
+      элемент 3 остаётся на месте, и пара 2, 1 так и не сравнивается.
+
+  - id: algo.sorting.insertion.q.depth-check-write
+    version: 1
+    level: depth
+    role: check
+    skill: algo.sorting.insertion.s.write-variant
+    type: write
+    format: code
+    prompt: >-
+      Напишите функцию `sortPairs(pairs)`: она упорядочивает пары `[ключ, имя]` по
+      ключу бинарными вставками и возвращает массив. Пары с равными ключами должны
+      остаться в исходном порядке.
+    function: sortPairs
+    starter: |
+      function sortPairs(pairs) {
+        // pairs[i][0] — ключ, pairs[i][1] — имя.
+        return pairs;
+      }
+    solution: 'function sortPairs(pairs) { return [...pairs].sort((x, y) => x[0] - y[0]); }'
+    tests: [[[[2, 'a'], [1, 'b'], [2, 'c'], [1, 'd']]]]
+    hidden:
+      - [[]]
+      - [[[5, 'x']]]
+      - [[[3, 'a'], [3, 'b'], [3, 'c']]]
+      - [[[4, 'a'], [2, 'b'], [4, 'c'], [1, 'd'], [2, 'e']]]
+      - [[[9, 'p'], [8, 'q'], [7, 'r'], [8, 's']]]
+      - [[[1, 'a'], [2, 'b'], [3, 'c'], [4, 'd']]]
+    hints:
+      - Ищите первое место в левой части, где ключ строго больше ключа вставляемой пары.
+
+  - id: algo.sorting.insertion.q.depth-check-exact
+    version: 1
+    level: depth
+    role: check
+    skill: algo.sorting.insertion.s.exact-count
+    type: complexity
+    format: generated
+    generator: exactCount
+
+  - id: algo.sorting.insertion.q.depth-check-inversions
+    version: 1
+    level: depth
+    role: check
+    skill: algo.sorting.insertion.s.inversions
+    type: trace
+    format: generated
+    generator: inversionsCount
+
+  - id: algo.sorting.insertion.q.depth-check-variants
+    version: 1
+    level: depth
+    role: check
+    skill: algo.sorting.insertion.s.variants
+    type: choice
+    format: choice
+    prompt: Какая версия сортировки вставками делает меньше всего сравнений на случайном массиве из 1000 различных чисел?
+    options:
+      - text: Бинарные вставки
+        correct: true
+      - text: Вставка сдвигами
+        misconception: algo.sorting.insertion.m.shift-fewer-compares
+      - text: Все три версии — одинаково
+        misconception: algo.sorting.insertion.m.same-compares

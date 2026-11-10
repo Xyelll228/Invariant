@@ -68,7 +68,7 @@ Node.js 24 (файл `.nvmrc`).
 
 ## Контент
 
-- Формат темы — [docs/content-guide.md](docs/content-guide.md); образец — черновик `content/ru/algorithms/sorting/insertion-sort/`.
+- Формат темы — [docs/content-guide.md](docs/content-guide.md); образец — тема `content/ru/algorithms/sorting/insertion-sort/`.
 - Одна папка на тему: `content/ru/<раздел>/<модуль>/<тема>/` — `topic.yaml`, `fundament.mdx`, `base.mdx`, `depth.mdx`, `questions.yaml`, `sources.yaml`, для алгоритмов ещё `reference.ts`, `mutants.ts`, `vectors.json`, `impl.cpp`, `impl.py`, `generators.ts`. Термины — `content/ru/glossary/`, id модулей — `content/modules.yaml`, id и волны всех 427 тем — `content/topics.yaml`.
 - Адрес страницы строится из id темы, а не из папки: `algo.sorting.insertion` → `/ru/algorithms/sorting/insertion/`, уровни База и Глубина — `…/base/`, `…/depth/`, у блока — якорь с его id.
 - Черновик (`review.status: draft`) не публикуется как тема; его неполнота — предупреждение проверки. У опубликованной темы неполнота — ошибка.
