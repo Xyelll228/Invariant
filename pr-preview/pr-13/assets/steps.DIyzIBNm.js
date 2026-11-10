@@ -1,0 +1,1 @@
+var e={0:`Предвопросы`,1:`Понять`,2:`Разобрать`,3:`Доказать`,4:`Написать самому`,5:`Измерить`,6:`Сломать`};function t(t){let n=Number(t);return Number.isInteger(n)&&n in e?e[n]:void 0}export{t};

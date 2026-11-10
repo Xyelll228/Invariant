@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="content-security-policy" content="script-src 'sha256-/qhdjMjgTfJaJoj7hnpC98jhp79Fqr8X1vi5OLyI4Ew=' blob:; default-src 'none'; worker-src blob:; child-src blob:; connect-src 'none'; img-src 'none'; style-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="robots" content="noindex">
+<title>Песочница</title>
+</head>
+<body>
+<script>// Песочница «Инварианта»: страница во вложенном окне с атрибутом sandbox без
+// allow-same-origin. У неё непрозрачный источник — хранилища приложения она
+// не видит; CSP запрещает ей сеть. Код человека выполняется в фоновом потоке:
+// по таймауту поток уничтожается, и страница приложения не зависает.
+(() => {
+  'use strict';
+  // Код запускаем, только если окно действительно изолировано: у вложенного окна
+  // с sandbox без allow-same-origin источник непрозрачный — «null». Если чужой
+  // сайт встроит эту страницу без sandbox или её откроют напрямую, источник
+  // будет как у приложения, и фоновый поток увидел бы его хранилище. Тогда
+  // страница молчит и ничего не выполняет.
+  if (self.origin !== 'null' || window.parent === window) return;
+  const PREFIX = "'use strict';\n// Песочница «Инварианта»: начало фонового потока. Дальше идёт код человека,\n// после него — запуск теста (worker-suffix.js). Номера строк в ошибках\n// пересчитываются так, чтобы указывать на строку в коде человека.\nconst __invariant = (() => {\n  const logs = [];\n  let size = 0;\n  const MAX_LINES = 200;\n  const MAX_CHARS = 20000;\n\n  const format = (value, depth = 0) => {\n    if (typeof value === 'string') return depth === 0 ? value : JSON.stringify(value);\n    if (value === undefined) return 'undefined';\n    if (value === null) return 'null';\n    if (typeof value === 'number') return Object.is(value, -0) ? '0' : String(value);\n    if (typeof value === 'bigint') return `${value}n`;\n    if (typeof value === 'function') return `функция ${value.name || ''}`.trim();\n    if (typeof value !== 'object') return String(value);\n    if (depth > 4) return '…';\n    if (Array.isArray(value)) {\n      const items = value.slice(0, 100).map((item) => format(item, depth + 1));\n      if (value.length > 100) items.push(`… ещё ${value.length - 100}`);\n      return `[${items.join(', ')}]`;\n    }\n    if (value instanceof Map) return `Map(${value.size})`;\n    if (value instanceof Set) return `Set(${value.size})`;\n    const entries = Object.entries(value).slice(0, 50).map(([key, item]) => `${key}: ${format(item, depth + 1)}`);\n    return `{ ${entries.join(', ')} }`;\n  };\n\n  const record = (args) => {\n    if (logs.length >= MAX_LINES || size >= MAX_CHARS) return;\n    const line = args.map((item) => format(item)).join(' ').slice(0, 1000);\n    size += line.length;\n    logs.push(line);\n  };\n  for (const method of ['log', 'info', 'warn', 'error', 'debug']) console[method] = (...args) => record(args);\n\n  // Сеть закрыта CSP; заглушки дают понятное сообщение вместо сетевой ошибки.\n  const blocked = (name) =>\n    function () {\n      throw new Error(`${name} недоступен в песочнице: сеть отключена`);\n    };\n  for (const name of ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'importScripts']) {\n    try {\n      Object.defineProperty(self, name, { value: blocked(name), writable: false, configurable: false });\n    } catch {\n      // Свойство нельзя переопределить — запрос всё равно остановит CSP.\n    }\n  }\n\n  const post = self.postMessage.bind(self);\n  return { logs, format, post };\n})();";
+  const SUFFIX = ";\n// Песочница «Инварианта»: запуск одного теста после кода человека.\nconst __invariantEqual = (a, b) => {\n  if (typeof a === 'number' && typeof b === 'number') return a === b || (Number.isNaN(a) && Number.isNaN(b));\n  if (a === b) return true;\n  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;\n  if (Array.isArray(a) !== Array.isArray(b)) return false;\n  if (Array.isArray(a)) return a.length === b.length && a.every((item, index) => __invariantEqual(item, b[index]));\n  const keys = Object.keys(a);\n  return keys.length === Object.keys(b).length && keys.every((key) => Object.hasOwn(b, key) && __invariantEqual(a[key], b[key]));\n};\n\nconst __invariantLine = (error) => {\n  const stack = error && typeof error.stack === 'string' ? error.stack : '';\n  const match = /blob:[^\\s)]*:(\\d+):\\d+/.exec(stack);\n  if (!match) return null;\n  const line = Number(match[1]) - __INVARIANT_OFFSET__;\n  return line >= 1 ? line : null;\n};\n\nself.onmessage = (event) => {\n  const { args, expected, hasExpected } = event.data;\n  const fn = typeof __INVARIANT_FUNCTION__ === 'function' ? __INVARIANT_FUNCTION__ : undefined;\n  if (!fn) {\n    __invariant.post({ status: 'missing', logs: __invariant.logs });\n    return;\n  }\n  const finish = (result) => {\n    const got = result === undefined ? args[0] : result;\n    const status = !hasExpected ? 'done' : __invariantEqual(got, expected) ? 'pass' : 'fail';\n    __invariant.post({ status, shown: __invariant.format(got, 1), error: null, logs: __invariant.logs });\n  };\n  const fail = (error) => {\n    __invariant.post({\n      status: 'error',\n      shown: null,\n      error: {\n        name: error && error.name ? String(error.name) : 'Error',\n        message: error && error.message !== undefined ? String(error.message) : String(error),\n        line: __invariantLine(error),\n      },\n      logs: __invariant.logs,\n    });\n  };\n  try {\n    const result = fn(...args);\n    if (result && typeof result.then === 'function') result.then(finish, fail);\n    else finish(result);\n  } catch (error) {\n    fail(error);\n  }\n};";
+  const OFFSET = PREFIX.split('\n').length;
+  const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+  const MAX_CODE = 100000;
+  const MAX_TESTS = 100;
+
+  const reply = (message) => window.parent.postMessage(message, '*');
+
+  const buildSource = (code, name) =>
+    `${PREFIX}\n${code}\n${SUFFIX.split('__INVARIANT_FUNCTION__').join(name).split('__INVARIANT_OFFSET__').join(String(OFFSET))}`;
+
+  const runOne = (url, test, timeoutMs) =>
+    new Promise((resolve) => {
+      let settled = false;
+      const started = performance.now();
+      const worker = new Worker(url);
+      const done = (result) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        worker.terminate();
+        resolve({ ...result, ms: Math.round(performance.now() - started) });
+      };
+      const timer = setTimeout(() => done({ status: 'timeout', shown: null, error: null, logs: [] }), timeoutMs);
+      worker.onmessage = (event) => done(event.data);
+      worker.onerror = (event) => {
+        event.preventDefault();
+        const line = typeof event.lineno === 'number' && event.lineno > OFFSET ? event.lineno - OFFSET : null;
+        // Ошибки выполнения код ловит сам (worker-suffix.js), поэтому сюда приходят
+        // в основном ошибки разбора кода. Firefox сообщает о них без текста ошибки —
+        // тогда это синтаксическая ошибка без подробностей.
+        const error = event.message ? { name: 'Error', message: String(event.message), line } : { name: 'SyntaxError', message: '', line };
+        done({ status: 'load-error', shown: null, error, logs: [] });
+      };
+      worker.postMessage({ args: test.args, expected: test.expected, hasExpected: Object.hasOwn(test, 'expected') });
+    });
+
+  window.addEventListener('message', async (event) => {
+    if (event.source !== window.parent) return;
+    const message = event.data;
+    if (!message || message.type !== 'run') return;
+    const { id, code, functionName, tests, timeoutMs } = message;
+    if (typeof code !== 'string' || code.length > MAX_CODE || !IDENTIFIER.test(functionName) || !Array.isArray(tests) || tests.length > MAX_TESTS) {
+      reply({ type: 'result', id, results: [], loadError: { name: 'Error', message: 'Неверный запрос к песочнице', line: null } });
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([buildSource(code, functionName)], { type: 'text/javascript' }));
+    const codeLines = code.split('\n').length;
+    // Номер строки вне кода человека (ошибка в обвязке) не показываем.
+    const clampLine = (error) => (error && (error.line === null || error.line > codeLines) ? { ...error, line: null } : error);
+    const results = [];
+    try {
+      for (const test of tests) {
+        const result = await runOne(url, test, Math.min(Math.max(Number(timeoutMs) || 2000, 100), 10000));
+        if (result.status === 'load-error') {
+          reply({ type: 'result', id, results: [], loadError: clampLine(result.error) });
+          return;
+        }
+        results.push({ ...result, error: clampLine(result.error) });
+        // После превышения лимита остальные тесты не запускаем: почти всегда это
+        // бесконечный цикл, и человек ждал бы по 2 секунды на каждый тест.
+        if (result.status === 'timeout') break;
+      }
+      while (results.length < tests.length) results.push({ status: 'skipped', shown: null, error: null, logs: [], ms: 0 });
+      reply({ type: 'result', id, results });
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  });
+
+  reply({ type: 'ready' });
+})();</script>
+</body>
+</html>

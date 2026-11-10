@@ -1,0 +1,1 @@
+var e=()=>{let e=decodeURIComponent(window.location.hash.slice(1));if(!e)return;let t=document.getElementById(e),n=t?.closest(`details`)??t?.querySelector(`details`);n&&!n.open&&(n.open=!0,t?.scrollIntoView())};window.addEventListener(`hashchange`,e),e();
